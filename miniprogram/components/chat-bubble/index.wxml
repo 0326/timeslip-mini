@@ -1,0 +1,18 @@
+<view class="bubble-wrap {{isUser ? 'right' : 'left'}}" id="msg-{{msgId}}">
+  <block wx:if="{{!isUser}}">
+    <figure-avatar figure="{{figure}}" size="sm" class="bubble-avatar" />
+  </block>
+  <view class="bubble-main">
+    <view class="bubble-name" wx:if="{{!isUser && showName}}">{{figure.figureName || '古人'}}</view>
+    <view class="bubble-content {{isUser ? 'user' : 'figure'}} {{multiLine ? 'multi' : ''}}">
+      <text wx:if="{{typing}}" class="typing-dots">
+        <text class="dot"></text><text class="dot"></text><text class="dot"></text>
+      </text>
+      <text wx:else class="content-text">{{content}}</text>
+    </view>
+    <view class="bubble-time" wx:if="{{showTime}}">{{displayTime}}</view>
+  </view>
+  <block wx:if="{{isUser}}">
+    <image class="user-avatar" src="{{userAvatar || '/images/icons/avatar.png'}}" mode="aspectFill" />
+  </block>
+</view>

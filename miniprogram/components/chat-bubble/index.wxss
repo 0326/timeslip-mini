@@ -1,0 +1,123 @@
+.bubble-wrap {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 28rpx;
+  padding: 0 24rpx;
+}
+.bubble-wrap.right {
+  flex-direction: row-reverse;
+}
+
+.bubble-avatar, .user-avatar {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.bubble-avatar { margin-right: 16rpx; }
+.user-avatar { margin-left: 16rpx; background: #e5e5e5; }
+
+.bubble-main {
+  max-width: 68%;
+  min-width: 0;
+}
+.bubble-wrap.right .bubble-main {
+  align-items: flex-end;
+}
+
+.bubble-name {
+  font-size: 22rpx;
+  color: var(--wechat-text2);
+  margin: 0 12rpx 8rpx;
+}
+
+.bubble-content {
+  position: relative;
+  padding: 20rpx 24rpx;
+  border-radius: 8rpx;
+  font-size: 30rpx;
+  line-height: 1.55;
+  word-break: break-all;
+  white-space: pre-wrap;
+}
+.bubble-content.figure {
+  background: var(--ancient-paper);
+  color: var(--ancient-ink);
+  border: 1rpx solid rgba(201,162,77,0.3);
+  font-family: 'Noto Serif SC', serif;
+  border-top-left-radius: 2rpx;
+}
+.bubble-content.figure::before {
+  content: '';
+  position: absolute;
+  top: 20rpx;
+  left: -14rpx;
+  width: 0;
+  height: 0;
+  border-top: 14rpx solid transparent;
+  border-bottom: 14rpx solid transparent;
+  border-right: 14rpx solid rgba(201,162,77,0.3);
+}
+.bubble-content.figure::after {
+  content: '';
+  position: absolute;
+  top: 21rpx;
+  left: -12rpx;
+  width: 0;
+  height: 0;
+  border-top: 12rpx solid transparent;
+  border-bottom: 12rpx solid transparent;
+  border-right: 12rpx solid var(--ancient-paper);
+}
+.bubble-content.user {
+  background: var(--wechat-green);
+  color: #fff;
+  border-top-right-radius: 2rpx;
+}
+.bubble-content.user::before {
+  content: '';
+  position: absolute;
+  top: 20rpx;
+  right: -14rpx;
+  width: 0;
+  height: 0;
+  border-top: 14rpx solid transparent;
+  border-bottom: 14rpx solid transparent;
+  border-left: 14rpx solid var(--wechat-green);
+}
+.bubble-content.multi {
+  line-height: 1.75;
+}
+
+.content-text {
+  display: block;
+}
+
+.typing-dots {
+  display: inline-flex;
+  gap: 8rpx;
+  padding: 4rpx 0;
+}
+.typing-dots .dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background: rgba(45,24,16,0.4);
+  animation: typing 1.2s infinite ease-in-out;
+}
+.typing-dots .dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots .dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typing {
+  0%, 60%, 100% { transform: scale(0.8); opacity: 0.5; }
+  30% { transform: scale(1.1); opacity: 1; }
+}
+
+.bubble-time {
+  font-size: 20rpx;
+  color: var(--wechat-text2);
+  margin: 8rpx 12rpx 0;
+  opacity: 0.8;
+}
+.bubble-wrap.right .bubble-time {
+  text-align: right;
+}

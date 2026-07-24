@@ -1,0 +1,29 @@
+<view class="pigeon-container {{autoplay ? 'playing' : ''}}">
+  <view class="cloud-layer">
+    <view class="cloud c-1">☁️</view>
+    <view class="cloud c-2">☁️</view>
+    <view class="cloud c-3">☁️</view>
+    <view class="cloud c-4">☁️</view>
+  </view>
+  <view class="pigeon-wrap">
+    <view class="pigeon {{flying ? 'fly' : ''}}" style="{{sizeStyle}}">
+      <view class="pigeon-body">
+        <view class="wing wing-left"></view>
+        <view class="wing wing-right"></view>
+        <view class="head">
+          <view class="eye"></view>
+          <view class="beak"></view>
+        </view>
+        <view class="tail"></view>
+        <view class="letter-pouch" wx:if="{{showLetter}}">✉️</view>
+      </view>
+    </view>
+    <view class="trail-line" wx:if="{{showTrail}}"></view>
+  </view>
+  <view class="loading-text" wx:if="{{showText}}">
+    <text>飞鸽传书</text>
+    <view class="dots">
+      <text class="d">.</text><text class="d">.</text><text class="d">.</text>
+    </view>
+  </view>
+</view>

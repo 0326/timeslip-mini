@@ -1,0 +1,107 @@
+.nav-bar {
+  position: relative;
+  z-index: 900;
+  width: 100%;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+.nav-bar.is-fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.nav-bar.is-translucent {
+  background: transparent !important;
+  backdrop-filter: blur(12rpx);
+  -webkit-backdrop-filter: blur(12rpx);
+}
+
+.nav-placeholder {
+  width: 100%;
+  pointer-events: none;
+}
+
+.nav-bar-inner {
+  position: relative;
+  width: 100%;
+}
+
+.nav-left,
+.nav-right {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  z-index: 2;
+}
+
+.nav-left {
+  left: 16rpx;
+  max-width: 300rpx;
+}
+
+.nav-right {
+  right: 16rpx;
+  max-width: 300rpx;
+}
+
+.nav-back,
+.nav-home {
+  display: flex;
+  align-items: center;
+  padding: 0 16rpx;
+  height: 100%;
+  border-radius: 999rpx;
+  transition: background 0.15s;
+}
+
+.nav-hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.nav-back-icon {
+  font-size: 48rpx;
+  line-height: 1;
+  font-weight: 300;
+  margin-right: 2rpx;
+  margin-top: -4rpx;
+  display: inline-block;
+  font-family: -apple-system, sans-serif;
+}
+
+.nav-back-text {
+  font-size: 30rpx;
+  margin-left: 4rpx;
+}
+
+.nav-home {
+  padding: 0 20rpx;
+  font-size: 32rpx;
+}
+
+.nav-title {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  z-index: 1;
+  pointer-events: auto;
+}
+
+.nav-title-text {
+  font-size: 34rpx;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.nav-subtitle {
+  font-size: 22rpx;
+  opacity: 0.6;
+  margin-top: 2rpx;
+}

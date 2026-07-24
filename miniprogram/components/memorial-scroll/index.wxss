@@ -1,0 +1,155 @@
+.scroll-wrap {
+  width: 100%;
+  padding: 12rpx 0;
+}
+
+.scroll-bg {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 16rpx 48rpx rgba(139,69,19,0.25);
+  border-radius: 8rpx;
+  overflow: hidden;
+}
+
+.scroll-rod {
+  display: flex;
+  align-items: center;
+  height: 48rpx;
+  background: linear-gradient(180deg, #8B4513 0%, #654321 40%, #3E2723 100%);
+  position: relative;
+}
+.scroll-rod.top {
+  border-radius: 8rpx 8rpx 0 0;
+}
+.scroll-rod.bottom {
+  border-radius: 0 0 8rpx 8rpx;
+}
+.rod-cap {
+  width: 64rpx;
+  height: 64rpx;
+  background: radial-gradient(circle at 30% 30%, #D4AF37 0%, #8B6914 60%, #5C4A1F 100%);
+  border-radius: 50%;
+  position: absolute;
+  top: -8rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.4);
+}
+.rod-cap.left { left: 8rpx; }
+.rod-cap.right { right: 8rpx; }
+.rod-body {
+  flex: 1;
+  margin: 0 56rpx;
+  height: 100%;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(0,0,0,0.15) 0px,
+    rgba(0,0,0,0.15) 2px,
+    transparent 2px,
+    transparent 12rpx
+  );
+}
+
+.scroll-paper {
+  background: #F5ECD7;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 59rpx,
+      rgba(139,111,71,0.15) 59rpx,
+      rgba(139,111,71,0.15) 60rpx
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255,255,255,0.3),
+      rgba(255,255,255,0.3) 80rpx,
+      rgba(201,162,77,0.05) 80rpx,
+      rgba(201,162,77,0.05) 160rpx
+    );
+  padding: 48rpx 40rpx;
+  border-left: 4rpx solid rgba(139,69,19,0.2);
+  border-right: 4rpx solid rgba(139,69,19,0.2);
+  min-height: 400rpx;
+}
+
+.paper-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32rpx;
+  margin-bottom: 32rpx;
+  padding-bottom: 24rpx;
+  border-bottom: 2rpx dashed rgba(139,111,71,0.3);
+}
+.seal-left, .seal-right {
+  width: 64rpx;
+  height: 64rpx;
+  line-height: 64rpx;
+  text-align: center;
+  background: var(--ancient-seal);
+  color: #fff;
+  font-family: 'Ma Shan Zheng', serif;
+  font-size: 30rpx;
+  transform: rotate(-8deg);
+  border-radius: var(--radius-sm);
+  opacity: 0.9;
+  box-shadow: 0 2rpx 8rpx rgba(183,28,28,0.3);
+}
+.seal-right { transform: rotate(8deg); }
+.title-text {
+  font-family: 'Ma Shan Zheng', serif;
+  font-size: 40rpx;
+  color: var(--ancient-ink);
+  letter-spacing: 8rpx;
+  text-shadow: 0 2rpx 4rpx rgba(0,0,0,0.05);
+}
+
+.paper-meta {
+  text-align: right;
+  font-size: 24rpx;
+  color: #8B6F47;
+  margin-bottom: 32rpx;
+  padding: 0 12rpx;
+  font-family: 'Noto Serif SC', serif;
+}
+.paper-meta .sep { margin: 0 8rpx; opacity: 0.5; }
+
+.paper-content {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 32rpx;
+  line-height: 60rpx;
+  color: #3D2B1F;
+  text-indent: 2em;
+  padding: 8rpx 0 40rpx;
+}
+.content-text {
+  display: block;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.paper-footer {
+  margin-top: 40rpx;
+  padding-top: 32rpx;
+  border-top: 2rpx dashed rgba(183,28,28,0.3);
+}
+.zhupi-title {
+  text-align: center;
+  font-size: 22rpx;
+  color: var(--ancient-seal);
+  font-family: 'Ma Shan Zheng', serif;
+  letter-spacing: 16rpx;
+  margin-bottom: 20rpx;
+  opacity: 0.85;
+}
+.zhupi-content {
+  padding: 24rpx 32rpx;
+  background: rgba(183,28,28,0.05);
+  border: 2rpx dashed rgba(183,28,28,0.3);
+  border-radius: var(--radius-md);
+  color: var(--ancient-seal);
+  font-family: 'Ma Shan Zheng', serif;
+  font-size: 32rpx;
+  line-height: 1.8;
+  min-height: 80rpx;
+}

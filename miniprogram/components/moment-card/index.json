@@ -1,0 +1,6 @@
+{
+  "component": true,
+  "usingComponents": {
+    "figure-avatar": "/components/figure-avatar/index"
+  }
+}

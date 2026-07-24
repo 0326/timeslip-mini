@@ -1,0 +1,36 @@
+<view class="scroll-wrap">
+  <view class="scroll-bg">
+    <view class="scroll-rod top">
+      <view class="rod-cap left"></view>
+      <view class="rod-body"></view>
+      <view class="rod-cap right"></view>
+    </view>
+    <view class="scroll-paper">
+      <view class="paper-header" wx:if="{{title}}">
+        <view class="seal-left">敕</view>
+        <view class="title-text">{{title}}</view>
+        <view class="seal-right">旨</view>
+      </view>
+      <view class="paper-meta" wx:if="{{submitter || dynasty}}">
+        <text wx:if="{{dynasty}}">{{dynasty}}</text>
+        <text class="sep" wx:if="{{submitter && dynasty}}">·</text>
+        <text wx:if="{{submitter}}">臣 {{submitter}} 跪奏</text>
+      </view>
+      <view class="paper-content">
+        <slot name="content"></slot>
+        <block wx:if="{{!$slots.content && content}}">
+          <text class="content-text">{{content}}</text>
+        </block>
+      </view>
+      <view class="paper-footer" wx:if="{{showZhuPi}}">
+        <view class="zhupi-title">— 朱批 —</view>
+        <view class="zhupi-content">{{zhupi || '（尚未批示）'}}</view>
+      </view>
+    </view>
+    <view class="scroll-rod bottom">
+      <view class="rod-cap left"></view>
+      <view class="rod-body"></view>
+      <view class="rod-cap right"></view>
+    </view>
+  </view>
+</view>

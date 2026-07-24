@@ -1,0 +1,94 @@
+<view class="moment-card" data-id="{{moment._id}}" bindtap="onCardTap">
+  <view class="mc-header">
+    <figure-avatar figure="{{avatarFigure}}" size="md" show-dynasty="{{false}}" bindtap="onAvatarTap" />
+    <view class="mc-meta">
+      <view class="mc-author">
+        <text class="name">{{moment.figureName}}</text>
+        <text class="title" wx:if="{{moment.figureTitle}}">· {{moment.figureTitle}}</text>
+      </view>
+      <view class="mc-sub">
+        <text class="dynasty" wx:if="{{dynastyInfo}}">{{dynastyInfo.name}}</text>
+        <text class="sep" wx:if="{{dynastyInfo && moment.historicalEvent}}">·</text>
+        <text class="event" wx:if="{{moment.historicalEvent}}">{{moment.historicalEvent}}</text>
+        <text class="sep" wx:if="{{moment.displayTime}}">·</text>
+        <text class="time">{{moment.displayTime}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="mc-content" bindtap="onContentTap">
+    <text class="content-text">{{moment.content}}</text>
+  </view>
+
+  <view class="mc-images" wx:if="{{moment.images && moment.images.length}}" bindtap="onImageTap">
+    <block wx:if="{{moment.images.length === 1}}">
+      <image class="img-single" src="{{moment.images[0]}}" mode="widthFix" data-idx="0" />
+    </block>
+    <block wx:elif="{{moment.images.length <= 4}}">
+      <view class="img-grid grid-2">
+        <image
+          class="img-item"
+          wx:for="{{moment.images}}"
+          wx:for-item="img"
+          wx:key="*this"
+          src="{{img}}"
+          mode="aspectFill"
+          data-idx="{{index}}"
+        />
+      </view>
+    </block>
+    <block wx:else>
+      <view class="img-grid grid-3">
+        <image
+          class="img-item"
+          wx:for="{{moment.images}}"
+          wx:for-item="img"
+          wx:key="*this"
+          wx:for-index="idx"
+          src="{{img}}"
+          mode="aspectFill"
+          data-idx="{{idx}}"
+        />
+      </view>
+    </block>
+  </view>
+
+  <view class="mc-event-tag" wx:if="{{moment.historicalDate}}">
+    📅 {{moment.historicalDate}}{{moment.historicalEvent ? ' · ' + moment.historicalEvent : ''}}
+  </view>
+
+  <view class="mc-actions">
+    <view class="action-item {{liked ? 'liked' : ''}}" catchtap="onLike">
+      <text class="icon">{{liked ? '❤️' : '🤍'}}</text>
+      <text class="num" wx:if="{{likeCount}}">{{likeCount}}</text>
+    </view>
+    <view class="action-item" catchtap="onComment">
+      <text class="icon">💬</text>
+      <text class="num" wx:if="{{commentCount}}">{{commentCount}}</text>
+    </view>
+    <view class="action-item" catchtap="onShareTap">
+      <text class="icon">🔗</text>
+    </view>
+  </view>
+
+  <view class="mc-likes" wx:if="{{moment.likes && moment.likes.length}}">
+    <text class="like-icon">❤️</text>
+    <text class="like-users">{{likeSummary}}</text>
+  </view>
+
+  <view class="mc-comments" wx:if="{{moment.comments && moment.comments.length && showComments}}">
+    <view
+      class="comment-row"
+      wx:for="{{displayComments}}"
+      wx:for-item="c"
+      wx:key="_id"
+    >
+      <text class="c-name">{{c.name}}</text>
+      <text class="c-colon">：</text>
+      <text class="c-content">{{c.content}}</text>
+    </view>
+    <view class="more-comments" wx:if="{{moreCommentsCount}}" catchtap="onShowAll">
+      查看全部 {{commentCount}} 条评论 ›
+    </view>
+  </view>
+</view>

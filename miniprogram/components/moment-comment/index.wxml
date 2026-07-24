@@ -1,0 +1,44 @@
+<view class="comment-item" id="comment-{{comment._id}}">
+  <figure-avatar
+    class="c-avatar"
+    figure="{{avatar}}"
+    size="sm"
+    show-dynasty="{{false}}"
+    bindtap="onAvatarTap"
+  />
+  <view class="c-body">
+    <view class="c-top">
+      <text class="c-name" bindtap="onNameTap">{{comment.name || '匿名'}}</text>
+      <text class="c-time">{{comment.displayTime}}</text>
+    </view>
+    <view class="c-content" bindtap="onContentTap">{{comment.content}}</view>
+    <view class="c-bottom">
+      <view class="c-action {{isLiked ? 'liked' : ''}}" catchtap="onLike">
+        <text class="icon">{{isLiked ? '👍' : '👍🏼'}}</text>
+        <text class="txt" wx:if="{{likeCount}}">{{likeCount}}</text>
+      </view>
+      <view class="c-action reply" catchtap="onReply">
+        <text class="icon">💬</text>
+        <text class="txt">回复</text>
+      </view>
+      <view class="c-action delete" wx:if="{{canDelete}}" catchtap="onDelete">
+        <text class="txt">删除</text>
+      </view>
+    </view>
+
+    <view class="replies" wx:if="{{comment.replies && comment.replies.length}}">
+      <view
+        class="reply-item"
+        wx:for="{{comment.replies}}"
+        wx:for-item="r"
+        wx:key="_id"
+      >
+        <text class="r-name">{{r.name || '匿名'}}</text>
+        <text class="r-at" wx:if="{{r.to}}"> 回复 </text>
+        <text class="r-to" wx:if="{{r.to}}">{{r.to}}</text>
+        <text class="r-colon">：</text>
+        <text class="r-content">{{r.content}}</text>
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,95 @@
+.tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  height: 110rpx;
+  background: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  box-shadow: 0 -2rpx 20rpx rgba(0,0,0,0.05);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-bottom {
+  height: calc(110rpx + env(safe-area-inset-bottom));
+}
+
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 8rpx 0;
+  transition: transform 0.2s ease;
+}
+.tab-item.active {
+  transform: translateY(-4rpx);
+}
+
+.tab-icon {
+  width: 52rpx;
+  height: 52rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4rpx;
+  position: relative;
+}
+
+.icon-text {
+  font-size: 44rpx;
+  line-height: 1;
+  transition: transform 0.2s;
+  filter: grayscale(0.8);
+  opacity: 0.7;
+}
+.tab-item.active .icon-text {
+  filter: grayscale(0);
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.tab-label {
+  font-size: 22rpx;
+  color: #8E8E93;
+  line-height: 1;
+  transition: color 0.2s, font-weight 0.2s;
+  font-weight: 500;
+}
+.tab-item.active .tab-label {
+  color: #B8860B;
+  font-weight: 600;
+  font-family: 'Ma Shan Zheng', serif;
+}
+
+.tab-dot {
+  position: absolute;
+  top: 2rpx;
+  right: 50%;
+  transform: translateX(40rpx);
+  width: 8rpx;
+  height: 8rpx;
+  background: var(--wechat-red);
+  border-radius: 50%;
+}
+
+.tab-badge {
+  position: absolute;
+  top: -6rpx;
+  right: 20%;
+  min-width: 32rpx;
+  height: 32rpx;
+  line-height: 32rpx;
+  padding: 0 8rpx;
+  background: var(--wechat-red);
+  color: #fff;
+  border-radius: 16rpx;
+  font-size: 20rpx;
+  text-align: center;
+  box-sizing: border-box;
+}

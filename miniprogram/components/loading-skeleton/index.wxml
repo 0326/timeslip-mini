@@ -1,0 +1,21 @@
+<view class="skeleton-wrap {{active ? 'active' : ''}}">
+  <block wx:for="{{rows}}" wx:key="idx" wx:for-index="idx">
+    <view class="sk-row" style="height: {{item.height || '32'}}rpx; margin-bottom: {{item.gap || '16'}}rpx; width: {{item.width || '100'}}%; border-radius: {{item.radius || '8'}}rpx;"></view>
+  </block>
+
+  <view class="sk-list" wx:if="{{rows.length === 0}}">
+    <view class="sk-item" wx:for="{{displayRows}}" wx:key="*this">
+      <view class="sk-avatar"></view>
+      <view class="sk-lines">
+        <view class="sk-line w-80"></view>
+        <view class="sk-line w-50"></view>
+        <view class="sk-line w-100 sk-last"></view>
+      </view>
+    </view>
+  </view>
+
+  <view class="sk-title-loading" wx:if="{{title}}">
+    <text class="sk-spinner"></text>
+    <text class="sk-text">{{title}}</text>
+  </view>
+</view>

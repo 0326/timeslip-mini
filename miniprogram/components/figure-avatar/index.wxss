@@ -1,0 +1,77 @@
+.avatar-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #E8D5B0 0%, #D4B896 100%);
+  transition: transform 0.2s ease;
+}
+.avatar-wrap:active { transform: scale(0.95); }
+.avatar-wrap.locked {
+  filter: grayscale(0.5) brightness(0.85);
+}
+.avatar-wrap.locked .avatar-img,
+.avatar-wrap.locked .avatar-text {
+  opacity: 0.7;
+}
+
+.avatar-wrap.size-sm { width: 64rpx; height: 64rpx; border-radius: 50%; }
+.avatar-wrap.size-md { width: 88rpx; height: 88rpx; border-radius: 50%; }
+.avatar-wrap.size-lg { width: 120rpx; height: 120rpx; border-radius: 50%; }
+.avatar-wrap.size-xl { width: 180rpx; height: 180rpx; border-radius: 24rpx; }
+
+.avatar-wrap.bordered {
+  border: 4rpx solid rgba(201,162,77,0.6);
+  box-shadow: 0 4rpx 12rpx rgba(201,162,77,0.25);
+}
+
+.avatar-wrap.shape-square { border-radius: 16rpx !important; }
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.avatar-text {
+  font-family: 'Ma Shan Zheng', serif;
+  color: var(--ancient-ink);
+  font-weight: 700;
+}
+.size-sm .initials { font-size: 24rpx; }
+.size-md .initials { font-size: 32rpx; }
+.size-lg .initials { font-size: 44rpx; }
+.size-xl .initials { font-size: 64rpx; }
+
+.dynasty-tag {
+  position: absolute;
+  bottom: -4rpx;
+  right: -4rpx;
+  padding: 2rpx 8rpx;
+  background: var(--ancient-gold);
+  color: #fff;
+  font-size: 16rpx;
+  border-radius: var(--radius-sm);
+  font-family: 'Noto Serif SC', serif;
+  font-weight: 600;
+  border: 2rpx solid var(--wechat-white);
+}
+.size-sm .dynasty-tag { display: none; }
+.size-md .dynasty-tag { font-size: 14rpx; padding: 1rpx 6rpx; }
+
+.lock-mask {
+  position: absolute;
+  inset: 0;
+  background: rgba(45,24,16,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lock-icon {
+  font-size: 28rpx;
+  text-shadow: 0 2rpx 4rpx rgba(0,0,0,0.3);
+}
+.size-sm .lock-icon { font-size: 20rpx; }
+.size-lg .lock-icon { font-size: 40rpx; }

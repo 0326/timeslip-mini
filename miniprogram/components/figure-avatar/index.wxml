@@ -1,0 +1,22 @@
+<view
+  class="avatar-wrap size-{{size}} {{locked ? 'locked' : ''}} {{showBorder ? 'bordered' : ''}} {{shape}}"
+  style="{{bgStyle}}"
+  bindtap="onTap"
+>
+  <image
+    wx:if="{{figure.avatar || fallback}}"
+    class="avatar-img"
+    src="{{figure.avatar || fallback}}"
+    mode="aspectFill"
+    lazy-load="{{lazyLoad}}"
+  />
+  <view wx:else class="avatar-text">
+    <text class="initials">{{initials}}</text>
+  </view>
+  <view class="dynasty-tag" wx:if="{{showDynasty && figure.dynasty}}">
+    {{dynastyShort}}
+  </view>
+  <view class="lock-mask" wx:if="{{locked}}">
+    <text class="lock-icon">🔒</text>
+  </view>
+</view>

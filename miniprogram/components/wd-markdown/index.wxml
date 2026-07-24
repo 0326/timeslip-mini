@@ -1,0 +1,86 @@
+<view class="md-render {{ancient ? 'ancient-mode' : ''}}">
+  <view
+    class="md-block {{block.type}}"
+    wx:for="{{blocks}}"
+    wx:for-item="block"
+    wx:key="idx"
+  >
+    <block wx:if="{{block.type === 'heading'}}">
+      <view class="md-h md-h{{block.level || 1}}">
+        <text wx:for="{{block.inlines}}" wx:for-item="t" wx:key="*this" class="{{t.bold ? 'bold' : ''}} {{t.italic ? 'italic' : ''}}">{{t.text}}</text>
+      </view>
+    </block>
+
+    <block wx:elif="{{block.type === 'paragraph'}}">
+      <view class="md-p">
+        <text
+          wx:for="{{block.inlines}}"
+          wx:for-item="t"
+          wx:key="*this"
+          class="md-inline {{t.bold ? 'bold' : ''}} {{t.italic ? 'italic' : ''}} {{t.code ? 'code' : ''}}"
+        >{{t.text}}
+        </text>
+      </view>
+    </block>
+
+    <block wx:elif="{{block.type === 'quote'}}">
+      <view class="md-quote">
+        <view class="md-quote-bar"></view>
+        <view class="md-quote-content">
+          <text wx:for="{{block.inlines}}" wx:for-item="t" wx:key="*this" class="{{t.italic ? 'italic' : ''}}">{{t.text}}</text>
+        </view>
+      </view>
+    </block>
+
+    <block wx:elif="{{block.type === 'list'}}">
+      <view class="md-list {{block.ordered ? 'ordered' : 'unordered'}}">
+        <view
+          class="md-li"
+          wx:for="{{block.items}}"
+          wx:for-item="li"
+          wx:for-index="liIdx"
+          wx:key="idx"
+        >
+          <view class="li-bullet">{{block.ordered ? (liIdx + 1) + '.' : '·'}}</view>
+          <view class="li-content">
+            <text wx:for="{{li.inlines}}" wx:for-item="t" wx:key="*this">{{t.text}}</text>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <block wx:elif="{{block.type === 'code'}}">
+      <view class="md-codeblock">
+        <view class="code-lang" wx:if="{{block.lang}}">{{block.lang}}</view>
+        <view class="code-content"><text>{{block.content}}</text></view>
+      </view>
+    </block>
+
+    <block wx:elif="{{block.type === 'hr'}}">
+      <view class="md-hr"></view>
+    </block>
+
+    <block wx:elif="{{block.type === 'table'}}">
+      <view class="md-table-wrap">
+        <view class="md-table">
+          <view class="tr th-row" wx:if="{{block.header}}">
+            <view class="th" wx:for="{{block.header}}" wx:for-item="h" wx:key="*this">{{h}}</view>
+          </view>
+          <view class="tr" wx:for="{{block.rows}}" wx:for-item="row" wx:key="idx">
+            <view class="td" wx:for="{{row}}" wx:for-item="cell" wx:key="*this">{{cell}}</view>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <block wx:else>
+      <view class="md-p md-raw">
+        <text>{{block.text || ''}}</text>
+      </view>
+    </block>
+  </view>
+
+  <view class="md-p md-fallback" wx:if="{{!blocks && content}}">
+    <text>{{content}}</text>
+  </view>
+</view>
