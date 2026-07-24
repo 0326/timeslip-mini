@@ -1,0 +1,115 @@
+{
+  "users": {
+    ".read": "auth.openid == resource.data._openid",
+    ".write": "auth.openid == resource.data._openid",
+    "nickname": true,
+    "avatar": true,
+    "ancientName": true,
+    "crossNo": true,
+    "memberLevel": true,
+    "points": true,
+    "createdAt": true,
+    "updatedAt": true,
+    "_openid": false
+  },
+  "chat_sessions": {
+    ".read": "auth.openid == resource.data._openid",
+    ".write": false,
+    "_openid": false
+  },
+  "chat_messages": {
+    ".read": "auth.openid == resource.data._openid",
+    ".write": false,
+    "_openid": false
+  },
+  "messages": {
+    ".read": "auth.openid == resource.data._openid",
+    ".write": false
+  },
+  "moments": {
+    ".read": true,
+    ".write": false,
+    ".validate": "newData.hasAll(['figureId','figureName','content','createdAt'])"
+  },
+  "moment_comments": {
+    ".read": true,
+    ".write": "auth.openid != null && auth.openid == newData._openid",
+    ".validate": "newData.hasAll(['momentId','content','createdAt'])"
+  },
+  "moment_likes": {
+    ".read": true,
+    ".write": "auth.openid != null && auth.openid == newData._openid"
+  },
+  "letters": {
+    ".read": "auth.openid == resource.data._openid",
+    ".write": false,
+    "_openid": false
+  },
+  "memorials": {
+    ".read": true,
+    ".write": false
+  },
+  "user_memorial_progress": {
+    ".read": "auth.openid == resource.data._openid",
+    ".write": false,
+    "_openid": false
+  },
+  "dna_questions": {
+    ".read": true,
+    ".write": false
+  },
+  "dna_types": {
+    ".read": true,
+    ".write": false
+  },
+  "dna_results": {
+    ".read": "auth.openid == resource.data._openid",
+    ".write": "auth.openid != null && auth.openid == newData._openid",
+    "_openid": false
+  },
+  "figures": {
+    ".read": true,
+    ".write": false
+  },
+  "historical_figures": {
+    ".read": true,
+    ".write": false
+  },
+  "achievements": {
+    ".read": true,
+    ".write": false
+  },
+  "user_achievements": {
+    ".read": "auth.openid == resource.data._openid",
+    ".write": false,
+    "_openid": false
+  },
+  "user_figures": {
+    ".read": "auth.openid == resource.data._openid",
+    ".write": "auth.openid != null && auth.openid == newData._openid",
+    "_openid": false
+  },
+  "user_points": {
+    ".read": "auth.openid == resource.data._openid",
+    ".write": false,
+    "_openid": false
+  },
+  "book_favorites": {
+    ".read": "auth.openid == resource.data._openid",
+    ".write": "auth.openid != null && auth.openid == newData._openid",
+    "_openid": false
+  },
+  "books": {
+    ".read": true,
+    ".write": false
+  },
+  "content_audit_log": {
+    ".read": "auth.openid == resource.data._openid",
+    ".write": false,
+    "_openid": false
+  },
+  "system_config": {
+    ".read": true,
+    ".write": false
+  }
+}
