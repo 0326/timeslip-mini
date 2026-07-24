@@ -1,0 +1,93 @@
+<view class="page">
+  <custom-nav-bar title="历史人格DNA" show-back="{{true}}" />
+
+  <view class="container" wx:if="{{!loading && !result}}">
+    <view class="hero">
+      <view class="hero-title">穿越DNA · 历史人格鉴定</view>
+      <view class="hero-sub">答完{{totalQuestions}}道题，测测你是哪位历史人物的转世</view>
+    </view>
+
+    <view class="progress-wrap">
+      <view class="progress-bar">
+        <view class="progress-fill" style="width: {{progressPercent}}%"></view>
+      </view>
+      <view class="progress-text">第 {{currentIdx + 1}} / {{totalQuestions}} 题</view>
+    </view>
+
+    <view class="question-card" wx:if="{{questions[currentIdx]}}">
+      <view class="q-number">Q{{currentIdx + 1}}</view>
+      <view class="q-title">{{questions[currentIdx].title}}</view>
+      <view class="q-desc" wx:if="{{questions[currentIdx].desc}}">{{questions[currentIdx].desc}}</view>
+
+      <view class="options">
+        <view
+          class="option-item {{selectedOption === opt.key ? 'selected' : ''}}"
+          wx:for="{{questions[currentIdx].options}}"
+          wx:for-item="opt"
+          wx:key="key"
+          data-key="{{opt.key}}"
+          bindtap="onSelectOption"
+        >
+          <view class="opt-key">{{opt.key}}</view>
+          <view class="opt-body">
+            <view class="opt-text">{{opt.text}}</view>
+            <view class="opt-tag" wx:if="{{opt.tag}}">{{opt.tag}}</view>
+          </view>
+          <view class="opt-check" wx:if="{{selectedOption === opt.key}}">✓</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="actions">
+      <button class="btn-prev" bindtap="onPrev" disabled="{{currentIdx === 0}}">上一题</button>
+      <button
+        class="btn-next {{selectedOption ? 'active' : ''}}"
+        bindtap="onNext"
+        disabled="{{!selectedOption}}"
+      >
+        {{currentIdx === totalQuestions - 1 ? '生成结果' : '下一题'}}
+      </button>
+    </view>
+  </view>
+
+  <view class="result-page" wx:if="{{!loading && result}}">
+    <view class="result-hero" style="background: linear-gradient(135deg, {{result.bgStart || '#C9A24D'}}, {{result.bgEnd || '#B71C1C'}})">
+      <view class="result-badge">匹配度 {{result.matchPercent}}%</view>
+      <view class="result-figure">{{result.figureName}}</view>
+      <view class="result-title">{{result.figureTitle || ''}}</view>
+      <view class="result-dynasty">{{result.dynastyName || ''}}</view>
+    </view>
+
+    <view class="radar-wrap">
+      <view class="section-title">人格雷达</view>
+      <canvas canvas-id="radarCanvas" class="radar-canvas"></canvas>
+    </view>
+
+    <view class="detail-card">
+      <view class="section-title">人物简介</view>
+      <view class="bio-text">{{result.bio}}</view>
+    </view>
+
+    <view class="detail-card">
+      <view class="section-title">经典名言</view>
+      <view class="quote-text">"{{result.quote}}"</view>
+    </view>
+
+    <view class="detail-card">
+      <view class="section-title">为什么是{{result.figureName}}？</view>
+      <view class="reason-list">
+        <view class="reason-item" wx:for="{{result.reasons}}" wx:key="*this">
+          <text class="dot">◆</text>{{item}}
+        </view>
+      </view>
+    </view>
+
+    <view class="result-actions">
+      <button class="btn-chat" bindtap="goChat">💬 去找{{result.figureName}}聊天</button>
+      <button class="btn-retry" bindtap="onRetry">重新测试</button>
+      <button class="btn-share" open-type="share">生成海报分享</button>
+    </view>
+  </view>
+
+  <loading-skeleton wx:if="{{loading}}" rows="6" />
+</view>

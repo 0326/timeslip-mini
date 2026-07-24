@@ -1,0 +1,144 @@
+<view class="page">
+  <custom-nav-bar title="穿越成就" show-back="{{true}}" />
+
+  <view class="hero">
+    <view class="hero-bg"></view>
+    <view class="hero-content">
+      <view class="unlock-count">
+        <text class="num">{{unlockedCount}}</text>
+        <text class="sep">/</text>
+        <text class="total">{{totalCount}}</text>
+      </view>
+      <view class="hero-label">已解锁成就</view>
+      <view class="progress-wrap">
+        <view class="progress-bar">
+          <view class="progress-fill" style="width: {{progressPercent}}%"></view>
+        </view>
+        <view class="progress-text">{{progressPercent}}% 完成度</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="container">
+    <view class="category">
+      <view class="cat-header">
+        <view class="cat-title">🌱 初入穿越</view>
+        <view class="cat-progress">{{categoryProgress.beginner}}</view>
+      </view>
+      <view class="card-grid">
+        <view
+          class="ach-card {{item.unlocked ? 'unlocked' : 'locked'}}"
+          wx:for="{{achievementList}}"
+          wx:for-item="item"
+          wx:key="key"
+          wx:if="{{item.category === 'beginner'}}"
+          data-item="{{item}}"
+          bindtap="showDetail"
+        >
+          <view class="ach-icon">{{item.icon}}</view>
+          <view class="ach-name">{{item.name}}</view>
+          <view class="ach-desc">{{item.desc}}</view>
+          <view class="ach-tag" wx:if="{{item.unlocked}}">{{item.unlockTime}}</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="category">
+      <view class="cat-header">
+        <view class="cat-title">💬 交流互动</view>
+        <view class="cat-progress">{{categoryProgress.communicate}}</view>
+      </view>
+      <view class="card-grid">
+        <view
+          class="ach-card {{item.unlocked ? 'unlocked' : 'locked'}}"
+          wx:for="{{achievementList}}"
+          wx:for-item="item"
+          wx:key="key"
+          wx:if="{{item.category === 'communicate'}}"
+          data-item="{{item}}"
+          bindtap="showDetail"
+        >
+          <view class="ach-icon">{{item.icon}}</view>
+          <view class="ach-name">{{item.name}}</view>
+          <view class="ach-desc">{{item.desc}}</view>
+          <view class="ach-tag" wx:if="{{item.unlocked}}">{{item.unlockTime}}</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="category">
+      <view class="cat-header">
+        <view class="cat-title">📜 历史探索</view>
+        <view class="cat-progress">{{categoryProgress.explore}}</view>
+      </view>
+      <view class="card-grid">
+        <view
+          class="ach-card {{item.unlocked ? 'unlocked' : 'locked'}}"
+          wx:for="{{achievementList}}"
+          wx:for-item="item"
+          wx:key="key"
+          wx:if="{{item.category === 'explore'}}"
+          data-item="{{item}}"
+          bindtap="showDetail"
+        >
+          <view class="ach-icon">{{item.icon}}</view>
+          <view class="ach-name">{{item.name}}</view>
+          <view class="ach-desc">{{item.desc}}</view>
+          <view class="ach-tag" wx:if="{{item.unlocked}}">{{item.unlockTime}}</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="category">
+      <view class="cat-header">
+        <view class="cat-title">👑 稀世传奇</view>
+        <view class="cat-progress">{{categoryProgress.legend}}</view>
+      </view>
+      <view class="card-grid">
+        <view
+          class="ach-card {{item.unlocked ? 'unlocked' : 'locked'}}"
+          wx:for="{{achievementList}}"
+          wx:for-item="item"
+          wx:key="key"
+          wx:if="{{item.category === 'legend'}}"
+          data-item="{{item}}"
+          bindtap="showDetail"
+        >
+          <view class="ach-icon">{{item.icon}}</view>
+          <view class="ach-name">{{item.name}}</view>
+          <view class="ach-desc">{{item.desc}}</view>
+          <view class="ach-tag" wx:if="{{item.unlocked}}">{{item.unlockTime}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="detail-mask" wx:if="{{showModal}}" bindtap="closeModal">
+    <view class="detail-modal {{showModal && detailData ? 'show' : ''}}" catchtap="stopProp">
+      <view class="dm-hero {{detailData.unlocked ? 'unlocked' : 'locked'}}">
+        <view class="dm-icon">{{detailData.icon}}</view>
+        <view class="dm-name">{{detailData.name}}</view>
+        <view class="dm-status">{{detailData.unlocked ? '✓ 已解锁' : '🔒 未解锁'}}</view>
+      </view>
+      <view class="dm-body">
+        <view class="dm-section">
+          <view class="dm-label">成就描述</view>
+          <view class="dm-desc">{{detailData.desc}}</view>
+        </view>
+        <view class="dm-section" wx:if="{{detailData.unlockCondition}}">
+          <view class="dm-label">解锁条件</view>
+          <view class="dm-desc">{{detailData.unlockCondition}}</view>
+        </view>
+        <view class="dm-section" wx:if="{{detailData.reward}}">
+          <view class="dm-label">奖励</view>
+          <view class="dm-reward">{{detailData.reward}}</view>
+        </view>
+        <view class="dm-section" wx:if="{{detailData.unlockTime}}">
+          <view class="dm-label">解锁时间</view>
+          <view class="dm-desc">{{detailData.unlockTime}}</view>
+        </view>
+        <button class="dm-close" bindtap="closeModal">知道了</button>
+      </view>
+    </view>
+  </view>
+</view>

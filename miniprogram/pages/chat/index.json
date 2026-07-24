@@ -1,0 +1,9 @@
+{
+  "navigationBarTitleText": "穿越聊天",
+  "enablePullDownRefresh": true,
+  "backgroundColor": "#EDEDED",
+  "backgroundTextStyle": "dark",
+  "usingComponents": {
+    "custom-nav-bar": "/components/custom-nav-bar/index"
+  }
+}

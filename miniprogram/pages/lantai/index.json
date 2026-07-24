@@ -1,0 +1,9 @@
+{
+  "navigationBarTitleText": "兰台",
+  "enablePullDownRefresh": true,
+  "backgroundColor": "#f8f6f2",
+  "usingComponents": {
+    "custom-nav-bar": "/components/custom-nav-bar/index",
+    "figure-avatar": "/components/figure-avatar/index"
+  }
+}

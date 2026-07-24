@@ -1,0 +1,165 @@
+<view class="page">
+  <custom-nav-bar title="批奏折" show-back="{{true}}" />
+
+  <view class="container" wx:if="{{!loading && !memorial}}">
+    <view class="chapter-select">
+      <view class="section-title">选择篇章</view>
+      <scroll-view class="chapter-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+        <view
+          class="chapter-item {{activeChapter === ch.key ? 'active' : ''}}"
+          wx:for="{{chapters}}"
+          wx:for-item="ch"
+          wx:key="key"
+          data-key="{{ch.key}}"
+          bindtap="selectChapter"
+        >
+          {{ch.name}}
+        </view>
+      </scroll-view>
+    </view>
+
+    <view class="memorial-list">
+      <view
+        class="memorial-card {{item.unlocked ? '' : 'locked'}}"
+        wx:for="{{memorialList}}"
+        wx:key="_id"
+        data-id="{{item._id}}"
+        bindtap="selectMemorial"
+      >
+        <view class="card-order">{{item.order}}</view>
+        <view class="card-body">
+          <view class="card-title">{{item.title}}</view>
+          <view class="card-sub">
+            <text class="dynasty-tag">{{item.dynastyName}}</text>
+            <text class="submitter">上折人：{{item.submitter}}</text>
+          </view>
+          <view class="card-progress">
+            <block wx:if="{{item.completed}}">
+              <text class="tag done">已批阅 ✓</text>
+              <text class="choice">选择：{{item.userChoice}}</text>
+            </block>
+            <block wx:elif="{{item.unlocked}}">
+              <text class="tag pending">待批阅</text>
+            </block>
+            <block wx:else>
+              <text class="tag lock">🔒 未解锁</text>
+              <text class="lock-hint">完成前置奏折解锁</text>
+            </block>
+          </view>
+        </view>
+        <view class="card-arrow" wx:if="{{item.unlocked}}">›</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="detail-page" wx:if="{{!loading && memorial && !simulating && !simulationResult}}">
+    <view class="scroll-container">
+      <view class="scroll-header">
+        <view class="scroll-nail top-left"></view>
+        <view class="scroll-nail top-right"></view>
+        <view class="memorial-title">{{memorial.title}}</view>
+        <view class="memorial-meta">
+          <text class="chapter">{{memorial.chapter}}</text>
+          <text class="submitter">上折：{{memorial.submitter}}</text>
+        </view>
+      </view>
+
+      <view class="scroll-body">
+        <view class="memorial-content">
+          {{memorial.content}}
+        </view>
+      </view>
+
+      <view class="scroll-footer">
+        <view class="scroll-nail bottom-left"></view>
+        <view class="scroll-nail bottom-right"></view>
+      </view>
+    </view>
+
+    <view class="decide-panel">
+      <view class="decide-title">朱笔决断</view>
+      <view class="options">
+        <view
+          class="opt-card {{selectedOpt === opt.key ? 'selected' : ''}}"
+          wx:for="{{memorial.options}}"
+          wx:for-item="opt"
+          wx:key="key"
+          data-key="{{opt.key}}"
+          bindtap="selectOption"
+        >
+          <view class="opt-key">{{opt.key}}</view>
+          <view class="opt-main">
+            <view class="opt-text">{{opt.text}}</view>
+            <view class="opt-hint" wx:if="{{opt.hint}}">{{opt.hint}}</view>
+          </view>
+          <view class="opt-check" wx:if="{{selectedOpt === opt.key}}">✓</view>
+        </view>
+      </view>
+
+      <view class="zhupi-area">
+        <view class="zhupi-title">朱批（可选，最多30字）</view>
+        <input
+          class="zhupi-input"
+          placeholder="写下你的朱批..."
+          value="{{zhupi}}"
+          bindinput="onZhupiInput"
+          maxlength="30"
+        />
+      </view>
+
+      <button
+        class="btn-decide {{selectedOpt ? 'active' : ''}}"
+        bindtap="onDecide"
+        disabled="{{!selectedOpt || simulating}}"
+      >
+        {{simulating ? '推演中...' : '✍️ 朱批此折'}}
+      </button>
+    </view>
+  </view>
+
+  <view class="simulating" wx:if="{{simulating}}">
+    <view class="sim-hero">
+      <view class="hourglass">⏳</view>
+      <view class="sim-title">历史推演中...</view>
+      <view class="sim-sub">你的选择正在改变历史走向</view>
+    </view>
+  </view>
+
+  <view class="result-page" wx:if="{{!loading && simulationResult}}">
+    <view class="result-hero {{simulationResult.outcome === 'better' ? 'good' : simulationResult.outcome === 'worse' ? 'bad' : 'neutral'}}">
+      <view class="outcome-badge">
+        {{simulationResult.outcome === 'better' ? '✦ 盛世之治' : simulationResult.outcome === 'worse' ? '⚠ 内忧外患' : '— 波澜不惊'}}
+      </view>
+      <view class="outcome-title">你的选择：{{simulationResult.choiceText}}</view>
+      <view class="outcome-hint" wx:if="{{zhupi}}">朱批：「{{zhupi}}」</view>
+    </view>
+
+    <view class="result-cards">
+      <view class="rcard">
+        <view class="rcard-title">📜 真实历史</view>
+        <view class="rcard-content">{{memorial.historicalOutcome}}</view>
+      </view>
+
+      <view class="rcard alternate">
+        <view class="rcard-title">🔮 推演结果 · 三个月后</view>
+        <view class="rcard-content">{{simulationResult.threeMonthsLater}}</view>
+      </view>
+
+      <view class="rcard">
+        <view class="rcard-title">🧠 AI 史评</view>
+        <view class="rcard-content">{{simulationResult.aiComment}}</view>
+      </view>
+    </view>
+
+    <view class="result-actions">
+      <button class="btn-next" bindtap="goNext" wx:if="{{nextMemorialId}}">
+        📋 批阅下一折
+      </button>
+      <button class="btn-list" bindtap="backToList">
+        ← 返回奏折列表
+      </button>
+    </view>
+  </view>
+
+  <loading-skeleton wx:if="{{loading}}" rows="6" />
+</view>

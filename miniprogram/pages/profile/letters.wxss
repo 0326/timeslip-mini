@@ -1,0 +1,175 @@
+.page {
+  min-height: 100vh;
+  background: var(--wechat-bg);
+}
+.container { padding: 32rpx; }
+
+.stats-bar {
+  display: flex;
+  background: var(--wechat-white);
+  border-radius: var(--radius-lg);
+  padding: 32rpx 0;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.03);
+}
+.stat-item {
+  flex: 1;
+  text-align: center;
+  border-right: 1rpx solid var(--wechat-divider);
+}
+.stat-item:last-child { border-right: none; }
+.num {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: var(--ancient-seal);
+  font-family: 'Ma Shan Zheng', serif;
+}
+.label {
+  font-size: 22rpx;
+  color: var(--wechat-text2);
+  margin-top: 6rpx;
+}
+
+.filter-bar {
+  display: flex;
+  overflow-x: auto;
+  white-space: nowrap;
+  margin-bottom: 20rpx;
+}
+.filter-item {
+  display: inline-block;
+  padding: 12rpx 28rpx;
+  background: var(--wechat-white);
+  border-radius: 999rpx;
+  font-size: 26rpx;
+  color: var(--wechat-text2);
+  margin-right: 16rpx;
+}
+.filter-item.active {
+  background: var(--ancient-paper);
+  color: var(--ancient-seal);
+  border: 2rpx solid var(--ancient-gold);
+  font-weight: 500;
+}
+
+.letter-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+.letter-card {
+  background: var(--wechat-white);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.03);
+  overflow: hidden;
+}
+.letter-card.expanded {
+  background: linear-gradient(180deg, var(--wechat-white) 0%, var(--ancient-paper) 100%);
+}
+
+.lc-header {
+  display: flex;
+  align-items: center;
+  padding: 24rpx;
+}
+.lc-meta { margin-left: 20rpx; flex: 1; }
+.lc-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--wechat-text);
+}
+.lc-time {
+  font-size: 22rpx;
+  color: var(--wechat-text2);
+  margin-top: 4rpx;
+}
+.lc-arrow {
+  color: #ccc;
+  font-size: 36rpx;
+  transition: transform 0.2s;
+}
+.letter-card.expanded .lc-arrow {
+  transform: rotate(-180deg);
+}
+
+.lc-body {
+  padding: 0 24rpx 24rpx;
+  border-top: 1rpx solid var(--wechat-divider);
+}
+.lc-section {
+  padding: 20rpx 0;
+}
+.lc-label {
+  font-size: 22rpx;
+  color: var(--wechat-text2);
+  margin-bottom: 12rpx;
+}
+.lc-content {
+  font-size: 28rpx;
+  line-height: 1.8;
+  font-family: 'Noto Serif SC', serif;
+  padding: 16rpx 20rpx;
+  border-radius: var(--radius-sm);
+}
+.my-content {
+  background: rgba(0,0,0,0.03);
+  color: var(--wechat-text);
+}
+.reply-content {
+  background: rgba(201,162,77,0.08);
+  color: var(--ancient-ink);
+}
+.lc-divider {
+  text-align: center;
+  font-size: 22rpx;
+  color: var(--ancient-gold);
+  letter-spacing: 12rpx;
+  font-family: 'Ma Shan Zheng', serif;
+  padding: 8rpx 0;
+}
+.lc-actions {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 20rpx;
+}
+.lc-action {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx 0;
+  font-size: 26rpx;
+  color: var(--wechat-text);
+  background: var(--wechat-bg);
+  border-radius: var(--radius-md);
+}
+
+.empty {
+  padding: 160rpx 32rpx;
+  text-align: center;
+}
+.empty-icon {
+  font-size: 120rpx;
+  opacity: 0.6;
+  margin-bottom: 32rpx;
+}
+.empty-title {
+  font-size: 32rpx;
+  color: var(--wechat-text);
+  font-weight: 500;
+  margin-bottom: 12rpx;
+}
+.empty-sub {
+  font-size: 26rpx;
+  color: var(--wechat-text2);
+  margin-bottom: 48rpx;
+}
+.btn-go {
+  width: 400rpx;
+  margin: 0 auto;
+  height: 80rpx;
+  line-height: 80rpx;
+  background: var(--wechat-green);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-size: 28rpx;
+}

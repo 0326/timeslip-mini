@@ -1,0 +1,9 @@
+{
+  "navigationBarTitleText": "对话",
+  "usingComponents": {
+    "custom-nav-bar": "/components/custom-nav-bar/index",
+    "chat-bubble": "/components/chat-bubble/index",
+    "chat-input-bar": "/components/chat-input-bar/index"
+  },
+  "backgroundColor": "#EDEDED"
+}

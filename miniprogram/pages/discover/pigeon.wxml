@@ -1,0 +1,124 @@
+<view class="page">
+  <custom-nav-bar title="飞鸽传书" show-back="{{true}}" />
+
+  <view class="compose" wx:if="{{!sending && !reply}}">
+    <view class="to-card" bindtap="openFigurePicker">
+      <view class="to-label">致</view>
+      <view class="to-figure" wx:if="{{selectedFigure}}">
+        <figure-avatar figure="{{selectedFigure}}" size="lg" />
+        <view class="to-info">
+          <view class="to-name">{{selectedFigure.figureName}} · {{selectedFigure.figureTitle}}</view>
+          <view class="to-dynasty">{{selectedFigure.dynastyName}}</view>
+        </view>
+      </view>
+      <view class="to-placeholder" wx:else>
+        <text class="ph-text">请选择要写信的历史人物...</text>
+        <text class="ph-arrow">›</text>
+      </view>
+    </view>
+
+    <view class="letter-paper">
+      <view class="paper-header">
+        <view class="paper-seal">封</view>
+      </view>
+      <textarea
+        class="letter-input"
+        placeholder="展信佳...&#10;&#10;请在此写信，最多300字。可以说些什么呢？&#10;· 倾诉你心中的烦恼&#10;· 请教一个历史难题&#10;· 聊聊你的人生志向&#10;· 只是问候一声也好"
+        value="{{letterContent}}"
+        bindinput="onInput"
+        maxlength="300"
+        auto-height="{{true}}"
+        maxlength="{{300}}"
+      />
+      <view class="counter">{{letterContent.length}} / 300</view>
+      <view class="paper-footer">— 穿越朋友圈 · 飞鸽传书 —</view>
+    </view>
+
+    <view class="tips">
+      <text class="tip-icon">🕊️</text>
+      <text class="tip-text">飞鸽将穿越千年时空，为您送达此信</text>
+    </view>
+
+    <view class="actions">
+      <button class="btn-send {{canSend ? 'active' : ''}}" bindtap="onSend" disabled="{{!canSend}}">
+        🕊️ 放飞信鸽
+      </button>
+    </view>
+  </view>
+
+  <view class="flying" wx:if="{{sending}}">
+    <view class="sky">
+      <pigeon-lottie autoplay="{{true}}" />
+      <view class="cloud c1">☁️</view>
+      <view class="cloud c2">☁️</view>
+      <view class="cloud c3">☁️</view>
+    </view>
+    <view class="flying-text">
+      <view class="line1">飞鸽正在穿越时空...</view>
+      <view class="line2">信中所载：{{selectedFigure.figureName}}亲启</view>
+      <view class="dots">
+        <text>.</text><text>.</text><text>.</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="reply-page" wx:if="{{reply && !sending}}">
+    <view class="reply-hero">🕊️ 回信已到</view>
+
+    <view class="reply-paper">
+      <view class="reply-header">
+        <figure-avatar figure="{{selectedFigure}}" size="md" />
+        <view class="reply-meta">
+          <view class="reply-from">{{selectedFigure.figureName}} · {{selectedFigure.figureTitle}}</view>
+          <view class="reply-time">{{reply.replyTime}}</view>
+        </view>
+      </view>
+
+      <view class="my-letter">
+        <view class="my-label">你的去信：</view>
+        <view class="my-content">{{letterContent}}</view>
+      </view>
+
+      <view class="divider">— 回 —</view>
+
+      <view class="reply-content">
+        <text wx:for="{{reply.displayContent}}" wx:key="index">{{item}}</text>
+      </view>
+
+      <view class="seal-area">
+        <view class="seal">{{selectedFigure.figureName}}</view>
+      </view>
+    </view>
+
+    <view class="reply-actions">
+      <button class="btn-save" bindtap="saveLetter">💾 保存至信鸽驿站</button>
+      <button class="btn-write" bindtap="writeAgain">✍️ 再写一封</button>
+      <button class="btn-chat" bindtap="goChat">💬 找{{selectedFigure.figureName}}聊天</button>
+    </view>
+  </view>
+
+  <view class="picker-mask" wx:if="{{showPicker}}" bindtap="closeFigurePicker">
+    <view class="picker-sheet" catchtap="stopProp">
+      <view class="picker-header">
+        <text>选择收信人</text>
+        <text class="close-btn" bindtap="closeFigurePicker">×</text>
+      </view>
+      <scroll-view class="picker-list" scroll-y>
+        <view
+          class="picker-item {{selectedFigure && selectedFigure.figureId === item.figureId ? 'active' : ''}}"
+          wx:for="{{figureList}}"
+          wx:key="figureId"
+          data-item="{{item}}"
+          bindtap="selectFigure"
+        >
+          <figure-avatar figure="{{item}}" size="sm" />
+          <view class="picker-info">
+            <view class="picker-name">{{item.figureName}} · {{item.figureTitle}}</view>
+            <view class="picker-dynasty">{{item.dynastyName}}</view>
+          </view>
+          <view class="picker-check" wx:if="{{selectedFigure && selectedFigure.figureId === item.figureId}}">✓</view>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
+</view>

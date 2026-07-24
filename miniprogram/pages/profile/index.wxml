@@ -1,0 +1,98 @@
+<custom-nav-bar
+  title="我的"
+  subTitle="穿越中心"
+  showBack="{{false}}"
+  bgColor="transparent"
+  translucent
+></custom-nav-bar>
+
+<view class="profile-page">
+  <view class="profile-hero ancient-paper">
+    <view class="hero-inner">
+      <view class="user-avatar-row" bindtap="onEditAvatar">
+        <view class="avatar-big">
+          <figure-avatar
+            figure="{{userInfo}}"
+            size="140"
+            round="{{true}}"
+            defaultIcon="👤"
+          ></figure-avatar>
+          <view class="avatar-edit">✏️</view>
+        </view>
+        <view class="user-meta">
+          <view class="user-name-row">
+            <text class="u-name">{{userInfo.nickName || '穿越客'}}</text>
+            <text wx:if="{{userInfo.ancientName}}" class="u-ancient">「{{userInfo.ancientName}}」</text>
+          </view>
+          <view class="user-id-row">
+            <text class="u-crossno">穿越编号：{{userInfo.crossNo || '--'}}</text>
+            <view class="seal" wx:if="{{userInfo.memberLevel}}">{{userInfo.memberLevel || '布衣'}}</view>
+          </view>
+          <view class="u-points">
+            <text class="p-icon">✨</text>
+            <text class="p-text">{{userInfo.points || 0}} 穿越积分</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="stats-grid">
+        <view wx:for="{{stats}}" wx:key="key" class="stat-card">
+          <text class="s-icon">{{item.icon}}</text>
+          <text class="s-num">{{item.num}}</text>
+          <text class="s-label">{{item.label}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="section-title">
+    <text class="st-line"></text>
+    <text class="st-text">穿越成就</text>
+    <text class="st-line"></text>
+  </view>
+
+  <view class="achv-row">
+    <view
+      wx:for="{{achievements}}"
+      wx:key="id"
+      class="achv-card {{!item.unlocked ? 'is-locked' : ''}}"
+    >
+      <text class="a-icon">{{item.unlocked ? item.icon : '🔒'}}</text>
+      <text class="a-name">{{item.name}}</text>
+      <text class="a-desc">{{item.desc}}</text>
+    </view>
+  </view>
+
+  <view class="section-title">
+    <text class="st-line"></text>
+    <text class="st-text">功能菜单</text>
+    <text class="st-line"></text>
+  </view>
+
+  <view class="menu-group card">
+    <view
+      wx:for="{{menus}}"
+      wx:key="key"
+      class="menu-item"
+      data-url="{{item.url}}"
+      data-istab="{{item.isTab}}"
+      bindtap="onMenuTap"
+      hover-class="menu-hover"
+    >
+      <text class="m-icon">{{item.icon}}</text>
+      <view class="m-text">
+        <text class="m-name">{{item.name}}</text>
+        <text class="m-desc">{{item.desc}}</text>
+      </view>
+      <text class="m-arrow">{{item.right}}</text>
+    </view>
+  </view>
+
+  <view class="about-row">
+    <text class="a-title">穿越圈 v1.0.0</text>
+    <text class="a-sub">「以史为镜，可以知兴替」</text>
+    <text class="a-site" bindtap="onShare">分享小程序 ›</text>
+  </view>
+
+  <view class="bottom-pad"></view>
+</view>

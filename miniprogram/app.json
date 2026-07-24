@@ -1,21 +1,50 @@
 {
   "pages": [
-    "pages/index/index"
+    "pages/chat/index",
+    "pages/chat/room",
+    "pages/lantai/index",
+    "pages/lantai/figure-detail",
+    "pages/lantai/book-reader",
+    "pages/discover/index",
+    "pages/discover/moment-detail",
+    "pages/discover/dna-test",
+    "pages/discover/pigeon",
+    "pages/discover/memorial",
+    "pages/profile/index",
+    "pages/profile/letters",
+    "pages/profile/achievements",
+    "pages/profile/settings"
   ],
-  "window": {
-    "backgroundColor": "#f8f6f2",
-    "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#ffffff",
-    "navigationBarTitleText": "穿越圈",
-    "navigationBarTextStyle": "black"
+  "tabBar": {
+    "custom": true,
+    "color": "#8E8E93",
+    "selectedColor": "#07C160",
+    "backgroundColor": "#FFFFFF",
+    "list": [
+      { "pagePath": "pages/chat/index", "text": "聊天" },
+      { "pagePath": "pages/lantai/index", "text": "兰台" },
+      { "pagePath": "pages/discover/index", "text": "发现" },
+      { "pagePath": "pages/profile/index", "text": "我的" }
+    ]
   },
+  "window": {
+    "navigationStyle": "custom",
+    "backgroundColor": "#EDEDED",
+    "backgroundTextStyle": "dark"
+  },
+  "requiredBackgroundModes": ["audio"],
+  "lazyCodeLoading": "requiredComponents",
   "sitemapLocation": "sitemap.json",
   "style": "v2",
-  "lazyCodeLoading": "requiredComponents",
   "networkTimeout": {
     "request": 30000,
     "connectSocket": 60000,
     "uploadFile": 60000,
     "downloadFile": 60000
+  },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于定位相关功能"
+    }
   }
 }

@@ -1,0 +1,125 @@
+<custom-nav-bar
+  title="{{figure.name}}"
+  subTitle="{{figure.title}}"
+  bgColor="transparent"
+  translucent
+></custom-nav-bar>
+
+<view wx:if="{{loading}}" class="loading-wrap">
+  <view class="spinner"></view>
+  <text class="loading-text">加载中...</text>
+</view>
+
+<view wx:else class="figure-detail ancient-paper">
+  <view class="detail-hero">
+    <view class="hero-bg"></view>
+    <view class="hero-inner">
+      <view class="hero-avatar">
+        <figure-avatar figure="{{figure}}" size="180" round="{{false}}"></figure-avatar>
+      </view>
+      <view class="hero-meta">
+        <view class="h-name-row">
+          <text class="h-name">{{figure.name}}</text>
+          <view class="seal" wx:if="{{figure.title}}">{{figure.title}}</view>
+        </view>
+        <view class="h-tags">
+          <text wx:if="{{dynastyInfo}}" class="h-tag" style="background:{{dynastyInfo.color}}22;color:{{dynastyInfo.color}};">{{dynastyInfo.name}}</text>
+          <text wx:if="{{figure.era}}" class="h-tag h-tag-plain">{{figure.era}}</text>
+        </view>
+        <view class="h-lifespan" wx:if="{{figure.birth || figure.death}}">
+          {{figure.birth || '?'}} — {{figure.death || '?'}}
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="action-bar">
+    <view class="a-btn a-primary" bindtap="startChat">
+      <text class="a-btn-icon">💬</text>
+      <text class="a-btn-text">开始聊天</text>
+    </view>
+    <view class="a-btn a-ancient" bindtap="sendLetter">
+      <text class="a-btn-icon">🕊️</text>
+      <text class="a-btn-text">飞鸽传书</text>
+    </view>
+  </view>
+
+  <view class="sub-tabs">
+    <view class="st {{tab === 'bio' ? 'is-active' : ''}}" data-tab="bio" bindtap="switchTab">生平简介</view>
+    <view class="st {{tab === 'works' ? 'is-active' : ''}}" data-tab="works" bindtap="switchTab">著作名言</view>
+    <view class="st {{tab === 'related' ? 'is-active' : ''}}" data-tab="related" bindtap="switchTab">关联阅读</view>
+  </view>
+
+  <view class="tab-body">
+    <block wx:if="{{tab === 'bio'}}">
+      <view class="section-card">
+        <view class="card-title">人物生平</view>
+        <text class="card-text">{{figure.bio}}</text>
+      </view>
+    </block>
+
+    <block wx:elif="{{tab === 'works'}}">
+      <view wx:if="{{figure.masterpieces && figure.masterpieces.length}}" class="section-card">
+        <view class="card-title">主要著作</view>
+        <view
+          wx:for="{{figure.masterpieces}}"
+          wx:key="*this"
+          class="work-item"
+        >📖 {{item}}</view>
+      </view>
+
+      <view wx:if="{{figure.famousQuotes && figure.famousQuotes.length}}" class="section-card ancient-paper">
+        <view class="card-title">千古名言</view>
+        <view
+          wx:for="{{figure.famousQuotes}}"
+          wx:key="*this"
+          class="quote-item"
+        >
+          <text class="quote-mark">「</text>
+          <text class="quote-text">{{item}}</text>
+          <text class="quote-mark">」</text>
+        </view>
+      </view>
+    </block>
+
+    <block wx:else>
+      <view wx:if="{{figure.relatedBooks && figure.relatedBooks.length}}" class="section-card">
+        <view class="card-title">相关典籍</view>
+        <view
+          wx:for="{{figure.relatedBooks}}"
+          wx:key="id"
+          class="rel-item"
+          data-id="{{item.id}}"
+          bindtap="goBookReader"
+        >
+          <view class="rel-cover">{{item.title}}</view>
+          <view class="rel-meta">
+            <text class="rel-title">{{item.title}}</text>
+            <text class="rel-ch">{{item.chapter}}</text>
+          </view>
+          <text class="rel-arrow">›</text>
+        </view>
+      </view>
+
+      <view wx:if="{{figure.relatedMoments && figure.relatedMoments.length}}" class="section-card">
+        <view class="card-title">历史瞬间</view>
+        <view
+          wx:for="{{figure.relatedMoments}}"
+          wx:key="_id"
+          class="rel-m-item"
+          data-id="{{item._id}}"
+          bindtap="goMoment"
+        >
+          <view class="rm-head">
+            <text class="rm-title">{{item.title}}</text>
+            <text class="rm-time">{{item.time}}</text>
+          </view>
+          <text class="rm-desc">{{item.desc}}</text>
+          <text class="rm-who">— 关联：{{item.figureName}}</text>
+        </view>
+      </view>
+    </block>
+  </view>
+
+  <view class="bottom-pad"></view>
+</view>

@@ -1,0 +1,11 @@
+{
+  "navigationBarTitleText": "发现",
+  "enablePullDownRefresh": true,
+  "onReachBottomDistance": 100,
+  "backgroundColor": "#EDEDED",
+  "usingComponents": {
+    "custom-nav-bar": "/components/custom-nav-bar/index",
+    "moment-card": "/components/moment-card/index",
+    "figure-avatar": "/components/figure-avatar/index"
+  }
+}

@@ -1,0 +1,139 @@
+<custom-nav-bar
+  title="兰台"
+  subTitle="24史 · 人物图鉴"
+  showBack="{{false}}"
+  bgColor="#f8f6f2"
+></custom-nav-bar>
+
+<view class="lantai-page ancient-paper">
+  <view class="top-search">
+    <view class="search-box">
+      <text class="s-icon">🔍</text>
+      <input
+        class="s-input"
+        placeholder="搜索人物/典籍..."
+        placeholder-style="color:#aaa"
+        value="{{searchText}}"
+        bindinput="onSearchInput"
+      />
+    </view>
+  </view>
+
+  <view class="tabs">
+    <view
+      class="tab-item {{tab === 'figures' ? 'is-active' : ''}}"
+      data-tab="figures"
+      bindtap="switchTab"
+    >人物图鉴</view>
+    <view
+      class="tab-item {{tab === 'books' ? 'is-active' : ''}}"
+      data-tab="books"
+      bindtap="switchTab"
+    >二十四史</view>
+  </view>
+
+  <block wx:if="{{tab === 'figures'}}">
+    <scroll-view class="filter-bar" scroll-x enhanced show-scrollbar="{{false}}">
+      <view
+        wx:for="{{dynastyFilters}}"
+        wx:key="key"
+        class="filter-item {{currentDynasty === item.key ? 'is-active' : ''}}"
+        data-key="{{item.key}}"
+        bindtap="selectDynasty"
+      >{{item.name}}</view>
+    </scroll-view>
+
+    <view wx:if="{{loading}}" class="loading-wrap">
+      <text class="loading-text">加载人物中...</text>
+    </view>
+
+    <view wx:elif="{{filteredFigures.length === 0}}" class="empty">
+      <text class="e-icon">🔍</text>
+      <text class="e-text">未找到相关人物</text>
+    </view>
+
+    <view wx:else class="waterfall-wrap">
+      <view class="wf-col">
+        <view
+          wx:for="{{waterfallLeft}}"
+          wx:key="_id"
+          class="wf-card {{!item.unlocked ? 'is-locked' : ''}}"
+          data-id="{{item._id}}"
+          bindtap="onFigureTap"
+        >
+          <view class="wf-avatar">
+            <figure-avatar figure="{{item}}" size="88"></figure-avatar>
+          </view>
+          <view class="wf-body">
+            <view class="wf-name">
+              <text class="n">{{item.name}}</text>
+              <text wx:if="{{item.dynastyInfo}}" class="tag" style="background:{{item.dynastyInfo.color}}22;color:{{item.dynastyInfo.color}};">{{item.dynastyInfo.name}}</text>
+            </view>
+            <text wx:if="{{item.title}}" class="wf-title">{{item.title}}</text>
+            <text class="wf-bio">{{item.bio}}</text>
+            <view class="wf-footer">
+              <view wx:if="{{item.unlocked}}" class="wf-btn" catchtap="openChat" data-id="{{item._id}}">聊天</view>
+              <view wx:else class="wf-btn wf-btn-lock">🔒 解锁</view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="wf-col">
+        <view
+          wx:for="{{waterfallRight}}"
+          wx:key="_id"
+          class="wf-card {{!item.unlocked ? 'is-locked' : ''}}"
+          data-id="{{item._id}}"
+          bindtap="onFigureTap"
+        >
+          <view class="wf-avatar">
+            <figure-avatar figure="{{item}}" size="88"></figure-avatar>
+          </view>
+          <view class="wf-body">
+            <view class="wf-name">
+              <text class="n">{{item.name}}</text>
+              <text wx:if="{{item.dynastyInfo}}" class="tag" style="background:{{item.dynastyInfo.color}}22;color:{{item.dynastyInfo.color}};">{{item.dynastyInfo.name}}</text>
+            </view>
+            <text wx:if="{{item.title}}" class="wf-title">{{item.title}}</text>
+            <text class="wf-bio">{{item.bio}}</text>
+            <view class="wf-footer">
+              <view wx:if="{{item.unlocked}}" class="wf-btn" catchtap="openChat" data-id="{{item._id}}">聊天</view>
+              <view wx:else class="wf-btn wf-btn-lock">🔒 解锁</view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <block wx:else>
+    <view class="books-list">
+      <view
+        wx:for="{{books}}"
+        wx:key="id"
+        class="book-item"
+        data-id="{{item.id}}"
+        bindtap="onBookTap"
+        hover-class="book-hover"
+      >
+        <view class="book-cover">
+          <text class="cover-title">{{item.title}}</text>
+          <text class="cover-author">{{item.author}}</text>
+        </view>
+        <view class="book-info">
+          <view class="book-top">
+            <text class="book-title">{{item.title}}</text>
+            <text class="book-chap">{{item.chapters}}篇</text>
+          </view>
+          <text class="book-desc">{{item.desc}}</text>
+          <view class="book-foot">
+            <text class="book-cta">进入阅读 ›</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <view class="bottom-safe"></view>
+</view>

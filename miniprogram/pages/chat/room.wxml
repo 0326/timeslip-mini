@@ -1,0 +1,89 @@
+<custom-nav-bar
+  title="{{figureName}}"
+  subTitle="{{figureTitle}}"
+  bgColor="#fff"
+  bind:back="onBack"
+>
+</custom-nav-bar>
+
+<view class="room-page">
+  <scroll-view
+    class="msg-scroll"
+    scroll-y
+    scroll-into-view="{{scrollTo}}"
+    scroll-with-animation
+    enhanced
+    show-scrollbar="{{false}}"
+    style="padding-bottom: {{safeBottom + 140}}rpx;"
+  >
+    <view class="messages-wrap">
+      <view wx:if="{{messages.length === 0}}" class="empty-tip">
+        <text class="empty-tip-text">开始与{{figureName}}的穿越对话吧...</text>
+      </view>
+
+      <view
+        wx:for="{{messages}}"
+        wx:key="_id"
+        id="msg-{{item._id}}"
+        class="msg-row {{item.role === 'user' ? 'is-right' : 'is-left'}}"
+      >
+        <block wx:if="{{item.role !== 'user'}}">
+          <image class="avatar" src="{{avatar}}" mode="aspectFill"></image>
+        </block>
+        <view class="bubble-wrap">
+          <view class="bubble {{item.role === 'user' ? 'bubble-user' : 'bubble-figure'}}">
+            <text class="bubble-text" user-select="{{true}}">{{item.content}}</text>
+            <text wx:if="{{aiTyping && index === messages.length - 1 && item.role === 'figure' && item.content.length > 0}}" class="typing-cursor">▊</text>
+          </view>
+        </view>
+        <block wx:if="{{item.role === 'user'}}">
+          <view class="avatar avatar-user">我</view>
+        </block>
+      </view>
+
+      <view wx:if="{{aiTyping && messages.length && messages[messages.length - 1].role !== 'figure'}}" class="msg-row is-left">
+        <image class="avatar" src="{{avatar}}" mode="aspectFill"></image>
+        <view class="bubble-wrap">
+          <view class="bubble bubble-figure bubble-typing">
+            <text class="typing-dots"><text class="d">●</text><text class="d">●</text><text class="d">●</text></text>
+          </view>
+        </view>
+      </view>
+
+      <view class="msg-bottom-sentry"></view>
+    </view>
+  </scroll-view>
+
+  <view class="quick-bar">
+    <scroll-view scroll-x class="quick-scroll" show-scrollbar="{{false}}" enhanced>
+      <view
+        wx:for="{{['太史公认为写史最重要的是什么？','您最敬佩的人物是谁？','谈谈鸿门宴的看法？']}}"
+        wx:key="*this"
+        class="quick-item"
+        data-item="{{item}}"
+        bindtap="onQuickReply"
+      >{{item}}</view>
+    </scroll-view>
+  </view>
+
+  <view class="input-bar-wrap" style="padding-bottom: {{safeBottom + 12}}rpx;">
+    <view class="input-bar">
+      <input
+        class="msg-input"
+        placeholder="请输入你想说的话..."
+        placeholder-style="color:#b2b2b2"
+        value="{{inputText}}"
+        bindinput="onInput"
+        bindconfirm="onSend"
+        confirm-type="send"
+        cursor-spacing="20"
+        adjust-position
+      />
+      <button
+        class="send-btn {{inputText ? 'is-active' : ''}}"
+        bindtap="onSend"
+        disabled="{{!inputText || sending}}"
+      >发送</button>
+    </view>
+  </view>
+</view>

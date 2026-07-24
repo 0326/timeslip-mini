@@ -1,0 +1,328 @@
+.profile-page {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+.profile-hero {
+  position: relative;
+  padding: 40rpx 32rpx 32rpx;
+  background:
+    radial-gradient(ellipse at top, rgba(201, 162, 77, 0.12) 0%, transparent 70%),
+    linear-gradient(180deg, #F5ECDB 0%, #F9F4EA 60%, #f5f5f5 100%);
+  border-bottom-left-radius: 32rpx;
+  border-bottom-right-radius: 32rpx;
+  margin-bottom: 32rpx;
+}
+
+.hero-inner {
+  position: relative;
+  z-index: 2;
+}
+
+.user-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  margin-bottom: 28rpx;
+}
+
+.avatar-big {
+  position: relative;
+  width: 140rpx;
+  height: 140rpx;
+  flex-shrink: 0;
+}
+
+.avatar-edit {
+  position: absolute;
+  right: -4rpx;
+  bottom: -4rpx;
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+.user-meta {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.user-name-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 10rpx;
+  gap: 10rpx;
+}
+
+.u-name {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: var(--ancient-ink);
+  font-family: 'Noto Serif SC', serif;
+}
+
+.u-ancient {
+  font-size: 24rpx;
+  color: var(--ancient-gold);
+  font-family: 'Ma Shan Zheng', serif;
+  background: rgba(201, 162, 77, 0.12);
+  padding: 4rpx 14rpx;
+  border-radius: 999rpx;
+}
+
+.user-id-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 10rpx;
+}
+
+.u-crossno {
+  font-size: 22rpx;
+  color: #998877;
+  letter-spacing: 1rpx;
+}
+
+.u-points {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-top: 6rpx;
+}
+
+.p-icon {
+  font-size: 24rpx;
+}
+
+.p-text {
+  font-size: 24rpx;
+  color: var(--ancient-gold);
+  font-weight: 600;
+}
+
+.stats-grid {
+  display: flex;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 20rpx;
+  padding: 20rpx 0;
+  backdrop-filter: blur(8rpx);
+  border: 1rpx solid rgba(201, 162, 77, 0.15);
+}
+
+.stat-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rpx;
+  position: relative;
+}
+
+.stat-card::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 20%;
+  height: 60%;
+  width: 1rpx;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.stat-card:last-child::after {
+  display: none;
+}
+
+.s-icon {
+  font-size: 36rpx;
+  margin-bottom: 4rpx;
+}
+
+.s-num {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: var(--ancient-ink);
+}
+
+.s-label {
+  font-size: 22rpx;
+  color: #888;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 32rpx 20rpx;
+  gap: 16rpx;
+}
+
+.st-line {
+  flex: 1;
+  height: 1rpx;
+  background: linear-gradient(90deg, transparent, rgba(201, 162, 77, 0.4), transparent);
+  max-width: 160rpx;
+}
+
+.st-text {
+  font-size: 26rpx;
+  color: var(--ancient-wood);
+  font-weight: 600;
+  font-family: 'Noto Serif SC', serif;
+  letter-spacing: 4rpx;
+}
+
+.achv-row {
+  display: flex;
+  gap: 16rpx;
+  padding: 0 24rpx 32rpx;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.achv-card {
+  flex-shrink: 0;
+  width: 200rpx;
+  padding: 24rpx 16rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  border: 1rpx solid rgba(201, 162, 77, 0.15);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.03);
+}
+
+.achv-card.is-locked {
+  filter: grayscale(0.8);
+  opacity: 0.7;
+}
+
+.a-icon {
+  font-size: 56rpx;
+  margin-bottom: 6rpx;
+}
+
+.a-name {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--ancient-ink);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.a-desc {
+  font-size: 20rpx;
+  color: #888;
+  line-height: 1.4;
+  text-align: center;
+  white-space: normal;
+  width: 100%;
+  max-width: 100%;
+}
+
+.menu-group {
+  margin: 0 24rpx 32rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.03);
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 28rpx 24rpx;
+  position: relative;
+  transition: background 0.15s;
+}
+
+.menu-hover {
+  background: #fafafa;
+}
+
+.menu-item::after {
+  content: '';
+  position: absolute;
+  left: 80rpx;
+  right: 24rpx;
+  bottom: 0;
+  height: 1rpx;
+  background: #f5f5f5;
+}
+
+.menu-item:last-child::after {
+  display: none;
+}
+
+.m-icon {
+  font-size: 40rpx;
+  width: 56rpx;
+  margin-right: 16rpx;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.m-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.m-name {
+  font-size: 30rpx;
+  color: #191919;
+  font-weight: 500;
+}
+
+.m-desc {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.m-arrow {
+  font-size: 32rpx;
+  color: #ccc;
+  margin-left: 8rpx;
+}
+
+.about-row {
+  padding: 32rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.a-title {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.a-sub {
+  font-size: 24rpx;
+  color: var(--ancient-gold);
+  font-family: 'Ma Shan Zheng', serif;
+  letter-spacing: 2rpx;
+}
+
+.a-site {
+  font-size: 22rpx;
+  color: var(--wechat-green);
+  margin-top: 8rpx;
+}
+
+.bottom-pad {
+  height: calc(120rpx + env(safe-area-inset-bottom));
+}

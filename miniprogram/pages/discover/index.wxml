@@ -1,0 +1,120 @@
+<custom-nav-bar
+  title="穿越朋友圈"
+  subTitle="与古人共享历史瞬间"
+  showBack="{{false}}"
+  bgColor="#fff"
+></custom-nav-bar>
+
+<view class="discover-page">
+  <view class="quick-grid">
+    <view
+      wx:for="{{quickEntries}}"
+      wx:key="key"
+      class="quick-card"
+      data-url="{{item.url}}"
+      bindtap="openQuick"
+    >
+      <view class="quick-icon-wrap" style="background:{{item.color}};">
+        <text class="q-icon">{{item.icon}}</text>
+      </view>
+      <view class="q-body">
+        <text class="q-name">{{item.name}}</text>
+        <text class="q-desc">{{item.desc}}</text>
+      </view>
+      <text class="q-arrow">›</text>
+    </view>
+  </view>
+
+  <view class="sub-tabs">
+    <view class="sub-tab {{subTab === 'moments' ? 'is-active' : ''}}" data-tab="moments" bindtap="switchSub">📸 朋友圈</view>
+    <view class="sub-tab {{subTab === 'hot' ? 'is-active' : ''}}" data-tab="hot" bindtap="switchSub">🔥 热门</view>
+  </view>
+
+  <scroll-view scroll-x class="dynasty-bar" enhanced show-scrollbar="{{false}}">
+    <view
+      wx:for="{{dynastyFilters}}"
+      wx:key="key"
+      class="dy-item {{currentDynasty === item.key ? 'is-active' : ''}}"
+      data-key="{{item.key}}"
+      bindtap="selectDynasty"
+    >
+      <text class="dy-text">{{item.name}}</text>
+    </view>
+  </scroll-view>
+
+  <view class="moments-list-wrap">
+    <view wx:if="{{refreshing}}" class="refreshing-tip">刷新中...</view>
+
+    <view wx:if="{{!loading && moments.length === 0}}" class="empty-moments">
+      <text class="em-icon">📭</text>
+      <text class="em-text">暂无历史朋友圈</text>
+      <text class="em-sub">下拉刷新查看更多内容</text>
+    </view>
+
+    <view
+      wx:for="{{moments}}"
+      wx:key="_id"
+      class="moment-block"
+    >
+      <view class="m-header" data-id="{{item._id}}" bindtap="openMomentDetail">
+        <figure-avatar figure="{{item}}" size="88" round="{{true}}"></figure-avatar>
+        <view class="mh-info">
+          <view class="mh-name-row">
+            <text class="mh-name">{{item.figureName}}</text>
+            <text wx:if="{{item.figureTitle}}" class="mh-title">· {{item.figureTitle}}</text>
+          </view>
+          <view class="mh-meta">
+            <text class="mh-time">{{item.displayTime}}</text>
+            <text wx:if="{{item.dynastyInfo}}" class="mh-dy" style="background:{{item.dynastyInfo.color}}15;color:{{item.dynastyInfo.color}};">{{item.dynastyInfo.name}}</text>
+            <text wx:if="{{item.historicalEvent}}" class="mh-event">· {{item.historicalEvent}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="m-content" data-id="{{item._id}}" bindtap="openMomentDetail">
+        <text class="mc-text">{{item.content}}</text>
+      </view>
+
+      <view class="m-stats">
+        <view class="stat-item" data-id="{{item._id}}" catchtap="onLike">
+          <text class="stat-icon">{{item._liked ? '❤️' : '🤍'}}</text>
+          <text class="stat-num">{{item.likeText}}</text>
+        </view>
+        <view class="stat-item" data-id="{{item._id}}" catchtap="openCommentInput">
+          <text class="stat-icon">💬</text>
+          <text class="stat-num">{{item.commentCount || 0}}</text>
+        </view>
+        <view class="stat-item" data-id="{{item._id}}" catchtap="openMomentDetail">
+          <text class="stat-icon">🔍</text>
+          <text class="stat-num">详情</text>
+        </view>
+      </view>
+
+      <view wx:if="{{item.likes && item.likes.length}}" class="m-likes">
+        <text class="like-icon-row">
+          <text wx:for="{{item.likes}}" wx:for-item="l" wx:key="openid" class="like-name">{{l.name}}</text>
+        </text>
+      </view>
+
+      <view wx:if="{{item.comments && item.comments.length}}" class="m-comments">
+        <view
+          wx:for="{{item.comments}}"
+          wx:for-item="c"
+          wx:key="openid"
+          class="cm-item"
+        >
+          <text class="cm-name">{{c.name}}：</text>
+          <text class="cm-content">{{c.content}}</text>
+        </view>
+        <view wx:if="{{item.commentCount > item.comments.length}}" class="cm-more" data-id="{{item._id}}" bindtap="openMomentDetail">
+          查看全部{{item.commentCount}}条评论 ›
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{loading}}" class="load-more">加载中...</view>
+    <view wx:elif="{{!hasMore && moments.length}}" class="load-more is-end">— 没有更多了 —</view>
+  </view>
+
+  <view class="bottom-pad"></view>
+</view>

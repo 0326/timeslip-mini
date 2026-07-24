@@ -1,0 +1,369 @@
+.page {
+  min-height: 100vh;
+  background: var(--wechat-bg);
+}
+
+.container {
+  padding: 32rpx;
+}
+
+.section-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--ancient-ink);
+  margin-bottom: 20rpx;
+  padding-left: 14rpx;
+  border-left: 6rpx solid var(--ancient-gold);
+}
+
+.chapter-scroll {
+  white-space: nowrap;
+  margin-bottom: 32rpx;
+}
+.chapter-item {
+  display: inline-block;
+  padding: 16rpx 32rpx;
+  background: var(--wechat-white);
+  border-radius: 999rpx;
+  margin-right: 16rpx;
+  font-size: 26rpx;
+  color: var(--wechat-text2);
+  border: 2rpx solid transparent;
+}
+.chapter-item.active {
+  background: var(--ancient-paper);
+  color: var(--ancient-seal);
+  border-color: var(--ancient-gold);
+  font-weight: 600;
+}
+
+.memorial-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+.memorial-card {
+  display: flex;
+  align-items: center;
+  padding: 24rpx;
+  background: var(--wechat-white);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.03);
+}
+.memorial-card.locked {
+  opacity: 0.6;
+}
+.card-order {
+  width: 64rpx;
+  height: 64rpx;
+  line-height: 64rpx;
+  text-align: center;
+  background: var(--ancient-paper);
+  color: var(--ancient-gold);
+  font-family: 'Ma Shan Zheng', serif;
+  font-size: 28rpx;
+  border-radius: var(--radius-sm);
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+.card-body {
+  flex: 1;
+  min-width: 0;
+}
+.card-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--wechat-text);
+  margin-bottom: 8rpx;
+}
+.card-sub {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 12rpx;
+  font-size: 22rpx;
+  color: var(--wechat-text2);
+}
+.dynasty-tag {
+  background: rgba(7,193,96,0.1);
+  color: var(--wechat-green);
+  padding: 4rpx 12rpx;
+  border-radius: var(--radius-sm);
+}
+.card-progress {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+.tag {
+  font-size: 22rpx;
+  padding: 4rpx 14rpx;
+  border-radius: 999rpx;
+}
+.tag.done { background: rgba(7,193,96,0.12); color: var(--wechat-green); }
+.tag.pending { background: rgba(201,162,77,0.15); color: var(--ancient-gold); }
+.tag.lock { background: rgba(0,0,0,0.06); color: #999; }
+.choice { font-size: 22rpx; color: var(--wechat-text2); }
+.lock-hint { font-size: 22rpx; color: #aaa; }
+.card-arrow { color: #ccc; font-size: 36rpx; margin-left: 12rpx; }
+
+.detail-page {
+  padding-bottom: 40rpx;
+}
+
+.scroll-container {
+  margin: 32rpx;
+  background: #F5ECD7;
+  border-radius: 8rpx;
+  box-shadow: 0 12rpx 40rpx rgba(0,0,0,0.1), inset 0 0 60rpx rgba(201,162,77,0.2);
+  position: relative;
+  overflow: hidden;
+}
+.scroll-header, .scroll-footer {
+  padding: 32rpx;
+  background: linear-gradient(90deg, #D4B896 0%, #E8D5B0 50%, #D4B896 100%);
+}
+.scroll-nail {
+  position: absolute;
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #8B4513, #5C3317);
+  box-shadow: 0 2rpx 6rpx rgba(0,0,0,0.3);
+}
+.top-left { top: 20rpx; left: 20rpx; }
+.top-right { top: 20rpx; right: 20rpx; }
+.bottom-left { bottom: 20rpx; left: 20rpx; position: relative; }
+.bottom-right { bottom: 20rpx; right: 20rpx; position: relative; }
+
+.memorial-title {
+  text-align: center;
+  font-family: 'Ma Shan Zheng', serif;
+  font-size: 44rpx;
+  color: var(--ancient-ink);
+  margin: 24rpx 0 16rpx;
+}
+.memorial-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 24rpx;
+  color: #8B6F47;
+  padding: 0 16rpx;
+}
+.scroll-body {
+  padding: 40rpx 48rpx;
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent 59rpx,
+    rgba(139,111,71,0.15) 59rpx,
+    rgba(139,111,71,0.15) 60rpx
+  );
+}
+.memorial-content {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 32rpx;
+  line-height: 60rpx;
+  color: #3D2B1F;
+  text-indent: 2em;
+  white-space: pre-wrap;
+}
+
+.decide-panel {
+  margin: 0 32rpx;
+  background: var(--wechat-white);
+  border-radius: var(--radius-lg);
+  padding: 32rpx;
+}
+.decide-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: var(--ancient-ink);
+  margin-bottom: 24rpx;
+  text-align: center;
+  font-family: 'Ma Shan Zheng', serif;
+}
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+.opt-card {
+  display: flex;
+  align-items: flex-start;
+  padding: 24rpx;
+  background: #fafafa;
+  border: 2rpx solid transparent;
+  border-radius: var(--radius-md);
+}
+.opt-card.selected {
+  background: #FFF9F0;
+  border-color: var(--ancient-seal);
+}
+.opt-key {
+  width: 48rpx;
+  height: 48rpx;
+  line-height: 48rpx;
+  text-align: center;
+  background: var(--wechat-bg);
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 26rpx;
+  color: var(--wechat-text2);
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+.opt-card.selected .opt-key {
+  background: var(--ancient-seal);
+  color: #fff;
+}
+.opt-main { flex: 1; }
+.opt-text {
+  font-size: 28rpx;
+  color: var(--wechat-text);
+  line-height: 1.5;
+  font-weight: 500;
+}
+.opt-hint {
+  font-size: 22rpx;
+  color: var(--wechat-text2);
+  margin-top: 8rpx;
+  line-height: 1.4;
+}
+.opt-check {
+  color: var(--ancient-seal);
+  font-size: 32rpx;
+  font-weight: 700;
+  margin-left: 12rpx;
+}
+
+.zhupi-area {
+  background: rgba(250, 245, 230, 0.6);
+  border: 2rpx dashed var(--ancient-gold);
+  border-radius: var(--radius-md);
+  padding: 20rpx;
+  margin-bottom: 24rpx;
+}
+.zhupi-title {
+  font-size: 24rpx;
+  color: var(--ancient-gold);
+  margin-bottom: 12rpx;
+  font-family: 'Ma Shan Zheng', serif;
+}
+.zhupi-input {
+  font-size: 28rpx;
+  color: var(--ancient-seal);
+  font-family: 'Noto Serif SC', serif;
+}
+
+.btn-decide {
+  width: 100%;
+  height: 96rpx;
+  line-height: 96rpx;
+  background: var(--wechat-divider);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-size: 32rpx;
+  font-weight: 500;
+  font-family: 'Ma Shan Zheng', serif;
+}
+.btn-decide.active {
+  background: linear-gradient(135deg, var(--ancient-seal), #C62828);
+  box-shadow: 0 8rpx 24rpx rgba(183,28,28,0.3);
+}
+.btn-decide[disabled] { opacity: 0.5; }
+
+.simulating {
+  padding: 200rpx 32rpx;
+  text-align: center;
+}
+.hourglass {
+  font-size: 120rpx;
+  animation: spin 1.5s linear infinite;
+  display: inline-block;
+  margin-bottom: 40rpx;
+}
+@keyframes spin { 0% { transform: rotate(0) } 100% { transform: rotate(360deg) } }
+.sim-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: var(--ancient-ink);
+  font-family: 'Ma Shan Zheng', serif;
+  margin-bottom: 12rpx;
+}
+.sim-sub { font-size: 26rpx; color: var(--wechat-text2); }
+
+.result-page { padding-bottom: 80rpx; }
+.result-hero {
+  padding: 60rpx 32rpx;
+  text-align: center;
+  color: #fff;
+}
+.result-hero.good { background: linear-gradient(135deg, #2E7D32, #66BB6A); }
+.result-hero.bad { background: linear-gradient(135deg, #C62828, #EF5350); }
+.result-hero.neutral { background: linear-gradient(135deg, #6D4C41, #A1887F); }
+.outcome-badge {
+  display: inline-block;
+  padding: 12rpx 32rpx;
+  background: rgba(255,255,255,0.2);
+  backdrop-filter: blur(10px);
+  border-radius: 999rpx;
+  font-size: 28rpx;
+  margin-bottom: 20rpx;
+}
+.outcome-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  font-family: 'Ma Shan Zheng', serif;
+  margin-bottom: 12rpx;
+}
+.outcome-hint {
+  font-size: 26rpx;
+  opacity: 0.95;
+  font-family: 'Noto Serif SC', serif;
+}
+
+.result-cards {
+  padding: 32rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+.rcard {
+  background: var(--wechat-white);
+  border-radius: var(--radius-lg);
+  padding: 28rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.04);
+}
+.rcard.alternate {
+  background: linear-gradient(135deg, #FFF9F0, #FFFBF5);
+  border: 2rpx solid rgba(201,162,77,0.25);
+}
+.rcard-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--ancient-ink);
+  margin-bottom: 16rpx;
+}
+.rcard-content {
+  font-size: 28rpx;
+  line-height: 1.8;
+  color: var(--wechat-text);
+  font-family: 'Noto Serif SC', serif;
+}
+
+.result-actions {
+  padding: 0 32rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+.btn-next, .btn-list {
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: var(--radius-lg);
+  font-size: 30rpx;
+  border: none;
+}
+.btn-next { background: var(--wechat-green); color: #fff; }
+.btn-list { background: var(--wechat-white); color: var(--wechat-text); border: 2rpx solid var(--wechat-divider); }

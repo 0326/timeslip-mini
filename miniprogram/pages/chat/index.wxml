@@ -1,0 +1,76 @@
+<custom-nav-bar
+  title="穿越聊天"
+  subTitle="与古人对话"
+  showBack="{{false}}"
+  bgColor="#fff"
+>
+  <view slot="right" class="nav-actions" bindtap="goToLantai">
+    <text class="nav-action-icon">➕</text>
+  </view>
+</custom-nav-bar>
+
+<view class="chat-list-page">
+  <view class="search-wrap">
+    <view class="search-bar">
+      <text class="search-icon">🔍</text>
+      <input
+        class="search-input"
+        placeholder="搜索历史人物..."
+        placeholder-style="color:#b2b2b2"
+        value="{{searchText}}"
+        bindinput="onSearchInput"
+        confirm-type="search"
+      />
+      <text wx:if="{{searchText}}" class="search-clear" bindtap="onClearSearch">✕</text>
+    </view>
+  </view>
+
+  <view wx:if="{{loading}}" class="loading-wrap">
+    <view class="loading-dots">
+      <text class="dot">.</text><text class="dot">.</text><text class="dot">.</text>
+    </view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <block wx:else>
+    <view wx:if="{{filteredSessions.length === 0}}" class="empty-wrap">
+      <text class="empty-icon">💬</text>
+      <text class="empty-title">暂无对话</text>
+      <text class="empty-desc">前往「兰台」选择一位历史人物开始聊天吧</text>
+      <button class="btn btn-primary empty-btn" bindtap="goToLantai">去兰台选人</button>
+    </view>
+
+    <scroll-view wx:else scroll-y class="session-list" enable-flex>
+      <view
+        wx:for="{{filteredSessions}}"
+        wx:key="figureId"
+        class="session-item"
+        data-id="{{item.figureId}}"
+        data-name="{{item.fullName}}"
+        bindtap="openRoom"
+        hover-class="session-hover"
+      >
+        <view class="avatar-wrap">
+          <image class="avatar" src="{{item.avatar}}" mode="aspectFill"></image>
+          <view wx:if="{{item.unreadCount > 0}}" class="unread-badge">
+            {{item.unreadCount > 99 ? '99+' : item.unreadCount}}
+          </view>
+        </view>
+        <view class="session-info">
+          <view class="session-top">
+            <view class="session-name-row">
+              <text class="session-name ellipsis">{{item.figureName}}</text>
+              <text wx:if="{{item.figureTitle}}" class="session-title ellipsis">· {{item.figureTitle}}</text>
+            </view>
+            <text class="session-time">{{item.displayTime}}</text>
+          </view>
+          <text class="session-preview ellipsis">{{item.lastMessage}}</text>
+        </view>
+      </view>
+
+      <view class="list-footer">
+        <text class="footer-text">— 更多历史人物等你开启 —</text>
+      </view>
+    </scroll-view>
+  </block>
+</view>

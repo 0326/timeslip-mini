@@ -1,0 +1,101 @@
+<custom-nav-bar
+  title="穿越朋友圈"
+  subTitle="{{moment.historicalEvent || ''}}"
+  bgColor="#fff"
+>
+  <view slot="right" class="actions" bindtap="onShare">
+    <text class="action-icon">↗</text>
+  </view>
+</custom-nav-bar>
+
+<view class="md-page">
+  <view wx:if="{{!moment}}" class="loading">加载中...</view>
+
+  <view wx:else class="md-content">
+    <view class="md-hero">
+      <figure-avatar figure="{{moment}}" size="100" round="{{true}}"></figure-avatar>
+      <view class="hero-info">
+        <view class="hero-name-row">
+          <text class="h-name">{{moment.figureName}}</text>
+          <text wx:if="{{moment.figureTitle}}" class="h-title">· {{moment.figureTitle}}</text>
+        </view>
+        <view class="hero-meta">
+          <text wx:if="{{dynastyInfo}}" class="h-dy" style="background:{{dynastyInfo.color}}15;color:{{dynastyInfo.color}};">{{dynastyInfo.name}}</text>
+          <text class="h-time">{{displayTime || moment.displayTime}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{moment.historicalEvent}}" class="md-event">
+      <text class="ev-icon">📜</text>
+      <view class="ev-info">
+        <text class="ev-event">{{moment.historicalEvent}}</text>
+        <text class="ev-date">{{moment.historicalDate}}</text>
+      </view>
+    </view>
+
+    <view class="md-body">
+      <text class="body-text">{{moment.content}}</text>
+    </view>
+
+    <view class="md-stats">
+      <view class="s-item {{moment._liked ? 'is-liked' : ''}}" bindtap="onLike">
+        <text class="s-icon">{{moment._liked ? '❤️' : '🤍'}}</text>
+        <text class="s-text">{{moment.likeCount}} 人觉得赞</text>
+      </view>
+    </view>
+
+    <view wx:if="{{moment.likes && moment.likes.length}}" class="md-likes">
+      <text class="lk-tip">❤️</text>
+      <text class="lk-list">
+        <text wx:for="{{moment.likes}}" wx:for-item="l" wx:key="openid" class="lk-name">{{l.name}}</text>
+      </text>
+    </view>
+
+    <view class="divider-row"></view>
+
+    <view class="comments-section">
+      <view class="cs-title">
+        <text class="cs-t">全部评论（{{moment.commentCount || 0}}）</text>
+      </view>
+
+      <view
+        wx:for="{{comments}}"
+        wx:key="_id"
+        class="cm-row"
+      >
+        <view class="cm-avatar">{{item.name[0]}}</view>
+        <view class="cm-body">
+          <view class="cm-head">
+            <text class="cm-name">{{item.name}}</text>
+            <text class="cm-time">{{item.displayTime}}</text>
+          </view>
+          <text class="cm-content">{{item.content}}</text>
+        </view>
+      </view>
+
+      <view wx:if="{{comments.length === 0}}" class="empty-cm">
+        <text>暂无评论，快来抢沙发～</text>
+      </view>
+    </view>
+
+    <view style="height: 220rpx;"></view>
+  </view>
+
+  <view class="md-input-bar">
+    <input
+      class="cm-input"
+      placeholder="说点什么穿越时空的评论..."
+      placeholder-style="color:#bbb"
+      value="{{commentInput}}"
+      bindinput="onInput"
+      bindconfirm="onSubmitComment"
+      confirm-type="send"
+    />
+    <button
+      class="send-btn {{commentInput ? 'is-active' : ''}}"
+      bindtap="onSubmitComment"
+      disabled="{{!commentInput || submitting}}"
+    >发布</button>
+  </view>
+</view>
