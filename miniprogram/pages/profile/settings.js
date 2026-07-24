@@ -92,16 +92,6 @@ Page({
     })
   },
 
-  editAncientName() {
-    this.setData({
-      showSheet: true,
-      sheetType: 'ancientName',
-      sheetTitle: '赐古风名号',
-      sheetPlaceholder: '请输入古风名号（如：青莲居士）',
-      sheetValue: this.data.userInfo.ancientName || ''
-    })
-  },
-
   onSheetInput(e) {
     this.setData({ sheetValue: e.detail.value || '' })
   },
@@ -115,8 +105,6 @@ Page({
     const userInfo = { ...this.data.userInfo }
     if (this.data.sheetType === 'nickname') {
       userInfo.nickName = val
-    } else if (this.data.sheetType === 'ancientName') {
-      userInfo.ancientName = val
     }
     this.setData({ userInfo, showSheet: false })
     const app = getApp()

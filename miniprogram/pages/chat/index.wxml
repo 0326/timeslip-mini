@@ -1,10 +1,9 @@
 <custom-nav-bar
   title="穿越聊天"
-  subTitle="与古人对话"
   showBack="{{false}}"
   bgColor="#fff"
 >
-  <view slot="right" class="nav-actions" bindtap="goToLantai">
+  <view slot="left" class="nav-actions" bindtap="goToLantai">
     <text class="nav-action-icon">➕</text>
   </view>
 </custom-nav-bar>

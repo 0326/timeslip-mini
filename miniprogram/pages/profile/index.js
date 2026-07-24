@@ -1,4 +1,4 @@
-const { ensureUser, updateUserInfo } = require('../../utils/auth')
+const { getUserInfo, updateUserInfo } = require('../../utils/auth')
 const { requestCloud } = require('../../utils/cloudRequest')
 const loginGuard = require('../../utils/loginGuard')
 
@@ -33,9 +33,23 @@ Page({
   },
 
   async refreshUser() {
+    // 先用 globalData 兜底，避免接口异常时白屏
+    const app = getApp()
+    const cached = app.globalData && app.globalData.userInfo
+    if (cached) this.setData({ userInfo: cached })
+
     try {
-      const userInfo = await ensureUser(this)
-      if (userInfo) this.setData({ userInfo })
+      const userInfo = await getUserInfo()
+      if (userInfo) {
+        this.setData({ userInfo })
+        if (!app.globalData) app.globalData = {}
+        app.globalData.openid = userInfo._openid
+        app.globalData.userInfo = userInfo
+        app.globalData.points = userInfo.points || 0
+        app.globalData.memberLevel = userInfo.memberLevel || '普通会员'
+        app.globalData.crossNo = userInfo.crossNo || ''
+      }
+      // userInfo 为 null 时不做处理，保留 globalData 兜底
     } catch (e) {
       console.warn('refreshUser failed:', e)
     }
@@ -65,11 +79,10 @@ Page({
 
   onEditAvatar() {
     wx.showActionSheet({
-      itemList: ['修改头像', '修改昵称', '修改古风名号'],
+      itemList: ['修改头像', '修改昵称'],
       success: (r) => {
         if (r.tapIndex === 0) this.doChooseAvatar()
         else if (r.tapIndex === 1) this.doEditName()
-        else if (r.tapIndex === 2) this.doEditAncientName()
       }
     })
   },
@@ -113,25 +126,6 @@ Page({
       success: (r) => {
         if (!r.confirm || !r.content) return
         updateUserInfo({ nickName: r.content.trim() }).then(ok => {
-          if (ok) {
-            this.refreshUser()
-            wx.showToast({ title: '已更新' })
-          }
-        })
-      }
-    })
-  },
-
-  doEditAncientName() {
-    const cur = (this.data.userInfo || {}).ancientName || ''
-    wx.showModal({
-      title: '修改古风名号',
-      editable: true,
-      placeholderText: '例：青衫居士',
-      content: cur,
-      success: (r) => {
-        if (!r.confirm || !r.content) return
-        updateUserInfo({ ancientName: r.content.trim() }).then(ok => {
           if (ok) {
             this.refreshUser()
             wx.showToast({ title: '已更新' })

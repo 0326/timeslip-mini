@@ -2,9 +2,8 @@
   "users": {
     ".read": "auth.openid == resource.data._openid",
     ".write": "auth.openid == resource.data._openid",
-    "nickname": true,
-    "avatar": true,
-    "ancientName": true,
+    "nickName": true,
+    "avatarUrl": true,
     "crossNo": true,
     "memberLevel": true,
     "points": true,

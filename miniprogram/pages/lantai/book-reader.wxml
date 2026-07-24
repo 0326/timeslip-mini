@@ -1,6 +1,5 @@
 <custom-nav-bar
   title="{{bookTitle}}"
-  subTitle="{{currentChapter ? currentChapter.title : '目录'}}"
   bgColor="#FFF9F0"
 >
   <block wx:if="{{currentChapter}}">

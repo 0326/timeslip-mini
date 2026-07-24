@@ -1,6 +1,5 @@
 <custom-nav-bar
   title="兰台"
-  subTitle="24史 · 人物图鉴"
   showBack="{{false}}"
   bgColor="#f8f6f2"
 ></custom-nav-bar>

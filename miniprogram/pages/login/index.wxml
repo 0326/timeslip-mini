@@ -6,7 +6,13 @@
   </view>
 
   <view class="login-card">
-    <view class="card-label">请选择头像与昵称</view>
+    <view wx:if="{{checking}}" class="checking-wrap">
+      <view class="checking-spinner"></view>
+      <text class="checking-text">正在确认账号...</text>
+    </view>
+
+    <block wx:else>
+      <view class="card-label">请选择头像与昵称</view>
 
     <!-- 头像：外层 view 固定正方形尺寸，button 绝对定位铺满 -->
     <view class="avatar-wrap">
@@ -53,6 +59,7 @@
       <text class="agreement-desc">我已阅读并同意</text>
       <text class="protocol-link" catchtap="onOpenAgreement">《用户协议与隐私政策》</text>
     </view>
+    </block>
   </view>
 
   <view class="login-footer">

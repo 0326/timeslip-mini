@@ -1,5 +1,7 @@
 const { login } = require('../../utils/auth')
 const { isLoggedIn } = require('../../utils/loginGuard')
+const { storage } = require('../../utils/storage')
+const { requestCloud } = require('../../utils/cloudRequest')
 
 Page({
   data: {
@@ -9,20 +11,50 @@ Page({
       agreed: false
     },
     canSubmit: false,
-    submitting: false
+    submitting: false,
+    checking: true
   },
 
   onLoad() {
-    if (isLoggedIn()) {
-      wx.switchTab({ url: '/pages/chat/index' })
-    }
-    this.updateCanSubmit()
+    this.tryAutoLogin()
   },
 
   onShow() {
     if (isLoggedIn()) {
       wx.switchTab({ url: '/pages/chat/index' })
+      return
     }
+    if (!this.data.checking) {
+      this.updateCanSubmit()
+    }
+  },
+
+  async tryAutoLogin() {
+    try {
+      const data = await requestCloud('getUser', 'get', {}, { throwError: false })
+      if (data && data._openid && data.nickName && data.avatarUrl) {
+        // 已注册，恢复登录态
+        const app = getApp()
+        if (!app.globalData) app.globalData = {}
+        app.globalData.openid = data._openid
+        app.globalData.userInfo = data
+        app.globalData.points = data.points || 0
+        app.globalData.memberLevel = data.memberLevel || '普通会员'
+        app.globalData.crossNo = data.crossNo || ''
+        storage.set('userInfo', data, 3600)
+        if (app.emitUserUpdate) app.emitUserUpdate(data)
+
+        wx.showToast({ title: '欢迎回来', icon: 'success' })
+        setTimeout(() => {
+          wx.switchTab({ url: '/pages/chat/index' })
+        }, 400)
+        return
+      }
+    } catch (e) {
+      // 用户不存在或网络错误，正常显示登录页
+    }
+    this.setData({ checking: false })
+    this.updateCanSubmit()
   },
 
   updateCanSubmit() {

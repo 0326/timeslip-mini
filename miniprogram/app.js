@@ -7,7 +7,6 @@ App({
     openid: '',
     points: 0,
     memberLevel: '普通会员',
-    ancientName: '',
     crossNo: '',
     cache: {
       figures: null,
@@ -72,7 +71,6 @@ App({
     if (userInfo) {
       this.globalData.userInfo = userInfo
       this.globalData.points = userInfo.points || 0
-      this.globalData.ancientName = userInfo.ancientName || ''
       this.globalData.crossNo = userInfo.crossNo || ''
     }
     this.userListeners.forEach(cb => {

@@ -1,6 +1,5 @@
 <custom-nav-bar
   title="我的"
-  subTitle="穿越中心"
   showBack="{{false}}"
   bgColor="transparent"
   translucent
@@ -10,19 +9,21 @@
   <view class="profile-hero ancient-paper">
     <view class="hero-inner">
       <view class="user-avatar-row" bindtap="onEditAvatar">
-        <view class="avatar-big">
-          <figure-avatar
-            figure="{{userInfo}}"
-            size="140"
-            round="{{true}}"
-            defaultIcon="👤"
-          ></figure-avatar>
+        <view class="avatar-big-wrap">
+          <view class="avatar-big">
+            <image
+              wx:if="{{userInfo.avatarUrl}}"
+              class="avatar-img"
+              src="{{userInfo.avatarUrl}}"
+              mode="aspectFill"
+            />
+            <view wx:else class="avatar-fallback">👤</view>
+          </view>
           <view class="avatar-edit">✏️</view>
         </view>
         <view class="user-meta">
           <view class="user-name-row">
             <text class="u-name">{{userInfo.nickName || '穿越客'}}</text>
-            <text wx:if="{{userInfo.ancientName}}" class="u-ancient">「{{userInfo.ancientName}}」</text>
           </view>
           <view class="user-id-row">
             <text class="u-crossno">穿越编号：{{userInfo.crossNo || '--'}}</text>

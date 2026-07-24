@@ -100,10 +100,19 @@ Page({
     page: 0,
     hasMore: true,
     loading: false,
-    refreshing: false
+    refreshing: false,
+    actionMenuId: '',
+    navOpaque: false,
+    navBgColor: 'transparent',
+    navTextColor: '#ffffff',
+    userInfo: {}
   },
 
   onLoad() {
+    const app = getApp()
+    this.setData({
+      userInfo: (app.globalData && app.globalData.userInfo) || {}
+    })
     this.loadMoments(true)
   },
 
@@ -113,6 +122,24 @@ Page({
 
   onPullDownRefresh() {
     this.loadMoments(true)
+  },
+
+  onPageScroll(e) {
+    const scrollTop = e.scrollTop
+    const threshold = 100
+    const shouldOpaque = scrollTop > threshold
+
+    if (shouldOpaque !== this.data.navOpaque) {
+      this.setData({
+        navOpaque: shouldOpaque,
+        navBgColor: shouldOpaque ? '#ffffff' : 'transparent',
+        navTextColor: shouldOpaque ? '#191919' : '#ffffff'
+      })
+    }
+
+    if (this.data.actionMenuId) {
+      this.setData({ actionMenuId: '' })
+    }
   },
 
   onReachBottom() {
@@ -161,6 +188,21 @@ Page({
     wx.stopPullDownRefresh()
   },
 
+  toggleActionMenu(e) {
+    const id = e.currentTarget.dataset.id
+    this.setData({
+      actionMenuId: this.data.actionMenuId === id ? '' : id
+    })
+  },
+
+  stopPropagation() {},
+
+  closeActionMenu() {
+    if (this.data.actionMenuId) {
+      this.setData({ actionMenuId: '' })
+    }
+  },
+
   _onLike: null,
   onLike(e) {
     if (!this._onLike) this._onLike = throttle(this.handleLike.bind(this), 300)
@@ -178,7 +220,7 @@ Page({
     const openid = (app.globalData && app.globalData.openid) || 'me'
     const likes = moment.likes || []
     if (nowLiked) {
-      likes.push({ openid, name: '我', avatar: '' })
+      likes.unshift({ openid, name: '我', avatar: '' })
       moment.likeCount = (moment.likeCount || 0) + 1
     } else {
       const newLikes = likes.filter(l => l.openid !== openid)
@@ -188,19 +230,24 @@ Page({
     moment._liked = nowLiked
     moment.likeText = moment.likeCount > 999 ? (moment.likeCount / 1000).toFixed(1) + 'k' : moment.likeCount
     moments[idx] = moment
-    this.setData({ moments })
+    this.setData({ moments, actionMenuId: '' })
     try {
       await requestCloud('moment', nowLiked ? 'like' : 'unlike', { momentId: id }, { throwError: false })
     } catch (e) {}
   },
 
   openMomentDetail(e) {
+    if (this.data.actionMenuId) {
+      this.setData({ actionMenuId: '' })
+      return
+    }
     const id = e.currentTarget.dataset.id
     wx.navigateTo({ url: `/pages/discover/moment-detail?id=${id}` })
   },
 
   openCommentInput(e) {
     const id = e.currentTarget.dataset.id
+    this.setData({ actionMenuId: '' })
     wx.showModal({
       title: '发表评论',
       editable: true,
@@ -223,5 +270,9 @@ Page({
         wx.showToast({ title: '已发布', icon: 'success' })
       }
     })
+  },
+
+  onPublish() {
+    wx.showToast({ title: '发布功能开发中...', icon: 'none' })
   }
 })

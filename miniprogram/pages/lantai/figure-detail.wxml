@@ -1,6 +1,5 @@
 <custom-nav-bar
   title="{{figure.name}}"
-  subTitle="{{figure.title}}"
   bgColor="transparent"
   translucent
 ></custom-nav-bar>

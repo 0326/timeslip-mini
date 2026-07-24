@@ -1,6 +1,5 @@
 <custom-nav-bar
   title="穿越朋友圈"
-  subTitle="{{moment.historicalEvent || ''}}"
   bgColor="#fff"
 >
   <view slot="right" class="actions" bindtap="onShare">
