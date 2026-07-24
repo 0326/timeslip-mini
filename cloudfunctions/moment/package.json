@@ -1,0 +1,9 @@
+{
+  "name": "moment",
+  "version": "1.0.0",
+  "description": "moments cloud function for timeslip-mini",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}
