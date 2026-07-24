@@ -3,6 +3,7 @@ const { formatChatTime } = require('../../utils/date')
 const { storage } = require('../../utils/storage')
 const { AI_CONFIG } = require('../../utils/constants')
 const { uid, sleep } = require('../../utils/helpers')
+const loginGuard = require('../../utils/loginGuard')
 
 const MOCK_MESSAGES = [
   { _id: 'm1', role: 'figure', figureId: 'simaqian', content: '吾乃司马迁，太史公司马迁是也。承蒙足下相邀，愿与君促膝长谈。不知君欲从何史问起？', createdAt: Date.now() - 3600000 * 2 },
@@ -43,6 +44,7 @@ Page({
   },
 
   onShow() {
+    if (!loginGuard.checkLogin(this)) return
     const app = getApp()
     app.setCurrentTab(this, 0)
   },

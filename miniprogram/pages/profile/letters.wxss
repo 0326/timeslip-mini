@@ -22,7 +22,6 @@
   font-size: 40rpx;
   font-weight: 700;
   color: var(--ancient-seal);
-  font-family: 'Ma Shan Zheng', serif;
 }
 .label {
   font-size: 22rpx;
@@ -107,7 +106,6 @@
 .lc-content {
   font-size: 28rpx;
   line-height: 1.8;
-  font-family: 'Noto Serif SC', serif;
   padding: 16rpx 20rpx;
   border-radius: var(--radius-sm);
 }
@@ -124,7 +122,6 @@
   font-size: 22rpx;
   color: var(--ancient-gold);
   letter-spacing: 12rpx;
-  font-family: 'Ma Shan Zheng', serif;
   padding: 8rpx 0;
 }
 .lc-actions {

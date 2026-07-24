@@ -80,7 +80,6 @@
     radial-gradient(ellipse at top left, rgba(201, 162, 77, 0.06) 0%, transparent 60%),
     linear-gradient(135deg, #FFF9F0 0%, #FFF3DE 100%);
   color: #2D1810;
-  font-family: 'Noto Serif SC', 'PingFang SC', serif;
   border: 1rpx solid rgba(201, 162, 77, 0.2);
   border-top-left-radius: 4rpx;
 }

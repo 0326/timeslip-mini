@@ -44,7 +44,6 @@
   background: var(--ancient-paper);
   color: var(--ancient-ink);
   border: 1rpx solid rgba(201,162,77,0.3);
-  font-family: 'Noto Serif SC', serif;
   border-top-left-radius: 2rpx;
 }
 .bubble-content.figure::before {

@@ -84,7 +84,6 @@
   font-size: 24rpx;
   border-radius: var(--radius-md);
   margin-bottom: 20rpx;
-  font-family: 'Noto Serif SC', serif;
   border: 1rpx dashed rgba(201,162,77,0.4);
 }
 

@@ -1,0 +1,226 @@
+.page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #1A1410 0%, #0F0B08 100%);
+  padding: 0 32rpx 60rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 顶部进度条 */
+.topbar {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 0;
+  /* padding-top 由内联 style 注入（含状态栏高度） */
+}
+.topbar-exit {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.6);
+  font-size: 36rpx;
+}
+.topbar-progress {
+  flex: 1;
+  height: 6rpx;
+  background: rgba(255,255,255,0.1);
+  border-radius: 100rpx;
+  margin: 0 24rpx;
+  overflow: hidden;
+}
+.topbar-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #C9A24D 0%, #B71C1C 100%);
+  border-radius: 100rpx;
+  transition: width 0.4s ease;
+}
+.topbar-count {
+  color: rgba(255,255,255,0.7);
+  font-size: 26rpx;
+}
+.topbar-count-cur { color: #C9A24D; font-weight: bold; }
+.topbar-count-total { opacity: 0.6; }
+
+/* 题目区 */
+.quiz {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding-top: 40rpx;
+}
+.quiz-icon {
+  font-size: 64rpx;
+  margin-bottom: 16rpx;
+}
+.quiz-title {
+  color: rgba(255,255,255,0.7);
+  font-size: 26rpx;
+  letter-spacing: 2rpx;
+  margin-bottom: 48rpx;
+}
+
+.question {
+  margin-bottom: 56rpx;
+}
+.question-no {
+  color: #C9A24D;
+  font-size: 26rpx;
+  letter-spacing: 4rpx;
+  margin-bottom: 20rpx;
+}
+.question-text {
+  color: #fff;
+  font-size: 40rpx;
+  line-height: 1.5;
+  letter-spacing: 2rpx;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+}
+.option {
+  display: flex;
+  align-items: center;
+  padding: 32rpx 28rpx;
+  margin-bottom: 20rpx;
+  background: rgba(255,255,255,0.04);
+  border: 2rpx solid rgba(255,255,255,0.08);
+  border-radius: 16rpx;
+  transition: all 0.25s;
+}
+.option:active {
+  background: rgba(255,255,255,0.08);
+}
+.option-selected {
+  background: rgba(201,162,77,0.12);
+  border-color: #C9A24D;
+  box-shadow: 0 0 0 1rpx #C9A24D, 0 8rpx 24rpx rgba(201,162,77,0.3);
+}
+.option-badge {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(201,162,77,0.15);
+  color: #C9A24D;
+  font-size: 28rpx;
+  font-weight: bold;
+  border-radius: 50%;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+  transition: all 0.25s;
+}
+.option-selected .option-badge {
+  background: #C9A24D;
+  color: #1A1410;
+}
+.option-text {
+  flex: 1;
+  color: rgba(255,255,255,0.9);
+  font-size: 30rpx;
+  line-height: 1.5;
+}
+
+/* 弹窗 */
+.modal-mask {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.modal {
+  width: 580rpx;
+  background: #2A2018;
+  border: 1rpx solid rgba(201,162,77,0.3);
+  border-radius: 20rpx;
+  padding: 48rpx 40rpx 32rpx;
+  text-align: center;
+}
+.modal-title {
+  color: #fff;
+  font-size: 34rpx;
+  font-weight: bold;
+  margin-bottom: 16rpx;
+  letter-spacing: 2rpx;
+}
+.modal-desc {
+  color: rgba(255,255,255,0.6);
+  font-size: 26rpx;
+  margin-bottom: 40rpx;
+}
+.modal-actions {
+  display: flex;
+  gap: 20rpx;
+}
+.modal-btn {
+  flex: 1;
+  padding: 22rpx 0;
+  border-radius: 100rpx;
+  font-size: 28rpx;
+  letter-spacing: 2rpx;
+}
+.modal-btn-cancel {
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.8);
+}
+.modal-btn-confirm {
+  background: linear-gradient(135deg, #B71C1C 0%, #5D1A1A 100%);
+  color: #fff;
+}
+
+/* 提交中 */
+.submitting {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(15,11,8,0.95);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.submitting-spinner {
+  width: 80rpx;
+  height: 80rpx;
+  border: 4rpx solid rgba(201,162,77,0.2);
+  border-top-color: #C9A24D;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 32rpx;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.submitting-text {
+  color: #C9A24D;
+  font-size: 28rpx;
+  letter-spacing: 4rpx;
+}
+
+/* 加载态 */
+.loading {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #0F0B08;
+}
+.loading-spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border: 4rpx solid rgba(201,162,77,0.2);
+  border-top-color: #C9A24D;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 24rpx;
+}
+.loading-text {
+  color: rgba(255,255,255,0.6);
+  font-size: 28rpx;
+}

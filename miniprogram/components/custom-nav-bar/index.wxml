@@ -1,12 +1,11 @@
 <view
   class="nav-bar {{fixed ? 'is-fixed' : ''}} {{translucent ? 'is-translucent' : ''}}"
-  style="background: {{bgColor}}; color: {{textColor}}; padding-top: {{statusBarHeight}}px;"
 >
   <view
     class="nav-bar-inner"
-    style="height: {{navBarHeight}}px;"
+    style="height: {{statusBarHeight + navBarHeight}}px; padding-top: {{statusBarHeight}}px; background: {{bgColor}}; color: {{textColor}};"
   >
-    <view class="nav-left" style="top: {{menuTop - statusBarHeight}}px; height: {{menuHeight}}px; line-height: {{menuHeight}}px;">
+    <view class="nav-left" style="top: {{menuTop}}px; height: {{menuHeight}}px; line-height: {{menuHeight}}px;">
       <view wx:if="{{showBack}}" class="nav-back" bindtap="onBack" hover-class="nav-hover" style="color: {{textColor}};">
         <text class="nav-back-icon">‹</text>
         <text wx:if="{{backText}}" class="nav-back-text">{{backText}}</text>
@@ -16,7 +15,7 @@
 
     <view
       class="nav-title"
-      style="top: {{menuTop - statusBarHeight}}px; height: {{menuHeight}}px; left: {{menuRight + 100}}px; right: {{menuRight + 100}}px;"
+      style="top: {{menuTop}}px; height: {{menuHeight}}px; left: {{menuRight + 100}}px; right: {{menuRight + 100}}px;"
       bindtap="onTitleClick"
     >
       <text wx:if="{{title}}" class="nav-title-text" style="color: {{textColor}};">{{title}}</text>
@@ -24,7 +23,7 @@
       <slot name="title"></slot>
     </view>
 
-    <view class="nav-right" style="top: {{menuTop - statusBarHeight}}px; height: {{menuHeight}}px;">
+    <view class="nav-right" style="top: {{menuTop}}px; height: {{menuHeight}}px;">
       <view wx:if="{{showHome}}" class="nav-home" bindtap="onHome" hover-class="nav-hover">
         <text>🏠</text>
       </view>

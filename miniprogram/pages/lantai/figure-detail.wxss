@@ -76,7 +76,6 @@
   font-size: 52rpx;
   font-weight: 800;
   color: var(--ancient-ink);
-  font-family: 'Noto Serif SC', serif;
   letter-spacing: 4rpx;
 }
 
@@ -102,7 +101,6 @@
 .h-lifespan {
   font-size: 24rpx;
   color: var(--ancient-wood);
-  font-family: 'Noto Serif SC', serif;
   letter-spacing: 1rpx;
 }
 
@@ -167,7 +165,6 @@
   color: var(--ancient-gold);
   font-weight: 600;
   border-bottom-color: var(--ancient-gold);
-  font-family: 'Noto Serif SC', serif;
 }
 
 .tab-body {
@@ -188,7 +185,6 @@
   font-weight: 700;
   color: var(--ancient-ink);
   margin-bottom: 16rpx;
-  font-family: 'Noto Serif SC', serif;
   padding-left: 16rpx;
   border-left: 6rpx solid var(--ancient-gold);
   line-height: 1;
@@ -198,7 +194,6 @@
   font-size: 28rpx;
   color: #443322;
   line-height: 1.85;
-  font-family: 'Noto Serif SC', serif;
   text-indent: 2em;
   white-space: pre-line;
 }
@@ -225,7 +220,6 @@
 
 .quote-mark {
   color: var(--ancient-seal);
-  font-family: 'Ma Shan Zheng', serif;
   font-size: 36rpx;
   line-height: 1;
 }
@@ -233,7 +227,6 @@
 .quote-text {
   font-size: 30rpx;
   color: var(--ancient-ink);
-  font-family: 'Noto Serif SC', serif;
   line-height: 1.8;
   padding: 0 8rpx;
 }
@@ -261,7 +254,6 @@
   padding: 0 8rpx;
   border-radius: 6rpx;
   text-align: center;
-  font-family: 'Ma Shan Zheng', serif;
   margin-right: 20rpx;
   flex-shrink: 0;
 }

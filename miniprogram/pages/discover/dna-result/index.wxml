@@ -1,0 +1,157 @@
+<view class="page" wx:if="{{result}}">
+  <!-- Hero 区：全屏冲击力 -->
+  <view class="hero"
+        style="background: linear-gradient(160deg, {{result.bgStart}} 0%, {{result.bgEnd}} 100%); padding-top: {{statusBarHeight + 40}}px;">
+    <view class="hero-overlay"></view>
+
+    <!-- 返回按钮 -->
+    <view class="hero-back" bindtap="onBack" style="top: {{statusBarHeight + 8}}px;">
+      <text class="hero-back-icon">‹</text>
+    </view>
+
+    <view class="hero-content">
+      <view class="hero-brand">— 穿越圈 · 历史人格DNA —</view>
+
+      <view class="hero-sim-label">你的历史DNA · 匹配度</view>
+      <view class="hero-sim">
+        <text class="hero-sim-num">{{record.similarity}}</text>
+        <text class="hero-sim-pct">%</text>
+      </view>
+
+      <view class="hero-divider"></view>
+
+      <view class="hero-figure-name">{{result.figureName}}</view>
+      <view class="hero-figure-title">
+        <text>{{result.figureTitle}}</text>
+        <text wx:if="{{result.dynastyName}}" class="hero-figure-dyn"> · {{result.dynastyName}}</text>
+      </view>
+      <view class="hero-result-title">{{result.title}}</view>
+    </view>
+
+    <!-- 印章装饰 -->
+    <view class="seal">DNA</view>
+  </view>
+
+  <!-- 雷达图 -->
+  <view class="section radar-section">
+    <view class="section-title">— 维度雷达 —</view>
+    <view class="radar-wrap">
+      <canvas
+        type="2d"
+        id="radarCanvas"
+        class="radar-canvas"
+        disable-scroll="true"></canvas>
+    </view>
+  </view>
+
+  <!-- 一句话简介 -->
+  <view class="section">
+    <view class="card quote-card">
+      <view class="quote-mark">「</view>
+      <view class="quote-text">{{result.intro}}</view>
+      <view class="quote-mark quote-mark-end">」</view>
+    </view>
+  </view>
+
+  <!-- 详细描述 -->
+  <view class="section">
+    <view class="card">
+      <view class="card-title">人物解析</view>
+      <view class="card-text">{{result.desc}}</view>
+    </view>
+  </view>
+
+  <!-- 名言 -->
+  <view class="section" wx:if="{{result.quote}}">
+    <view class="card quote-card-famous">
+      <view class="famous-label">名 言</view>
+      <view class="famous-text">{{result.quote}}</view>
+    </view>
+  </view>
+
+  <!-- 为什么是Ta -->
+  <view class="section" wx:if="{{result.reasons.length}}">
+    <view class="card">
+      <view class="card-title">为什么是Ta</view>
+      <view class="reasons">
+        <view class="reason-item" wx:for="{{result.reasons}}" wx:key="*this">
+          <view class="reason-no">{{index + 1}}</view>
+          <view class="reason-text">{{item}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 维度分析 -->
+  <view class="section" wx:if="{{dimBars.length}}">
+    <view class="card">
+      <view class="card-title">维度分析</view>
+      <view class="dim-bars">
+        <view class="dim-bar" wx:for="{{dimBars}}" wx:key="name">
+          <view class="dim-bar-name">{{item.name}}</view>
+          <view class="dim-bar-track">
+            <view class="dim-bar-fill" style="width: {{item.percent}}%;"></view>
+          </view>
+          <view class="dim-bar-value">{{item.value}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 人物简介 -->
+  <view class="section" wx:if="{{result.bio}}">
+    <view class="card">
+      <view class="card-title">人物简介</view>
+      <view class="card-text card-text-bio">{{result.bio}}</view>
+    </view>
+  </view>
+
+  <!-- 底部操作栏 -->
+  <view class="action-bar">
+    <button class="action-btn action-btn-secondary" bindtap="onRetryQuiz">再测一次</button>
+    <button class="action-btn action-btn-secondary" bindtap="onBackToHall">测其他</button>
+    <button class="action-btn action-btn-primary" open-type="share">分享给好友</button>
+    <button class="action-btn action-btn-poster" bindtap="onShowPoster">生成海报</button>
+  </view>
+
+  <view class="action-bar-extra">
+    <view class="chat-link" bindtap="onChatWithFigure">
+      去找Ta聊天 ›
+    </view>
+  </view>
+</view>
+
+<!-- 加载态 -->
+<view class="loading" wx:elif="{{loading}}">
+  <view class="loading-spinner"></view>
+  <view class="loading-text">正在揭晓你的历史DNA...</view>
+</view>
+
+<view class="loading" wx:else>
+  <view class="loading-text">{{error}}</view>
+</view>
+
+<!-- 海报弹层 -->
+<view class="poster-mask" wx:if="{{posterShow}}" bindtap="onHidePoster">
+  <view class="poster-wrap" catchtap>
+    <view class="poster-loading" wx:if="{{posterGenerating}}">
+      <view class="poster-spinner"></view>
+      <view class="poster-loading-text">海报生成中...</view>
+    </view>
+    <block wx:else>
+      <image src="{{posterPath}}" mode="widthFix" class="poster-img" show-menu-by-longpress></image>
+      <view class="poster-actions">
+        <button class="poster-btn poster-btn-save" bindtap="onSavePoster">保存到相册</button>
+        <button class="poster-btn poster-btn-close" bindtap="onHidePoster">关闭</button>
+      </view>
+      <view class="poster-tip">保存后可发朋友圈 / 微信群</view>
+    </block>
+  </view>
+</view>
+
+<!-- 隐藏的海报 canvas -->
+<canvas
+  type="2d"
+  id="posterCanvas"
+  class="poster-canvas-hidden"
+  disable-scroll="true"></canvas>

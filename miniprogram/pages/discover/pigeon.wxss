@@ -17,7 +17,6 @@
   box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.03);
 }
 .to-label {
-  font-family: 'Ma Shan Zheng', serif;
   font-size: 36rpx;
   color: var(--ancient-seal);
   margin-right: 24rpx;
@@ -76,7 +75,6 @@
   text-align: center;
   color: #fff;
   background: var(--ancient-seal);
-  font-family: 'Ma Shan Zheng', serif;
   font-size: 26rpx;
   transform: rotate(-10deg);
   border-radius: var(--radius-sm);
@@ -87,7 +85,6 @@
   font-size: 30rpx;
   line-height: 60rpx;
   color: var(--ancient-ink);
-  font-family: 'Noto Serif SC', serif;
   padding: 0;
   background: transparent;
 }
@@ -102,7 +99,6 @@
   font-size: 22rpx;
   color: rgba(201,162,77,0.6);
   margin-top: 32rpx;
-  font-family: 'Ma Shan Zheng', serif;
   letter-spacing: 4rpx;
 }
 
@@ -163,7 +159,6 @@
   font-weight: 600;
   color: var(--ancient-ink);
   margin-bottom: 16rpx;
-  font-family: 'Ma Shan Zheng', serif;
 }
 .flying-text .line2 {
   font-size: 26rpx;
@@ -184,7 +179,6 @@
 .reply-hero {
   text-align: center;
   font-size: 40rpx;
-  font-family: 'Ma Shan Zheng', serif;
   color: var(--ancient-seal);
   margin-bottom: 32rpx;
 }
@@ -221,7 +215,6 @@
   font-size: 26rpx;
   color: var(--wechat-text);
   line-height: 1.6;
-  font-family: 'Noto Serif SC', serif;
 }
 
 .divider {
@@ -229,7 +222,6 @@
   font-size: 24rpx;
   color: var(--ancient-gold);
   margin: 24rpx 0;
-  font-family: 'Ma Shan Zheng', serif;
   letter-spacing: 16rpx;
 }
 
@@ -237,7 +229,6 @@
   font-size: 30rpx;
   line-height: 60rpx;
   color: var(--ancient-ink);
-  font-family: 'Noto Serif SC', serif;
   padding: 16rpx 0;
   min-height: 200rpx;
 }
@@ -251,7 +242,6 @@
   padding: 12rpx 20rpx;
   color: #fff;
   background: var(--ancient-seal);
-  font-family: 'Ma Shan Zheng', serif;
   font-size: 26rpx;
   transform: rotate(-6deg);
   border-radius: var(--radius-sm);

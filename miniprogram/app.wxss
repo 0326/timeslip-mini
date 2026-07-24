@@ -40,7 +40,7 @@
 
 page {
   background-color: var(--wechat-bg);
-  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Segoe UI, Arial, Roboto, 'PingFang SC', 'miui', 'Hiragino Sans GB', 'Microsoft Yahei', 'Noto Serif SC', 'Ma Shan Zheng', serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Segoe UI, Arial, Roboto, 'PingFang SC', 'miui', 'Hiragino Sans GB', 'Microsoft Yahei', sans-serif;
   font-size: var(--font-md);
   color: var(--wechat-text);
   line-height: 1.6;
@@ -141,7 +141,6 @@ image {
   justify-content: center;
   background: var(--ancient-seal);
   color: var(--wechat-white);
-  font-family: 'Ma Shan Zheng', serif;
   border-radius: var(--radius-sm);
   padding: 6rpx 16rpx;
   letter-spacing: 2rpx;

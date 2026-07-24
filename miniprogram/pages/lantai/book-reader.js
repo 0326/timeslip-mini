@@ -1,5 +1,6 @@
 const { requestCloud } = require('../../utils/cloudRequest')
 const { storage } = require('../../utils/storage')
+const loginGuard = require('../../utils/loginGuard')
 
 const MOCK_CHAPTERS = [
   { id: 'c1', title: '五帝本纪第一', subtitle: '史记卷一', read: true, progress: 100 },
@@ -46,6 +47,10 @@ Page({
     wx.setNavigationBarTitle({ title })
     this.setData({ bookId: id, bookTitle: title })
     this.loadChapters(id)
+  },
+
+  onShow() {
+    if (!loginGuard.checkLogin(this)) return
   },
 
   async loadChapters(id) {

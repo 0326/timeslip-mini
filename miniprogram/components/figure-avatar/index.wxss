@@ -36,7 +36,6 @@
 }
 
 .avatar-text {
-  font-family: 'Ma Shan Zheng', serif;
   color: var(--ancient-ink);
   font-weight: 700;
 }
@@ -54,7 +53,6 @@
   color: #fff;
   font-size: 16rpx;
   border-radius: var(--radius-sm);
-  font-family: 'Noto Serif SC', serif;
   font-weight: 600;
   border: 2rpx solid var(--wechat-white);
 }

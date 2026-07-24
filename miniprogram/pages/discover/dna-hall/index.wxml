@@ -1,0 +1,92 @@
+<custom-nav-bar title="历史人格DNA" bg-color="#1A1410" text-color="#fff" />
+
+<view class="page">
+  <!-- 顶部装饰 -->
+  <view class="bg-deco">
+    <view class="bg-circle bg-circle-1"></view>
+    <view class="bg-circle bg-circle-2"></view>
+  </view>
+
+  <!-- Hero 区 -->
+  <view class="hero" wx:if="{{hero}}" bindtap="onTapHero"
+        style="background: linear-gradient(135deg, {{hero._bgStart}} 0%, {{hero._bgEnd}} 100%);">
+    <view class="hero-overlay"></view>
+    <view class="hero-content">
+      <view class="hero-badge">
+        <text class="hero-badge-icon">{{hero.icon}}</text>
+        <text class="hero-badge-text">精选测试</text>
+      </view>
+      <view class="hero-title">{{hero.title}}</view>
+      <view class="hero-subtitle">{{hero.subtitle}}</view>
+      <view class="hero-desc">{{hero.desc}}</view>
+      <view class="hero-meta">
+        <text class="hero-meta-item">{{hero.questionsCount}} 题</text>
+        <text class="hero-meta-dot">·</text>
+        <text class="hero-meta-item">{{hero._participantText}}</text>
+      </view>
+      <view class="hero-btn">
+        <text>立即挑战</text>
+        <text class="hero-btn-arrow">›</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 分类筛选条 -->
+  <scroll-view scroll-x="true" class="categories" enhanced show-scrollbar="{{false}}">
+    <view class="categories-inner">
+      <view
+        wx:for="{{categories}}"
+        wx:key="key"
+        class="cat-chip {{activeCategory === item.key ? 'cat-chip-active' : ''}}"
+        data-key="{{item.key}}"
+        bindtap="onSelectCategory">
+        <text class="cat-chip-icon">{{item.icon}}</text>
+        <text class="cat-chip-name">{{item.name}}</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 列表区 -->
+  <view class="list">
+    <block wx:if="{{loading}}">
+      <view class="loading-card" wx:for="{{[1,2,3]}}" wx:key="*this">
+        <view class="loading-thumb"></view>
+        <view class="loading-info">
+          <view class="loading-line loading-line-title"></view>
+          <view class="loading-line loading-line-desc"></view>
+          <view class="loading-line loading-line-tag"></view>
+        </view>
+      </view>
+    </block>
+
+    <block wx:elif="{{quizzes.length}}">
+      <view
+        wx:for="{{quizzes}}"
+        wx:key="id"
+        class="quiz-card"
+        data-id="{{item.id}}"
+        bindtap="onTapQuiz">
+        <view class="quiz-thumb"
+              style="background: linear-gradient(135deg, {{item._bgStart}} 0%, {{item._bgEnd}} 100%);">
+          <text class="quiz-thumb-icon">{{item.icon}}</text>
+        </view>
+        <view class="quiz-info">
+          <view class="quiz-title">{{item.title}}</view>
+          <view class="quiz-desc">{{item.desc}}</view>
+          <view class="quiz-tags">
+            <view class="quiz-tag">{{item.questionsCount}} 题</view>
+            <view class="quiz-tag quiz-tag-soft">{{item._participantText}}</view>
+          </view>
+        </view>
+        <view class="quiz-arrow">›</view>
+      </view>
+    </block>
+
+    <view wx:elif="{{error}}" class="empty">
+      <view class="empty-icon">📜</view>
+      <view class="empty-text">{{error}}</view>
+    </view>
+  </view>
+
+  <view class="footer-tip">— 历史人物 DNA 测试 · 穿越圈 —</view>
+</view>

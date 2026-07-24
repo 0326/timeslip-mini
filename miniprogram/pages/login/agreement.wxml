@@ -1,0 +1,21 @@
+<view class="agreement-page">
+  <view class="header">
+    <view class="app-name">穿越圈 · 用户协议与隐私政策</view>
+    <view class="update-date">更新日期：{{lastUpdate}}</view>
+  </view>
+
+  <view class="content">
+    <view class="intro">
+      欢迎使用穿越圈！使用本小程序前，请您仔细阅读以下协议条款。点击「同意并继续」即表示您已阅读、理解并同意接受本协议全部内容。
+    </view>
+
+    <view wx:for="{{sections}}" wx:key="title" class="section">
+      <view class="section-title">{{item.title}}</view>
+      <text class="section-content">{{item.content}}</text>
+    </view>
+  </view>
+
+  <view class="footer-bar">
+    <button class="btn-agree" bindtap="onAgree">已阅读并返回</button>
+  </view>
+</view>

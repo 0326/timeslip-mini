@@ -2,6 +2,7 @@ const { requestCloud } = require('../../utils/cloudRequest')
 const { storage } = require('../../utils/storage')
 const { sleep, uid } = require('../../utils/helpers')
 const { CONTENT_SECURITY } = require('../../utils/constants')
+const loginGuard = require('../../utils/loginGuard')
 
 const FIGURE_LIST = [
   { figureId: 'simaqian', figureName: '司马迁', figureTitle: '太史公', dynasty: 'han', dynastyName: '西汉', avatar: 'https://img.icons8.com/color/96/emperor.png' },
@@ -71,6 +72,10 @@ Page({
   onLoad() {
     const cached = storage.get('figures')
     if (cached && cached.length) this.setData({ figureList: cached })
+  },
+
+  onShow() {
+    if (!loginGuard.checkLogin(this)) return
   },
 
   onInput(e) {

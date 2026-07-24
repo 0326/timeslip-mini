@@ -1,5 +1,6 @@
 const { requestCloud } = require('../../utils/cloudRequest')
 const { formatRelative, getDynastyInfo } = require('../../utils/date')
+const loginGuard = require('../../utils/loginGuard')
 
 const MOCK_MOMENT = {
   _id: 'm2',
@@ -42,6 +43,10 @@ Page({
     const id = options.id || 'm2'
     this.setData({ id })
     this.loadDetail(id)
+  },
+
+  onShow() {
+    if (!loginGuard.checkLogin(this)) return
   },
 
   async loadDetail(id) {

@@ -1,0 +1,98 @@
+.agreement-page {
+  min-height: 100vh;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: calc(140rpx + env(safe-area-inset-bottom));
+}
+
+.header {
+  padding: 40rpx 40rpx 24rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.app-name {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: var(--ancient-ink);
+  margin-bottom: 8rpx;
+  letter-spacing: 2rpx;
+}
+
+.update-date {
+  font-size: 24rpx;
+  color: var(--wechat-text2);
+}
+
+.content {
+  flex: 1;
+  padding: 24rpx 40rpx 40rpx;
+}
+
+.intro {
+  font-size: 28rpx;
+  color: var(--wechat-text);
+  line-height: 1.8;
+  padding: 24rpx;
+  background: #FFF9F0;
+  border-radius: 12rpx;
+  margin-bottom: 32rpx;
+  border-left: 6rpx solid var(--ancient-gold);
+}
+
+.section {
+  margin-bottom: 36rpx;
+}
+
+.section-title {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: var(--ancient-ink);
+  margin-bottom: 12rpx;
+  letter-spacing: 1rpx;
+}
+
+.section-content {
+  font-size: 26rpx;
+  color: #444;
+  line-height: 1.9;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.footer-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 16rpx 48rpx;
+  padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
+  background: #fff;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.btn-agree {
+  width: 100%;
+  height: 88rpx;
+  border-radius: 12rpx;
+  font-size: 32rpx;
+  letter-spacing: 4rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  line-height: 88rpx;
+  padding: 0;
+  margin: 0;
+  background: linear-gradient(135deg, #C9A24D 0%, #A67B2D 100%);
+  color: #fff;
+  box-shadow: 0 4rpx 16rpx rgba(201, 162, 77, 0.3);
+}
+
+.btn-agree::after {
+  border: none;
+}
+
+.btn-agree:active {
+  opacity: 0.9;
+}

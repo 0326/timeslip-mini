@@ -155,7 +155,6 @@
   left: 50%;
   transform: translateX(-50%);
   color: var(--ancient-gold);
-  font-family: 'Ma Shan Zheng', serif;
   font-size: 32rpx;
   letter-spacing: 8rpx;
   display: flex;

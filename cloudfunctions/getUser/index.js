@@ -31,6 +31,56 @@ exports.main = async (event, context) => {
       return { code: 0, message: 'ok', data: { warmed: true } }
     }
 
+    if (action === 'login') {
+      const nickName = (event.nickName || '').toString().trim()
+      const avatarUrl = (event.avatarUrl || '').toString().trim()
+      if (!nickName) return { code: -1, message: '请填写昵称', data: null }
+      if (!avatarUrl) return { code: -1, message: '请选择头像', data: null }
+
+      const existing = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
+      if (existing.data && existing.data.length > 0) {
+        const user = existing.data[0]
+        await db.collection('users').doc(user._id).update({
+          data: {
+            nickName,
+            avatarUrl,
+            lastActiveAt: db.serverDate(),
+            updatedAt: db.serverDate()
+          }
+        })
+        user.nickName = nickName
+        user.avatarUrl = avatarUrl
+        user._openid = OPENID
+        return { code: 0, message: 'ok', data: user, isNewUser: false }
+      }
+
+      const newUser = {
+        nickName,
+        avatarUrl,
+        ancientName: randomAncientName(),
+        crossNo: generateCrossNo(),
+        points: 10,
+        memberLevel: '布衣',
+        dnaResult: null,
+        achievements: [],
+        stats: {
+          chatCount: 0,
+          letterCount: 0,
+          memorialCount: 0,
+          momentLikeCount: 0,
+          momentCommentCount: 0
+        },
+        createdAt: db.serverDate(),
+        updatedAt: db.serverDate(),
+        lastActiveAt: db.serverDate()
+      }
+
+      const addRes = await db.collection('users').add({ data: newUser })
+      newUser._id = addRes._id
+      newUser._openid = OPENID
+      return { code: 0, message: 'ok', data: newUser, isNewUser: true }
+    }
+
     if (action === 'ensure') {
       const existing = await db.collection('users').where({ _openid: OPENID }).get()
       if (existing.data && existing.data.length > 0) {
@@ -110,6 +160,38 @@ exports.main = async (event, context) => {
         }
       })
       return { code: 0, message: 'ok', data: { added: points } }
+    }
+
+    if (action === 'stats') {
+      const userRes = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
+      const userStats = (userRes.data && userRes.data[0] && userRes.data[0].stats) || {}
+
+      const countOf = async (coll) => {
+        try {
+          const r = await db.collection(coll).where({ _openid: OPENID }).count()
+          return r.total || 0
+        } catch (e) {
+          return 0
+        }
+      }
+
+      const [chatCount, letterCount, memorialCount] = await Promise.all([
+        countOf('chat_sessions'),
+        countOf('letters'),
+        countOf('memorial_answers')
+      ])
+
+      return {
+        code: 0,
+        message: 'ok',
+        data: {
+          chatCount,
+          letterCount,
+          memorialCount,
+          momentLikeCount: userStats.momentLikeCount || 0,
+          momentCommentCount: userStats.momentCommentCount || 0
+        }
+      }
     }
 
     return { code: -1, message: '未知操作: ' + (action || 'none'), data: null }

@@ -63,7 +63,7 @@
 
       <view class="content-block original">
         <view wx:if="{{showTranslation}}" class="block-title">【史书记载】</view>
-        <text class="content-text" style="font-size:{{fontSize}}rpx; font-family: 'Noto Serif SC', serif;">{{content.original}}</text>
+        <text class="content-text" style="font-size:{{fontSize}}rpx;">{{content.original}}</text>
       </view>
 
       <view wx:if="{{content.notes && content.notes.length}}" class="notes-block">

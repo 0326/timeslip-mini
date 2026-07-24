@@ -25,7 +25,6 @@
 .unlock-count .num {
   font-size: 96rpx;
   font-weight: 700;
-  font-family: 'Ma Shan Zheng', serif;
   color: #fff;
 }
 .unlock-count .sep {
@@ -178,7 +177,6 @@
 .dm-name {
   font-size: 36rpx;
   font-weight: 700;
-  font-family: 'Ma Shan Zheng', serif;
   margin-bottom: 8rpx;
 }
 .dm-status {

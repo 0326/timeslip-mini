@@ -13,7 +13,17 @@ const storage = {
   get(key, defaultValue = null) {
     try {
       const val = wx.getStorageSync(PREFIX + key)
-      return safeParse(val, defaultValue)
+      const parsed = safeParse(val, null)
+      if (parsed && Object.prototype.hasOwnProperty.call(parsed, '_v')) {
+        // 带 ttl 的封装数据
+        if (parsed._ttl && parsed._t + parsed._ttl * 1000 < Date.now()) {
+          wx.removeStorageSync(PREFIX + key)
+          return defaultValue
+        }
+        return parsed._v
+      }
+      // 兼容直接存储的原始值
+      return parsed === null ? (val !== '' && val !== undefined && val !== null ? val : defaultValue) : parsed
     } catch (e) {
       return defaultValue
     }

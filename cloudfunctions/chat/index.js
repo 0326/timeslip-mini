@@ -81,6 +81,7 @@ exports.main = async (event, context) => {
     switch (runAction) {
       case 'send':
       case 'chat': return await modeChat(OPENID, data)
+      case 'listSessions': return await listSessions(OPENID, data)
       case 'moment_comment': return await modeMomentComment(OPENID, data)
       case 'pigeon_reply': return await modePigeonReply(OPENID, data)
       case 'memorial_simulate': return await modeMemorialSimulate(OPENID, data)
@@ -91,6 +92,31 @@ exports.main = async (event, context) => {
   } catch (err) {
     console.error('chat cloudFn err:', err)
     return { code: -1, message: err.message || '聊天服务异常' }
+  }
+}
+
+// 会话列表：从 chat_sessions 集合查询当前用户的所有会话
+async function listSessions(OPENID, data) {
+  const { limit = 50 } = data
+  try {
+    const r = await db.collection('chat_sessions')
+      .where({ _openid: OPENID })
+      .orderBy('lastTime', 'desc')
+      .limit(Math.min(limit, 100))
+      .get()
+    const sessions = (r.data || []).map(s => ({
+      figureId: s.figureId,
+      figureName: s.figureName,
+      figureTitle: s.figureTitle || '',
+      dynasty: s.dynasty || '',
+      avatar: s.avatar || '',
+      lastMessage: s.lastMessage || '',
+      lastTime: s.lastTime ? new Date(s.lastTime).getTime() : 0,
+      unreadCount: s.unread || 0
+    }))
+    return { code: 0, message: 'ok', data: { sessions } }
+  } catch (e) {
+    return { code: 0, message: 'ok', data: { sessions: [] } }
   }
 }
 

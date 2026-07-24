@@ -5,7 +5,6 @@
   word-break: break-word;
 }
 .md-render.ancient-mode {
-  font-family: 'Noto Serif SC', 'Ma Shan Zheng', serif;
   color: var(--ancient-ink);
   background: var(--ancient-paper);
   padding: 32rpx;
@@ -28,7 +27,6 @@
 .md-h4 { font-size: 31rpx; }
 .md-h.md-h1, .md-h.md-h2 {
   color: var(--ancient-ink);
-  font-family: 'Ma Shan Zheng', 'Noto Serif SC', serif;
 }
 
 .md-p {
@@ -72,7 +70,6 @@
 }
 .ancient-mode .md-quote-content {
   color: #6B5D4E;
-  font-family: 'Noto Serif SC', serif;
 }
 
 .md-list {

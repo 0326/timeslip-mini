@@ -1,5 +1,6 @@
 const { storage } = require('../../utils/storage')
 const { formatChatTime } = require('../../utils/date')
+const loginGuard = require('../../utils/loginGuard')
 
 const ALL_ACHIEVEMENTS = [
   { key: 'first_chat', icon: '💬', name: '初遇古人', desc: '第一次与历史人物聊天', category: 'beginner',
@@ -49,6 +50,7 @@ Page({
   },
 
   onShow() {
+    if (!loginGuard.checkLogin(this)) return
     this.loadAchievements()
   },
 

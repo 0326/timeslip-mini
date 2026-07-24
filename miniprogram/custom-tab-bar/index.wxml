@@ -15,4 +15,3 @@
     <view class="tab-badge" wx:if="{{item.badge && item.badge > 0}}">{{item.badge > 99 ? '99+' : item.badge}}</view>
   </view>
 </view>
-<view class="safe-bottom"></view>

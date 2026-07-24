@@ -13,10 +13,6 @@
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-.safe-bottom {
-  height: calc(110rpx + env(safe-area-inset-bottom));
-}
-
 .tab-item {
   flex: 1;
   display: flex;
@@ -64,7 +60,6 @@
 .tab-item.active .tab-label {
   color: #B8860B;
   font-weight: 600;
-  font-family: 'Ma Shan Zheng', serif;
 }
 
 .tab-dot {

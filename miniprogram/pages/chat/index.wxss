@@ -109,7 +109,7 @@
 }
 
 .session-list {
-  height: calc(100vh - 88rpx - 68rpx - 180rpx);
+  height: calc(100vh - 88rpx - 68rpx - 120rpx - env(safe-area-inset-bottom));
   background: #fff;
 }
 
@@ -219,7 +219,6 @@
   color: var(--wechat-text2);
   line-height: 1.4;
   max-width: 100%;
-  font-family: 'Noto Serif SC', 'PingFang SC', serif;
 }
 
 .list-footer {

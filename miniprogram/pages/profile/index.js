@@ -1,34 +1,23 @@
 const { ensureUser, updateUserInfo } = require('../../utils/auth')
 const { requestCloud } = require('../../utils/cloudRequest')
-const { storage } = require('../../utils/storage')
+const loginGuard = require('../../utils/loginGuard')
 
 const MENU_LIST = [
-  { key: 'dna', icon: '🧬', name: '历史人格', desc: '查看你的DNA测试结果', url: '/pages/discover/dna-test', right: '›' },
-  { key: 'passport', icon: '🎖️', name: '穿越成就', desc: '成就墙与解锁', url: '/pages/profile/achievements', right: '›' },
   { key: 'letters', icon: '🕊️', name: '信鸽驿站', desc: '历史信件往来', url: '/pages/profile/letters', right: '›' },
-  { key: 'chats', icon: '💬', name: '聊天记录', desc: '管理历史对话', url: '/pages/chat/index', right: '›', isTab: true },
   { key: 'settings', icon: '⚙️', name: '设置', desc: '隐私与偏好', url: '/pages/profile/settings', right: '›' }
 ]
 
 const STAT_MENUS = [
-  { key: 'chats', num: 0, label: '对话次数', icon: '💬' },
-  { key: 'letters', num: 0, label: '飞鸽书信', icon: '🕊️' },
-  { key: 'memorials', num: 0, label: '奏折批阅', icon: '📜' },
-  { key: 'achievements', num: 0, label: '解锁成就', icon: '🎖️' }
+  { key: 'chatCount', num: 0, label: '对话次数', icon: '💬' },
+  { key: 'letterCount', num: 0, label: '飞鸽书信', icon: '🕊️' },
+  { key: 'memorialCount', num: 0, label: '奏折批阅', icon: '📜' }
 ]
 
 Page({
   data: {
     userInfo: null,
     menus: MENU_LIST,
-    stats: STAT_MENUS,
-    achievements: [
-      { id: 'first_chat', name: '初入异世', desc: '与第一位古人对话', icon: '🌟', unlocked: true },
-      { id: 'dna_complete', name: '真我本色', desc: '完成人格DNA测试', icon: '🧬', unlocked: true },
-      { id: 'letter_first', name: '鸿雁传书', desc: '寄出第一封信', icon: '🕊️', unlocked: false },
-      { id: 'memorial_10', name: '明君气象', desc: '批阅10道奏折', icon: '👑', unlocked: false },
-      { id: 'all_figures', name: '万古长青', desc: '解锁全部人物', icon: '🏆', unlocked: false }
-    ]
+    stats: STAT_MENUS
   },
 
   onLoad() {
@@ -38,6 +27,7 @@ Page({
   onShow() {
     const app = getApp()
     app.setCurrentTab(this, 3)
+    if (!loginGuard.checkLogin(this)) return
     this.refreshUser()
     this.loadStats()
   },
@@ -54,10 +44,10 @@ Page({
   async loadStats() {
     try {
       const data = await requestCloud('getUser', 'stats', {}, { throwError: false })
-      if (data && data.stats) {
+      if (data) {
         const stats = this.data.stats.map(s => ({
           ...s,
-          num: data.stats[s.key] || s.num
+          num: data[s.key] || 0
         }))
         this.setData({ stats })
       }
@@ -65,16 +55,12 @@ Page({
   },
 
   onMenuTap(e) {
-    const { url, istab } = e.currentTarget.dataset
+    const { url } = e.currentTarget.dataset
     if (!url) return
-    if (istab) {
-      wx.switchTab({ url })
-    } else {
-      wx.navigateTo({
-        url,
-        fail: () => wx.showToast({ title: '开发中', icon: 'none' })
-      })
-    }
+    wx.navigateTo({
+      url,
+      fail: () => wx.showToast({ title: '开发中', icon: 'none' })
+    })
   },
 
   onEditAvatar() {
@@ -153,17 +139,5 @@ Page({
         })
       }
     })
-  },
-
-  onShare() {
-    wx.showShareMenu({ withShareTicket: true })
-    wx.showToast({ title: '点击右上角分享', icon: 'none' })
-  },
-
-  onShareAppMessage() {
-    return {
-      title: '穿越圈 - 与历史人物对话',
-      path: '/pages/chat/index'
-    }
   }
 })

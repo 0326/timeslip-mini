@@ -60,7 +60,6 @@
   text-align: center;
   background: var(--ancient-paper);
   color: var(--ancient-gold);
-  font-family: 'Ma Shan Zheng', serif;
   font-size: 28rpx;
   border-radius: var(--radius-sm);
   margin-right: 20rpx;
@@ -137,7 +136,6 @@
 
 .memorial-title {
   text-align: center;
-  font-family: 'Ma Shan Zheng', serif;
   font-size: 44rpx;
   color: var(--ancient-ink);
   margin: 24rpx 0 16rpx;
@@ -159,7 +157,6 @@
   );
 }
 .memorial-content {
-  font-family: 'Noto Serif SC', serif;
   font-size: 32rpx;
   line-height: 60rpx;
   color: #3D2B1F;
@@ -179,7 +176,6 @@
   color: var(--ancient-ink);
   margin-bottom: 24rpx;
   text-align: center;
-  font-family: 'Ma Shan Zheng', serif;
 }
 .options {
   display: flex;
@@ -247,12 +243,10 @@
   font-size: 24rpx;
   color: var(--ancient-gold);
   margin-bottom: 12rpx;
-  font-family: 'Ma Shan Zheng', serif;
 }
 .zhupi-input {
   font-size: 28rpx;
   color: var(--ancient-seal);
-  font-family: 'Noto Serif SC', serif;
 }
 
 .btn-decide {
@@ -265,7 +259,6 @@
   border-radius: var(--radius-lg);
   font-size: 32rpx;
   font-weight: 500;
-  font-family: 'Ma Shan Zheng', serif;
 }
 .btn-decide.active {
   background: linear-gradient(135deg, var(--ancient-seal), #C62828);
@@ -288,7 +281,6 @@
   font-size: 36rpx;
   font-weight: 600;
   color: var(--ancient-ink);
-  font-family: 'Ma Shan Zheng', serif;
   margin-bottom: 12rpx;
 }
 .sim-sub { font-size: 26rpx; color: var(--wechat-text2); }
@@ -314,13 +306,11 @@
 .outcome-title {
   font-size: 36rpx;
   font-weight: 600;
-  font-family: 'Ma Shan Zheng', serif;
   margin-bottom: 12rpx;
 }
 .outcome-hint {
   font-size: 26rpx;
   opacity: 0.95;
-  font-family: 'Noto Serif SC', serif;
 }
 
 .result-cards {
@@ -349,7 +339,6 @@
   font-size: 28rpx;
   line-height: 1.8;
   color: var(--wechat-text);
-  font-family: 'Noto Serif SC', serif;
 }
 
 .result-actions {

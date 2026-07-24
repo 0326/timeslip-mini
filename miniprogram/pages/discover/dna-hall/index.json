@@ -1,0 +1,9 @@
+{
+  "navigationBarTitleText": "历史人格DNA",
+  "navigationStyle": "custom",
+  "enablePullDownRefresh": true,
+  "backgroundColor": "#1A1410",
+  "usingComponents": {
+    "custom-nav-bar": "/components/custom-nav-bar/index"
+  }
+}

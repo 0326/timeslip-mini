@@ -1,6 +1,7 @@
 const { requestCloud } = require('../../utils/cloudRequest')
 const { getDynastyInfo } = require('../../utils/date')
 const { storage } = require('../../utils/storage')
+const loginGuard = require('../../utils/loginGuard')
 
 const MOCK_FIGURE = {
   _id: 'simaqian',
@@ -40,6 +41,10 @@ Page({
     const id = options.id || 'simaqian'
     this.setData({ id })
     this.loadDetail(id)
+  },
+
+  onShow() {
+    if (!loginGuard.checkLogin(this)) return
   },
 
   async loadDetail(id) {

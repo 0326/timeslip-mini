@@ -1,6 +1,7 @@
 const { requestCloud } = require('../../utils/cloudRequest')
 const { storage } = require('../../utils/storage')
 const { formatRelative, formatChatTime } = require('../../utils/date')
+const loginGuard = require('../../utils/loginGuard')
 
 const FILTERS = [
   { key: 'all', name: '全部' },
@@ -48,6 +49,7 @@ Page({
   },
 
   onShow() {
+    if (!loginGuard.checkLogin(this)) return
     this.loadLetters()
   },
 

@@ -66,7 +66,6 @@
 .ancient-name {
   font-size: 28rpx;
   color: var(--ancient-seal);
-  font-family: 'Ma Shan Zheng', serif;
 }
 .arrow { color: #ccc; font-size: 36rpx; margin-left: 12rpx; }
 

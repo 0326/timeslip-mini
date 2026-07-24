@@ -1,0 +1,61 @@
+<view class="login-page ancient-paper">
+  <view class="login-hero">
+    <image class="hero-logo" src="/images/logo-256.png" mode="aspectFit"></image>
+    <view class="hero-title">穿越圈</view>
+    <view class="hero-subtitle">与古人对话 · 共续千秋</view>
+  </view>
+
+  <view class="login-card">
+    <view class="card-label">请选择头像与昵称</view>
+
+    <!-- 头像：外层 view 固定正方形尺寸，button 绝对定位铺满 -->
+    <view class="avatar-wrap">
+      <view class="avatar-box">
+        <image wx:if="{{form.avatarUrl}}" class="avatar-img" src="{{form.avatarUrl}}" mode="aspectFill"></image>
+        <view wx:else class="avatar-placeholder">
+          <text class="avatar-plus">＋</text>
+          <text class="avatar-tip">选头像</text>
+        </view>
+        <button
+          class="avatar-btn-abs"
+          open-type="chooseAvatar"
+          bind:chooseavatar="onChooseAvatar"
+        ></button>
+      </view>
+    </view>
+
+    <!-- 昵称输入 -->
+    <view class="nickname-row">
+      <input
+        class="nickname-input"
+        type="nickname"
+        placeholder="请输入昵称（最多10字）"
+        placeholder-style="color:#b2b2b2"
+        maxlength="10"
+        value="{{form.nickName}}"
+        bindinput="onNicknameInput"
+        bindblur="onNicknameBlur"
+        confirm-type="done"
+      />
+    </view>
+
+    <button
+      class="submit-btn {{canSubmit ? 'is-active' : ''}}"
+      bindtap="onSubmit"
+      disabled="{{submitting}}"
+    >进入穿越圈</button>
+
+    <!-- 协议勾选 -->
+    <view class="agreement-row" bindtap="onToggleAgree">
+      <view class="checkbox {{form.agreed ? 'is-checked' : ''}}">
+        <view class="check-mark"></view>
+      </view>
+      <text class="agreement-desc">我已阅读并同意</text>
+      <text class="protocol-link" catchtap="onOpenAgreement">《用户协议与隐私政策》</text>
+    </view>
+  </view>
+
+  <view class="login-footer">
+    <text>穿越兰台 | 趣读历史</text>
+  </view>
+</view>

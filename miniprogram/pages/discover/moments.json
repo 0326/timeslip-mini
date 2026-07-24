@@ -1,0 +1,10 @@
+{
+  "navigationBarTitleText": "朋友圈",
+  "enablePullDownRefresh": true,
+  "onReachBottomDistance": 100,
+  "backgroundColor": "#EDEDED",
+  "usingComponents": {
+    "custom-nav-bar": "/components/custom-nav-bar/index",
+    "figure-avatar": "/components/figure-avatar/index"
+  }
+}

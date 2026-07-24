@@ -1,6 +1,7 @@
 const { requestCloud } = require('../../utils/cloudRequest')
 const { storage } = require('../../utils/storage')
 const { uid, sleep } = require('../../utils/helpers')
+const loginGuard = require('../../utils/loginGuard')
 
 const CHAPTERS = [
   { key: 'all', name: '全部' },
@@ -84,6 +85,10 @@ Page({
 
   onLoad() {
     this.loadMemorialList()
+  },
+
+  onShow() {
+    if (!loginGuard.checkLogin(this)) return
   },
 
   async loadMemorialList() {

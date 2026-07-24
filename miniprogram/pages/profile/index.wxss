@@ -66,13 +66,11 @@
   font-size: 40rpx;
   font-weight: 700;
   color: var(--ancient-ink);
-  font-family: 'Noto Serif SC', serif;
 }
 
 .u-ancient {
   font-size: 24rpx;
   color: var(--ancient-gold);
-  font-family: 'Ma Shan Zheng', serif;
   background: rgba(201, 162, 77, 0.12);
   padding: 4rpx 14rpx;
   border-radius: 999rpx;
@@ -175,59 +173,7 @@
   font-size: 26rpx;
   color: var(--ancient-wood);
   font-weight: 600;
-  font-family: 'Noto Serif SC', serif;
   letter-spacing: 4rpx;
-}
-
-.achv-row {
-  display: flex;
-  gap: 16rpx;
-  padding: 0 24rpx 32rpx;
-  overflow-x: auto;
-  white-space: nowrap;
-}
-
-.achv-card {
-  flex-shrink: 0;
-  width: 200rpx;
-  padding: 24rpx 16rpx;
-  background: #fff;
-  border-radius: 20rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8rpx;
-  border: 1rpx solid rgba(201, 162, 77, 0.15);
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.03);
-}
-
-.achv-card.is-locked {
-  filter: grayscale(0.8);
-  opacity: 0.7;
-}
-
-.a-icon {
-  font-size: 56rpx;
-  margin-bottom: 6rpx;
-}
-
-.a-name {
-  font-size: 26rpx;
-  font-weight: 600;
-  color: var(--ancient-ink);
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.a-desc {
-  font-size: 20rpx;
-  color: #888;
-  line-height: 1.4;
-  text-align: center;
-  white-space: normal;
-  width: 100%;
-  max-width: 100%;
 }
 
 .menu-group {
@@ -308,19 +254,6 @@
 .a-title {
   font-size: 22rpx;
   color: #999;
-}
-
-.a-sub {
-  font-size: 24rpx;
-  color: var(--ancient-gold);
-  font-family: 'Ma Shan Zheng', serif;
-  letter-spacing: 2rpx;
-}
-
-.a-site {
-  font-size: 22rpx;
-  color: var(--wechat-green);
-  margin-top: 8rpx;
 }
 
 .bottom-pad {

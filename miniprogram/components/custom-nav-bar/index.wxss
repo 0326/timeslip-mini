@@ -2,17 +2,16 @@
   position: relative;
   z-index: 900;
   width: 100%;
-  transition: background 0.3s, box-shadow 0.3s;
 }
 
-.nav-bar.is-fixed {
+.nav-bar.is-fixed .nav-bar-inner {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
 }
 
-.nav-bar.is-translucent {
+.nav-bar.is-translucent .nav-bar-inner {
   background: transparent !important;
   backdrop-filter: blur(12rpx);
   -webkit-backdrop-filter: blur(12rpx);
@@ -26,6 +25,8 @@
 .nav-bar-inner {
   position: relative;
   width: 100%;
+  box-sizing: border-box;
+  transition: background 0.3s, box-shadow 0.3s;
 }
 
 .nav-left,

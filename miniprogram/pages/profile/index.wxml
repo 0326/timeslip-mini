@@ -47,24 +47,6 @@
 
   <view class="section-title">
     <text class="st-line"></text>
-    <text class="st-text">穿越成就</text>
-    <text class="st-line"></text>
-  </view>
-
-  <view class="achv-row">
-    <view
-      wx:for="{{achievements}}"
-      wx:key="id"
-      class="achv-card {{!item.unlocked ? 'is-locked' : ''}}"
-    >
-      <text class="a-icon">{{item.unlocked ? item.icon : '🔒'}}</text>
-      <text class="a-name">{{item.name}}</text>
-      <text class="a-desc">{{item.desc}}</text>
-    </view>
-  </view>
-
-  <view class="section-title">
-    <text class="st-line"></text>
     <text class="st-text">功能菜单</text>
     <text class="st-line"></text>
   </view>
@@ -75,7 +57,6 @@
       wx:key="key"
       class="menu-item"
       data-url="{{item.url}}"
-      data-istab="{{item.isTab}}"
       bindtap="onMenuTap"
       hover-class="menu-hover"
     >
@@ -90,8 +71,6 @@
 
   <view class="about-row">
     <text class="a-title">穿越圈 v1.0.0</text>
-    <text class="a-sub">「以史为镜，可以知兴替」</text>
-    <text class="a-site" bindtap="onShare">分享小程序 ›</text>
   </view>
 
   <view class="bottom-pad"></view>

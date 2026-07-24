@@ -1,6 +1,7 @@
 const { storage } = require('../../utils/storage')
 const { requestCloud } = require('../../utils/cloudRequest')
 const { CLOUD_ENV_ID, APP_ID } = require('../../utils/constants')
+const loginGuard = require('../../utils/loginGuard')
 
 Page({
   data: {
@@ -22,6 +23,10 @@ Page({
     this.loadUserInfo()
     this.loadSettings()
     this.calcCache()
+  },
+
+  onShow() {
+    if (!loginGuard.checkLogin(this)) return
   },
 
   loadUserInfo() {

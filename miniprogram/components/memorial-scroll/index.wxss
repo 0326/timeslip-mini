@@ -88,7 +88,6 @@
   text-align: center;
   background: var(--ancient-seal);
   color: #fff;
-  font-family: 'Ma Shan Zheng', serif;
   font-size: 30rpx;
   transform: rotate(-8deg);
   border-radius: var(--radius-sm);
@@ -97,7 +96,6 @@
 }
 .seal-right { transform: rotate(8deg); }
 .title-text {
-  font-family: 'Ma Shan Zheng', serif;
   font-size: 40rpx;
   color: var(--ancient-ink);
   letter-spacing: 8rpx;
@@ -110,12 +108,10 @@
   color: #8B6F47;
   margin-bottom: 32rpx;
   padding: 0 12rpx;
-  font-family: 'Noto Serif SC', serif;
 }
 .paper-meta .sep { margin: 0 8rpx; opacity: 0.5; }
 
 .paper-content {
-  font-family: 'Noto Serif SC', serif;
   font-size: 32rpx;
   line-height: 60rpx;
   color: #3D2B1F;
@@ -137,7 +133,6 @@
   text-align: center;
   font-size: 22rpx;
   color: var(--ancient-seal);
-  font-family: 'Ma Shan Zheng', serif;
   letter-spacing: 16rpx;
   margin-bottom: 20rpx;
   opacity: 0.85;
@@ -148,7 +143,6 @@
   border: 2rpx dashed rgba(183,28,28,0.3);
   border-radius: var(--radius-md);
   color: var(--ancient-seal);
-  font-family: 'Ma Shan Zheng', serif;
   font-size: 32rpx;
   line-height: 1.8;
   min-height: 80rpx;
