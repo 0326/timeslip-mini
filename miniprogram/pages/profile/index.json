@@ -1,8 +1,7 @@
 {
-  "navigationBarTitleText": "我的",
+  "navigationStyle": "custom",
   "backgroundColor": "#f5f5f5",
   "usingComponents": {
-    "custom-nav-bar": "/components/custom-nav-bar/index",
     "figure-avatar": "/components/figure-avatar/index"
   }
 }

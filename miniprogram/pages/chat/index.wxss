@@ -1,6 +1,18 @@
+page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: #fcf9f2;
+}
+
 .chat-list-page {
-  min-height: 100vh;
-  background: var(--wechat-bg);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: calc(110rpx + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  background-color: #fcf9f2;
 }
 
 .nav-actions {
@@ -15,18 +27,18 @@
 }
 
 .search-wrap {
-  padding: 16rpx 24rpx;
-  background: #fff;
-  border-bottom: 1rpx solid #eee;
+  padding: 16rpx 32rpx;
+  background-color: #fcf9f2;
 }
 
 .search-bar {
   display: flex;
   align-items: center;
   height: 68rpx;
-  background: #F2F2F2;
+  background: #ffffff;
   border-radius: 8rpx;
   padding: 0 24rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.03);
 }
 
 .search-icon {
@@ -72,7 +84,7 @@
 .loading-text {
   margin-top: 16rpx;
   font-size: 26rpx;
-  color: var(--wechat-text2);
+  color: #bbbbbb;
 }
 
 .empty-wrap {
@@ -98,7 +110,7 @@
 
 .empty-desc {
   font-size: 26rpx;
-  color: var(--wechat-text2);
+  color: #999999;
   line-height: 1.6;
   margin-bottom: 48rpx;
 }
@@ -109,32 +121,20 @@
 }
 
 .session-list {
-  height: calc(100vh - 88rpx - 68rpx - 120rpx - env(safe-area-inset-bottom));
-  background: #fff;
+  background-color: #ffffff;
+  flex: 1;
 }
 
 .session-item {
   display: flex;
   align-items: center;
-  padding: 24rpx;
-  background: #fff;
-  position: relative;
+  background-color: #ffffff;
+  padding-left: 32rpx;
   transition: background 0.15s;
 }
 
 .session-hover {
-  background: #F7F7F7;
-}
-
-.session-item::after {
-  content: '';
-  position: absolute;
-  left: 140rpx;
-  right: 24rpx;
-  bottom: 0;
-  height: 1rpx;
-  background: #eee;
-  opacity: 0.6;
+  background-color: #f5f5f5;
 }
 
 .avatar-wrap {
@@ -143,20 +143,24 @@
   height: 96rpx;
   margin-right: 24rpx;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  margin-top: 24rpx;
+  margin-bottom: 24rpx;
 }
 
 .avatar {
   width: 96rpx;
   height: 96rpx;
-  border-radius: 16rpx;
-  background: #eee;
+  border-radius: 12rpx;
+  background-color: #f0e6d6;
   overflow: hidden;
 }
 
 .unread-badge {
   position: absolute;
-  top: -10rpx;
-  right: -10rpx;
+  top: -6rpx;
+  right: -6rpx;
   min-width: 36rpx;
   height: 36rpx;
   padding: 0 10rpx;
@@ -168,22 +172,28 @@
   border-radius: 999rpx;
   font-weight: 600;
   box-shadow: 0 2rpx 6rpx rgba(250, 81, 81, 0.3);
+  z-index: 10;
+  border: 3rpx solid #ffffff;
 }
 
 .session-info {
   flex: 1;
   min-width: 0;
+  overflow: hidden;
   height: 96rpx;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 4rpx 0;
+  padding: 4rpx 32rpx 4rpx 0;
+  border-bottom: 1rpx solid #eeeeee;
 }
 
 .session-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 8rpx;
+  width: 100%;
 }
 
 .session-name-row {
@@ -191,32 +201,42 @@
   min-width: 0;
   display: flex;
   align-items: center;
+  overflow: hidden;
 }
 
 .session-name {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #191919;
+  font-size: 34rpx;
+  color: #333333;
+  font-weight: 500;
   max-width: 240rpx;
 }
 
 .session-title {
   font-size: 24rpx;
-  color: var(--wechat-text2);
+  color: #999999;
   margin-left: 4rpx;
   max-width: 200rpx;
+  background-color: #f5f5f5;
+  padding: 2rpx 10rpx;
+  border-radius: 6rpx;
+  border: 1rpx solid #eeeeee;
 }
 
 .session-time {
-  font-size: 22rpx;
-  color: var(--wechat-text2);
+  font-size: 24rpx;
+  color: #bbbbbb;
   flex-shrink: 0;
   margin-left: 12rpx;
 }
 
 .session-preview {
+  display: block;
+  width: 100%;
   font-size: 26rpx;
-  color: var(--wechat-text2);
+  color: #999999;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
   line-height: 1.4;
   max-width: 100%;
 }
@@ -225,6 +245,7 @@
   padding: 40rpx 24rpx 60rpx;
   display: flex;
   justify-content: center;
+  background-color: #ffffff;
 }
 
 .footer-text {

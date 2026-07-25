@@ -1,19 +1,12 @@
 .discover-page {
-  height: 100vh;
+  min-height: 100vh;
   background: #ededed;
   padding-top: 16rpx;
-  display: flex;
-  flex-direction: column;
 }
 
 .group {
   background: #fff;
   margin-bottom: 16rpx;
-  flex-shrink: 0;
-}
-
-.group:last-child {
-  flex: 1;
 }
 
 .entry {

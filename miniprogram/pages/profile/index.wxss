@@ -1,14 +1,13 @@
 .profile-page {
   min-height: 100vh;
-  background: #f5f5f5;
+  background:
+    radial-gradient(ellipse at top, rgba(201, 162, 77, 0.12) 0%, transparent 70%),
+    linear-gradient(180deg, #F5ECDB 0%, #F9F4EA 320rpx, #f5f5f5 560rpx);
 }
 
 .profile-hero {
   position: relative;
-  padding: 120rpx 32rpx 32rpx;
-  background:
-    radial-gradient(ellipse at top, rgba(201, 162, 77, 0.12) 0%, transparent 70%),
-    linear-gradient(180deg, #F5ECDB 0%, #F9F4EA 60%, #f5f5f5 100%);
+  padding: 0 32rpx 32rpx;
   border-bottom-left-radius: 32rpx;
   border-bottom-right-radius: 32rpx;
   margin-bottom: 32rpx;

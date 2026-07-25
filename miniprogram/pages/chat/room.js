@@ -18,12 +18,18 @@ Page({
     figureTitle: '太史公',
     avatar: 'https://img.icons8.com/color/96/emperor.png',
     messages: [],
+    inputValue: '',
     inputText: '',
     sending: false,
     scrollTop: 0,
     scrollTo: '',
     aiTyping: false,
-    safeBottom: 0
+    safeBottom: 0,
+    chatStatus: 0,
+    showTools: false,
+    manualScroll: false,
+    footerBoxHeight: 92,
+    inputBoxHeight: 44
   },
 
   onLoad(options) {
@@ -32,7 +38,12 @@ Page({
     const [name, title] = figureName.split(' · ')
     try {
       const sys = wx.getSystemInfoSync()
-      this.setData({ safeBottom: sys.safeAreaInsets ? sys.safeAreaInsets.bottom : 0 })
+      const pxPerRpx = sys.windowWidth / 750
+      const safeBottomPx = sys.safeAreaInsets ? sys.safeAreaInsets.bottom : 0
+      this.setData({
+        safeBottom: Math.round(safeBottomPx / pxPerRpx),
+        footerBoxHeight: Math.round(65 + safeBottomPx + 12 * pxPerRpx)
+      })
     } catch (e) {}
     this.setData({
       figureId,
@@ -76,12 +87,65 @@ Page({
     }, 50)
   },
 
-  onInput(e) {
-    this.setData({ inputText: e.detail.value })
+  bindKeyInput(e) {
+    this.setData({ inputValue: e.detail.value, inputText: e.detail.value })
+  },
+
+  bindInputFocus() {
+    this.setData({ showTools: false })
+  },
+
+  handleLineChange(e) {
+    const { height } = e.detail
+    if (height) {
+      const h = Math.max(44, Math.min(160, height))
+      this.setData({ inputBoxHeight: h })
+    }
+  },
+
+  toggleTools() {
+    this.setData({ showTools: !this.data.showTools })
+  },
+
+  onClearChat() {
+    wx.showModal({
+      title: '提示',
+      content: '确定要清除全部对话记录吗？',
+      success: (res) => {
+        if (res.confirm) {
+          const cacheKey = `chat_${this.data.figureId}`
+          storage.remove(cacheKey)
+          this.setData({ messages: [], showTools: false })
+        }
+      }
+    })
+  },
+
+  onStopGen() {
+    this.setData({ chatStatus: 0, aiTyping: false, sending: false })
+    if (this._typeTimer) {
+      clearTimeout(this._typeTimer)
+      this._typeTimer = null
+    }
+    const cacheKey = `chat_${this.data.figureId}`
+    storage.set(cacheKey, this.data.messages, 600)
+  },
+
+  onScrollMsg(e) {
+    const { scrollTop } = e.detail
+    if (scrollTop < (this._lastScrollTop || 0) - 20) {
+      if (!this.data.manualScroll) this.setData({ manualScroll: true })
+    }
+    this._lastScrollTop = scrollTop
+  },
+
+  autoToBottom() {
+    this.setData({ manualScroll: false })
+    this.scrollToBottom()
   },
 
   async onSend() {
-    const text = (this.data.inputText || '').trim()
+    const text = (this.data.inputValue || '').trim()
     if (!text || this.data.sending) return
     if (text.length > AI_CONFIG.chatMaxLength) {
       wx.showToast({ title: `最多${AI_CONFIG.chatMaxLength}字`, icon: 'none' })
@@ -97,9 +161,12 @@ Page({
     const messages = this.data.messages.concat([userMsg])
     this.setData({
       messages,
+      inputValue: '',
       inputText: '',
       sending: true,
-      aiTyping: true
+      aiTyping: true,
+      chatStatus: 1,
+      manualScroll: false
     })
     this.scrollToBottom()
 
@@ -130,15 +197,16 @@ Page({
       createdAt: Date.now()
     }
     const messages = this.data.messages.concat([fullMsg])
-    this.setData({ messages, sending: false })
+    this.setData({ messages, sending: false, chatStatus: 2 })
     this.scrollToBottom()
     this.typeEffect(fullMsg._id, content, 0)
   },
 
   typeEffect(msgId, content, i) {
+    if (this.data.chatStatus === 0) return
     const speed = AI_CONFIG.typingSpeedMs || 40
     if (i >= content.length) {
-      this.setData({ aiTyping: false })
+      this.setData({ aiTyping: false, chatStatus: 0 })
       const cacheKey = `chat_${this.data.figureId}`
       storage.set(cacheKey, this.data.messages, 600)
       return
@@ -147,8 +215,8 @@ Page({
       m._id === msgId ? { ...m, content: content.slice(0, i + 1) } : m
     )
     this.setData({ messages })
-    if (i % 5 === 0) this.scrollToBottom()
-    setTimeout(() => this.typeEffect(msgId, content, i + 1), speed)
+    if (i % 5 === 0 && !this.data.manualScroll) this.scrollToBottom()
+    this._typeTimer = setTimeout(() => this.typeEffect(msgId, content, i + 1), speed)
   },
 
   generateMockReply(text, name) {
@@ -164,7 +232,7 @@ Page({
 
   onQuickReply(e) {
     const item = e.currentTarget.dataset.item
-    this.setData({ inputText: item })
+    this.setData({ inputValue: item, inputText: item })
     this.onSend()
   },
 

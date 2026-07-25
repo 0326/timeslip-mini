@@ -4,84 +4,141 @@
   bind:back="onBack"
 ></custom-nav-bar>
 
-<view class="room-page">
+<view class="room-page" style="padding-bottom: {{footerBoxHeight + safeBottom}}px;">
   <scroll-view
-    class="msg-scroll"
+    class="msg-scroll main"
     scroll-y
     scroll-into-view="{{scrollTo}}"
     scroll-with-animation
     enhanced
     show-scrollbar="{{false}}"
-    style="padding-bottom: {{safeBottom + 140}}rpx;"
+    bindscroll="onScrollMsg"
   >
-    <view class="messages-wrap">
+    <view class="contentBox" style="padding-bottom: 30px;">
       <view wx:if="{{messages.length === 0}}" class="empty-tip">
         <text class="empty-tip-text">开始与{{figureName}}的穿越对话吧...</text>
       </view>
 
-      <view
-        wx:for="{{messages}}"
-        wx:key="_id"
-        id="msg-{{item._id}}"
-        class="msg-row {{item.role === 'user' ? 'is-right' : 'is-left'}}"
-      >
-        <block wx:if="{{item.role !== 'user'}}">
-          <image class="avatar" src="{{avatar}}" mode="aspectFill"></image>
-        </block>
-        <view class="bubble-wrap">
-          <view class="bubble {{item.role === 'user' ? 'bubble-user' : 'bubble-figure'}}">
-            <text class="bubble-text" user-select="{{true}}">{{item.content}}</text>
-            <text wx:if="{{aiTyping && index === messages.length - 1 && item.role === 'figure' && item.content.length > 0}}" class="typing-cursor">▊</text>
-          </view>
+      <block wx:for="{{messages}}" wx:key="_id">
+        <view
+          id="msg-{{item._id}}"
+          class="msg-row {{item.role === 'user' ? 'is-right userContent' : 'is-left system'}}"
+        >
+          <block wx:if="{{item.role !== 'user'}}">
+            <view class="avatar-left">
+              <image class="avatar-img" src="{{avatar}}" mode="aspectFill"></image>
+            </view>
+            <view class="system_bubble">
+              <block wx:if="{{(messages.length - 1) === index && aiTyping && chatStatus === 1}}">
+                <view class="thinking-row">
+                  <text class="thinking-icon">🤔</text>
+                  <text class="thinking-text">正在卖力思考中...</text>
+                </view>
+              </block>
+              <block wx:else>
+                <text class="bubble-text" user-select="{{true}}">{{item.content}}</text>
+                <text wx:if="{{aiTyping && index === messages.length - 1 && item.role === 'figure' && item.content.length > 0}}" class="typing-cursor">▊</text>
+              </block>
+            </view>
+          </block>
+
+          <block wx:if="{{item.role === 'user'}}">
+            <view class="user">
+              <view class="user_content">
+                <text class="bubble-text">{{item.content}}</text>
+              </view>
+            </view>
+            <view class="avatar-right">
+              <view class="avatar-user">我</view>
+            </view>
+          </block>
         </view>
-        <block wx:if="{{item.role === 'user'}}">
-          <view class="avatar avatar-user">我</view>
-        </block>
+      </block>
+
+      <view wx:if="{{aiTyping && messages.length && messages[messages.length - 1].role !== 'figure' && chatStatus !== 1}}" class="msg-row is-left system">
+        <view class="avatar-left">
+          <image class="avatar-img" src="{{avatar}}" mode="aspectFill"></image>
+        </view>
+        <view class="system_bubble bubble-typing">
+          <text class="typing-dots"><text class="d">●</text><text class="d">●</text><text class="d">●</text></text>
+        </view>
       </view>
 
-      <view wx:if="{{aiTyping && messages.length && messages[messages.length - 1].role !== 'figure'}}" class="msg-row is-left">
-        <image class="avatar" src="{{avatar}}" mode="aspectFill"></image>
-        <view class="bubble-wrap">
-          <view class="bubble bubble-figure bubble-typing">
-            <text class="typing-dots"><text class="d">●</text><text class="d">●</text><text class="d">●</text></text>
-          </view>
-        </view>
-      </view>
-
-      <view class="msg-bottom-sentry"></view>
+      <view id="scroll-bottom" class="msg-bottom-sentry"></view>
     </view>
   </scroll-view>
 
-  <view class="quick-bar">
-    <scroll-view scroll-x class="quick-scroll" show-scrollbar="{{false}}" enhanced>
-      <view
-        wx:for="{{['太史公认为写史最重要的是什么？','您最敬佩的人物是谁？','谈谈鸿门宴的看法？']}}"
-        wx:key="*this"
-        class="quick-item"
-        data-item="{{item}}"
-        bindtap="onQuickReply"
-      >{{item}}</view>
-    </scroll-view>
-  </view>
+  <image
+    wx:if="{{manualScroll}}"
+    class="to-bottom-btn"
+    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 5v14M5 12l7 7 7-7'/%3E%3C/svg%3E"
+    bindtap="autoToBottom"
+    mode="aspectFit"
+  />
 
-  <view class="input-bar-wrap" style="padding-bottom: {{safeBottom + 12}}rpx;">
-    <view class="input-bar">
-      <input
-        class="msg-input"
-        placeholder="请输入你想说的话..."
-        placeholder-style="color:#b2b2b2"
-        value="{{inputText}}"
-        bindinput="onInput"
-        bindconfirm="onSend"
-        confirm-type="send"
-        cursor-spacing="20"
-        adjust-position
-      />
-      <button
-        class="send-btn {{inputText ? 'is-active' : ''}}"
-        bindtap="onSend"
-        disabled="{{!inputText || sending}}"
-      >发送</button>
+  <view class="footer" style="padding-bottom: {{safeBottom + 12}}rpx;">
+    <view wx:if="{{showTools}}" class="tool_box">
+      <view class="function" bindtap="onClearChat">
+        <text class="tool-icon">🧹</text>
+        <text class="text_desc">清除</text>
+      </view>
+    </view>
+
+    <view class="foot_function">
+      <view class="input_box" style="min-height: {{inputBoxHeight}}px;">
+        <view class="right_btns">
+          <image
+            wx:if="{{!showTools}}"
+            class="set"
+            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'/%3E%3C/svg%3E"
+            mode="widthFix"
+            bindtap="toggleTools"
+          />
+          <image
+            wx:else
+            class="set"
+            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='4' width='20' height='16' rx='2' ry='2'/%3E%3Cline x1='22' y1='7' x2='2' y2='7'/%3E%3Cline x1='16' y1='2' x2='16' y2='6'/%3E%3Cline x1='8' y1='2' x2='8' y2='6'/%3E%3C/svg%3E"
+            mode="widthFix"
+            bindtap="toggleTools"
+          />
+          <view
+            wx:if="{{!!inputValue && chatStatus === 0}}"
+            class="send-btn-wrap"
+            bindtap="onSend"
+          >
+            <image
+              class="send-set"
+              src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='19' height='19' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='22' y1='2' x2='11' y2='13'/%3E%3Cpolygon points='22 2 15 22 11 13 2 9 22 2'/%3E%3C/svg%3E"
+              mode="widthFix"
+            />
+          </view>
+          <image
+            wx:if="{{chatStatus !== 0}}"
+            class="set"
+            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='6' y='6' width='12' height='12'/%3E%3C/svg%3E"
+            mode="widthFix"
+            bindtap="onStopGen"
+          />
+        </view>
+        <view class="input_inner_box">
+          <textarea
+            class="input"
+            value="{{inputValue}}"
+            maxlength="1024"
+            bindfocus="bindInputFocus"
+            bindinput="bindKeyInput"
+            placeholder="说点什么吧"
+            placeholder-style="color:#999"
+            bindconfirm="onSend"
+            confirm-type="send"
+            adjust-position="{{false}}"
+            cursor-spacing="40"
+            auto-height="{{true}}"
+            show-confirm-bar="{{false}}"
+            bindlinechange="handleLineChange"
+          />
+        </view>
+      </view>
     </view>
   </view>
 </view>

@@ -1,12 +1,5 @@
-<custom-nav-bar
-  title=""
-  showBack="{{false}}"
-  bgColor="transparent"
-  translucent
-></custom-nav-bar>
-
 <view class="profile-page">
-  <view class="profile-hero ancient-paper">
+  <view class="profile-hero ancient-paper" style="padding-top: {{statusBarHeight + 40}}rpx;">
     <view class="hero-inner">
       <view class="user-avatar-row" bindtap="onEditAvatar">
         <view class="avatar-big-wrap">

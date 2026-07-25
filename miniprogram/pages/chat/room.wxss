@@ -1,17 +1,23 @@
 .room-page {
-  background: #EDEDED;
+  background: #f3f3f3;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative;
+  overflow: hidden;
 }
 
-.msg-scroll {
+.msg-scroll.main {
+  background-color: #f3f3f3;
   flex: 1;
-  height: calc(100vh - 140rpx - 80rpx);
+  width: 100%;
+  min-height: 0;
+  position: relative;
+  height: 0;
 }
 
-.messages-wrap {
-  padding: 32rpx 24rpx 0;
+.contentBox {
+  padding: 32rpx 0 0;
 }
 
 .empty-tip {
@@ -29,27 +35,133 @@
 }
 
 .msg-row {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 36rpx;
-  max-width: 100%;
+  position: relative;
+  padding-bottom: 8rpx;
 }
 
-.msg-row.is-right {
-  flex-direction: row-reverse;
+/* ============ AI 消息（左侧） ============ */
+.system {
+  margin-left: 20rpx;
+  margin-right: 24rpx;
+  margin-top: 24rpx;
+  box-sizing: border-box;
 }
 
-.avatar {
+.avatar-left {
+  position: absolute;
+  top: 0px;
+  left: 12rpx;
+}
+
+.avatar-left .avatar-img {
   width: 80rpx;
   height: 80rpx;
-  border-radius: 12rpx;
+  border-radius: 8rpx;
   background: #fff;
-  flex-shrink: 0;
   overflow: hidden;
   border: 1rpx solid rgba(0, 0, 0, 0.05);
+  display: block;
 }
 
-.avatar-user {
+.system_bubble {
+  background-color: #ffffff;
+  border-radius: 12rpx;
+  padding: 16rpx 24rpx;
+  margin-left: 110rpx;
+  position: relative;
+  word-wrap: break-word;
+  word-break: break-all;
+  font-size: 30rpx;
+  line-height: 1.5;
+  min-height: 40rpx;
+  box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.05);
+}
+
+.system_bubble::before {
+  content: '';
+  position: absolute;
+  top: 20rpx;
+  left: -12rpx;
+  width: 0;
+  height: 0;
+  border-top: 10rpx solid transparent;
+  border-bottom: 10rpx solid transparent;
+  border-right: 12rpx solid #ffffff;
+}
+
+.thinking-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  font-size: 30rpx;
+  line-height: 1.8;
+  color: #333;
+}
+
+.thinking-icon {
+  font-size: 32rpx;
+}
+
+.thinking-text {
+  color: #555;
+}
+
+.bubble-text {
+  font-size: 30rpx;
+  line-height: 1.6;
+  word-break: break-all;
+  white-space: pre-wrap;
+}
+
+/* ============ 用户消息（右侧） ============ */
+.userContent {
+  margin-top: 24rpx;
+  position: relative;
+  padding-right: 24rpx;
+}
+
+.user {
+  display: flex;
+  justify-content: flex-end;
+  margin-right: 20rpx;
+  position: relative;
+}
+
+.user .user_content {
+  background-color: #95ec69;
+  border-radius: 12rpx;
+  margin-right: 110rpx;
+  padding: 16rpx 24rpx;
+  word-wrap: break-word;
+  word-break: break-all;
+  font-size: 30rpx;
+  line-height: 1.5;
+  position: relative;
+  box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.05);
+}
+
+.user .user_content::after {
+  content: '';
+  position: absolute;
+  top: 20rpx;
+  right: -12rpx;
+  width: 0;
+  height: 0;
+  border-top: 10rpx solid transparent;
+  border-bottom: 10rpx solid transparent;
+  border-left: 12rpx solid #95ec69;
+}
+
+.avatar-right {
+  position: absolute;
+  top: 0px;
+  right: 12rpx;
+}
+
+.avatar-right .avatar-user {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 8rpx;
   background: var(--wechat-green);
   color: #fff;
   display: flex;
@@ -57,43 +169,12 @@
   justify-content: center;
   font-size: 26rpx;
   font-weight: 600;
-  border-radius: 12rpx;
+  box-sizing: border-box;
+  line-height: 80rpx;
+  text-align: center;
 }
 
-.bubble-wrap {
-  max-width: 72%;
-  margin: 0 16rpx;
-}
-
-.bubble {
-  position: relative;
-  padding: 20rpx 24rpx;
-  font-size: 30rpx;
-  line-height: 1.6;
-  word-break: break-all;
-  border-radius: 16rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
-}
-
-.bubble-figure {
-  background:
-    radial-gradient(ellipse at top left, rgba(201, 162, 77, 0.06) 0%, transparent 60%),
-    linear-gradient(135deg, #FFF9F0 0%, #FFF3DE 100%);
-  color: #2D1810;
-  border: 1rpx solid rgba(201, 162, 77, 0.2);
-  border-top-left-radius: 4rpx;
-}
-
-.bubble-user {
-  background: var(--wechat-green);
-  color: #fff;
-  border-top-right-radius: 4rpx;
-}
-
-.bubble-user .bubble-text {
-  color: #fff;
-}
-
+/* ============ 正在输入动效 ============ */
 .bubble-typing {
   padding: 20rpx 28rpx;
   min-width: 120rpx;
@@ -122,7 +203,6 @@
   margin-left: 2rpx;
   animation: cursorBlink 0.9s step-end infinite;
 }
-.bubble-user .typing-cursor { color: rgba(255, 255, 255, 0.7); }
 
 @keyframes cursorBlink {
   50% { opacity: 0; }
@@ -132,85 +212,144 @@
   height: 10rpx;
 }
 
-.quick-bar {
-  position: absolute;
-  bottom: 140rpx;
-  left: 0;
-  right: 0;
-  background: transparent;
-  padding: 8rpx 0 8rpx 24rpx;
-  z-index: 10;
-  pointer-events: none;
-}
-
-.quick-scroll {
-  white-space: nowrap;
-  pointer-events: auto;
-}
-
-.quick-item {
-  display: inline-flex;
-  align-items: center;
-  padding: 12rpx 24rpx;
-  margin-right: 16rpx;
-  background: rgba(255, 255, 255, 0.95);
-  color: var(--ancient-wood);
-  font-size: 24rpx;
-  border-radius: 999rpx;
-  border: 1rpx solid rgba(201, 162, 77, 0.3);
-  backdrop-filter: blur(4rpx);
-}
-
-.quick-item:active {
-  background: var(--ancient-paper);
-  transform: scale(0.97);
-}
-
-.input-bar-wrap {
+/* ============ 滚动到底按钮 ============ */
+.to-bottom-btn {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: #F7F7F7;
-  border-top: 1rpx solid rgba(0, 0, 0, 0.06);
-  z-index: 100;
-  padding-top: 16rpx;
+  bottom: 260rpx;
+  right: 40rpx;
+  padding: 10rpx;
+  background-color: white;
+  box-shadow: rgba(99, 99, 99, 0.2) 0px 4rpx 16rpx 0px;
+  z-index: 50;
 }
 
-.input-bar {
+/* ============ 底部输入区域 ============ */
+.footer {
+  width: 100%;
+  min-height: 130rpx;
+  max-height: 760rpx;
+  flex-shrink: 0;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  padding: 0 16rpx 24rpx;
+  box-sizing: border-box;
+  background-color: #f7f7f7;
+}
+
+.tool_box {
+  display: flex;
+  flex-direction: row;
+  box-sizing: border-box;
+  gap: 20rpx;
+  justify-content: flex-start;
+  overflow-x: scroll;
+  padding: 20rpx 0rpx 0rpx;
+}
+
+.function {
+  display: flex;
+  width: 150rpx;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8rpx;
+  background-color: #f3f4f6;
+  color: black;
+  padding: 24rpx 12rpx;
+  border-radius: 32rpx;
+}
+
+.tool-icon {
+  font-size: 40rpx;
+}
+
+.text_desc {
+  font-weight: 300;
+  font-size: 24rpx;
+  color: rgb(95, 114, 146);
+}
+
+.foot_function {
+  width: 100%;
+  overflow: hidden;
+}
+
+.input_box {
+  display: flex;
+  align-items: flex-end;
+  flex-direction: row;
+  gap: 20rpx;
+  position: relative;
+  min-height: 80rpx;
+  padding: 12rpx 0rpx;
+  background-color: #f7f7f7;
+}
+
+.set {
+  width: 58rpx;
+  height: 58rpx;
+  padding: 6rpx;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.send-set {
+  width: 38rpx;
+  height: 38rpx;
+  flex-shrink: 0;
+}
+
+.input_inner_box {
+  flex: 1;
+  width: 100%;
+  min-height: 88rpx;
   display: flex;
   align-items: center;
-  padding: 0 24rpx;
+  border: none;
+  border-radius: 12rpx;
+  box-sizing: border-box;
+  background-color: #ffffff;
+  padding: 0 20rpx;
 }
 
-.msg-input {
+.input {
+  padding: 16rpx 0;
+  color: #333;
+  width: 100%;
   flex: 1;
+  max-height: 320rpx;
+  font-size: 32rpx;
+  line-height: 1.5;
+}
+
+.right_btns {
+  height: 100rpx;
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  flex-shrink: 0;
+}
+
+.send-btn-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #07c160;
+  border-radius: 12rpx;
+  width: 76rpx;
   height: 76rpx;
-  background: #fff;
-  border-radius: 8rpx;
-  padding: 0 24rpx;
-  font-size: 30rpx;
-  color: #191919;
+  flex-shrink: 0;
+  padding: 19rpx;
+  box-sizing: border-box;
 }
 
-.send-btn {
-  margin-left: 16rpx !important;
-  height: 76rpx;
-  padding: 0 36rpx !important;
-  line-height: 76rpx !important;
-  font-size: 28rpx !important;
-  background: #ccc !important;
-  color: #fff !important;
-  border-radius: 8rpx !important;
-  border: none !important;
-  transition: background 0.2s;
-}
-
-.send-btn::after { border: none; }
-
-.send-btn.is-active {
-  background: var(--wechat-green) !important;
-}
-.send-btn[disabled] {
-  opacity: 0.6;
+.send-btn-wrap:active {
+  opacity: 0.85;
+  transform: scale(0.97);
 }

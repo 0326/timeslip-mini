@@ -17,10 +17,16 @@ Page({
   data: {
     userInfo: null,
     menus: MENU_LIST,
-    stats: STAT_MENUS
+    stats: STAT_MENUS,
+    statusBarHeight: 40
   },
 
   onLoad() {
+    try {
+      const sys = wx.getSystemInfoSync()
+      const rpxRatio = 750 / sys.windowWidth
+      this.setData({ statusBarHeight: Math.round((sys.statusBarHeight || 20) * rpxRatio) })
+    } catch (e) {}
     this.refreshUser()
   },
 
