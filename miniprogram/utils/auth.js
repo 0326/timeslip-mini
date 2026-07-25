@@ -21,7 +21,7 @@ async function login(nickName, avatarUrl) {
     app.globalData.memberLevel = data.memberLevel || '普通会员'
     app.globalData.crossNo = data.crossNo || ''
 
-    storage.set('userInfo', data, 3600)
+    storage.set('userInfo', data, 86400)
     if (app.emitUserUpdate) app.emitUserUpdate(data)
     return { ok: true, data, isNewUser: res.result.isNewUser }
   } catch (err) {
@@ -48,8 +48,8 @@ function restoreFromCache() {
     if (app.globalData.userInfo && app.globalData.openid) return true
 
     const cached = storage.get('userInfo')
-    if (cached && cached._openid) {
-      app.globalData.openid = cached._openid
+    if (cached && (cached._openid || cached._id)) {
+      if (cached._openid) app.globalData.openid = cached._openid
       app.globalData.userInfo = cached
       app.globalData.points = cached.points || 0
       app.globalData.memberLevel = cached.memberLevel || '普通会员'

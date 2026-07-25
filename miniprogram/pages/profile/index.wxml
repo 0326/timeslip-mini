@@ -1,5 +1,5 @@
 <custom-nav-bar
-  title="我的"
+  title=""
   showBack="{{false}}"
   bgColor="transparent"
   translucent

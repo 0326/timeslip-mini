@@ -4,14 +4,14 @@
   bgColor="#fff"
 >
   <view slot="left" class="nav-actions" bindtap="goToLantai">
-    <text class="nav-action-icon">➕</text>
+    <text class="iconfont nav-action-icon icon-add"></text>
   </view>
 </custom-nav-bar>
 
 <view class="chat-list-page">
   <view class="search-wrap">
     <view class="search-bar">
-      <text class="search-icon">🔍</text>
+      <text class="iconfont search-icon icon-search"></text>
       <input
         class="search-input"
         placeholder="搜索历史人物..."

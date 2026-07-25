@@ -1,12 +1,19 @@
 .discover-page {
-  min-height: 100vh;
+  height: 100vh;
   background: #ededed;
   padding-top: 16rpx;
+  display: flex;
+  flex-direction: column;
 }
 
 .group {
   background: #fff;
   margin-bottom: 16rpx;
+  flex-shrink: 0;
+}
+
+.group:last-child {
+  flex: 1;
 }
 
 .entry {
@@ -63,4 +70,5 @@
 
 .bottom-pad {
   height: calc(120rpx + env(safe-area-inset-bottom));
+  flex-shrink: 0;
 }

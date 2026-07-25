@@ -33,14 +33,13 @@ Page({
   },
 
   async refreshUser() {
-    // 先用 globalData 兜底，避免接口异常时白屏
     const app = getApp()
     const cached = app.globalData && app.globalData.userInfo
     if (cached) this.setData({ userInfo: cached })
 
     try {
       const userInfo = await getUserInfo()
-      if (userInfo) {
+      if (userInfo && userInfo._openid) {
         this.setData({ userInfo })
         if (!app.globalData) app.globalData = {}
         app.globalData.openid = userInfo._openid
@@ -48,8 +47,9 @@ Page({
         app.globalData.points = userInfo.points || 0
         app.globalData.memberLevel = userInfo.memberLevel || '普通会员'
         app.globalData.crossNo = userInfo.crossNo || ''
+        const { storage } = require('../../utils/storage')
+        storage.set('userInfo', userInfo, 86400)
       }
-      // userInfo 为 null 时不做处理，保留 globalData 兜底
     } catch (e) {
       console.warn('refreshUser failed:', e)
     }
