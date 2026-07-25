@@ -19,7 +19,7 @@
             />
             <view wx:else class="avatar-fallback">👤</view>
           </view>
-          <view class="avatar-edit">✏️</view>
+          <view class="avatar-edit iconfont icon-edit"></view>
         </view>
         <view class="user-meta">
           <view class="user-name-row">
@@ -38,7 +38,7 @@
 
       <view class="stats-grid">
         <view wx:for="{{stats}}" wx:key="key" class="stat-card">
-          <text class="s-icon">{{item.icon}}</text>
+          <text class="iconfont s-icon icon-{{item.iconClass}}"></text>
           <text class="s-num">{{item.num}}</text>
           <text class="s-label">{{item.label}}</text>
         </view>
@@ -61,12 +61,12 @@
       bindtap="onMenuTap"
       hover-class="menu-hover"
     >
-      <text class="m-icon">{{item.icon}}</text>
+      <text class="iconfont m-icon icon-{{item.iconClass}}"></text>
       <view class="m-text">
         <text class="m-name">{{item.name}}</text>
         <text class="m-desc">{{item.desc}}</text>
       </view>
-      <text class="m-arrow">{{item.right}}</text>
+      <text class="iconfont m-arrow icon-right"></text>
     </view>
   </view>
 

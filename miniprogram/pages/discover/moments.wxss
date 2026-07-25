@@ -271,6 +271,11 @@
   font-size: 28rpx;
   margin-right: 8rpx;
   line-height: 1;
+  color: #fff;
+}
+
+.ami-icon.is-liked {
+  color: #FA5151;
 }
 
 .ami-text {

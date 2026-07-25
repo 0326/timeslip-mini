@@ -6,7 +6,7 @@
   translucent="{{!navOpaque}}"
 >
   <view slot="right" class="nav-camera" bindtap="onPublish">
-    <text class="camera-icon">📷</text>
+    <text class="iconfont camera-icon icon-picture"></text>
   </view>
 </custom-nav-bar>
 
@@ -22,7 +22,7 @@
   <view wx:if="{{refreshing}}" class="refreshing-tip">刷新中...</view>
 
   <view wx:if="{{!loading && moments.length === 0}}" class="empty-moments">
-    <text class="em-icon">📭</text>
+    <text class="iconfont em-icon icon-mail"></text>
     <text class="em-text">暂无历史朋友圈</text>
     <text class="em-sub">下拉刷新查看更多内容</text>
   </view>
@@ -83,12 +83,12 @@
 
       <view wx:if="{{actionMenuId === item._id}}" class="action-menu" catchtap="stopPropagation">
         <view class="am-item" catchtap="onLike" data-id="{{item._id}}">
-          <text class="ami-icon">{{item._liked ? '♥' : '♡'}}</text>
+          <text class="iconfont ami-icon icon-good {{item._liked ? 'is-liked' : ''}}"></text>
           <text class="ami-text">{{item._liked ? '取消' : '赞'}}</text>
         </view>
         <view class="am-split"></view>
         <view class="am-item" catchtap="openCommentInput" data-id="{{item._id}}">
-          <text class="ami-icon">💬</text>
+          <text class="iconfont ami-icon icon-chat"></text>
           <text class="ami-text">评论</text>
         </view>
       </view>

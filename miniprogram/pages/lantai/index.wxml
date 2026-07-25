@@ -37,7 +37,7 @@
     </view>
 
     <view wx:elif="{{groups.length === 0}}" class="empty">
-      <text class="e-icon">{{searchText ? '🔍' : '📜'}}</text>
+      <text class="iconfont e-icon {{searchText ? 'icon-search' : 'icon-content'}}"></text>
       <text class="e-text">{{searchText ? '未找到相关人物' : (loadError ? '加载失败，下拉刷新重试' : '暂无人物数据')}}</text>
     </view>
 
@@ -74,7 +74,7 @@
             </view>
             <text wx:if="{{f.title}}" class="c-title">{{f.title}}</text>
           </view>
-          <text class="c-arrow">›</text>
+          <text class="iconfont c-arrow icon-right"></text>
         </view>
       </view>
       <view class="bottom-safe"></view>
@@ -93,7 +93,7 @@
 
   <block wx:else>
     <view wx:if="{{books.length === 0}}" class="empty">
-      <text class="e-icon">📚</text>
+      <text class="iconfont e-icon icon-content"></text>
       <text class="e-text">暂无典籍数据</text>
     </view>
     <scroll-view wx:else class="book-scroll" scroll-y enhanced show-scrollbar="{{false}}">
@@ -117,7 +117,7 @@
             </view>
             <text class="book-desc">{{item.desc}}</text>
             <view class="book-foot">
-              <text class="book-cta">进入阅读 ›</text>
+              <text class="book-cta">进入阅读 <text class="iconfont icon-right" style="font-size:22rpx;"></text></text>
             </view>
           </view>
         </view>

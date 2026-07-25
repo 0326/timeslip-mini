@@ -20,9 +20,10 @@
       bindtap="onItemTap"
       hover-class="entry-hover"
     >
-      <text class="entry-icon">{{entry.icon}}</text>
+      <image wx:if="{{entry.iconSrc}}" class="entry-img" src="{{entry.iconSrc}}" mode="aspectFit"></image>
+      <text wx:else class="iconfont entry-icon icon-{{entry.iconClass}}" style="color:{{entry.color}};"></text>
       <text class="entry-name">{{entry.name}}</text>
-      <text class="entry-arrow">›</text>
+      <text class="iconfont entry-arrow icon-right"></text>
     </view>
   </view>
   <view class="bottom-pad"></view>

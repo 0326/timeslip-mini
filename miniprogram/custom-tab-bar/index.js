@@ -3,7 +3,7 @@ Component({
   data: {
     selected: 0,
     list: [
-      { pagePath: '/pages/chat/index', text: '聊天', icon: '💬', iconActive: '💬' },
+      { pagePath: '/pages/chat/index', text: '穿越', icon: '💬', iconActive: '💬' },
       { pagePath: '/pages/lantai/index', text: '兰台', icon: '📖', iconActive: '📚' },
       { pagePath: '/pages/discover/index', text: '发现', icon: '🧭', iconActive: '🧭' },
       { pagePath: '/pages/profile/index', text: '我的', icon: '👤', iconActive: '🏵️' }

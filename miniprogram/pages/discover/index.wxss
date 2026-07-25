@@ -42,6 +42,13 @@
   text-align: center;
 }
 
+.entry-img {
+  width: 48rpx;
+  height: 48rpx;
+  margin-right: 28rpx;
+  flex-shrink: 0;
+}
+
 .entry-name {
   flex: 1;
   font-size: 32rpx;
@@ -51,6 +58,7 @@
 .entry-arrow {
   font-size: 36rpx;
   color: #c8c8c8;
+  margin-left: 8rpx;
 }
 
 .bottom-pad {

@@ -3,25 +3,25 @@ Page({
     groups: [
       {
         items: [
-          { key: 'moments', icon: '📸', name: '朋友圈', url: '/pages/discover/moments' }
+          { key: 'moments', iconSrc: '/images/pyq.png', name: '朋友圈', url: '/pages/discover/moments' }
         ]
       },
       {
         items: [
-          { key: 'channels', icon: '📺', name: '视频号', url: '' },
-          { key: 'live', icon: '🎥', name: '直播', url: '' }
+          { key: 'channels', iconClass: 'shipinhao', name: '视频号', color: '#FA5151', url: '' },
+          { key: 'live', iconClass: 'zhibo', name: '直播', color: '#FF7A45', url: '' }
         ]
       },
       {
         items: [
-          { key: 'dna', icon: '🧬', name: '测一测', url: '/pages/discover/dna-hall/index' },
-          { key: 'memorial', icon: '📜', name: '批一批', url: '/pages/discover/memorial' }
+          { key: 'dna', iconClass: 'cyc', name: '测一测', color: '#722ED1', url: '/pages/discover/dna-hall/index' },
+          { key: 'memorial', iconClass: 'pyp', name: '批一批', color: '#C9A24D', url: '/pages/discover/memorial' }
         ]
       },
       {
         items: [
-          { key: 'listen', icon: '🎧', name: '听一听', url: '' },
-          { key: 'look', icon: '👀', name: '看一看', url: '' }
+          { key: 'listen', iconClass: 'tyt', name: '听一听', color: '#07C160', url: '' },
+          { key: 'look', iconClass: 'kyk', name: '看一看', color: '#1890FF', url: '' }
         ]
       }
     ]

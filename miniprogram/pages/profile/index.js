@@ -3,14 +3,14 @@ const { requestCloud } = require('../../utils/cloudRequest')
 const loginGuard = require('../../utils/loginGuard')
 
 const MENU_LIST = [
-  { key: 'letters', icon: '🕊️', name: '信鸽驿站', desc: '历史信件往来', url: '/pages/profile/letters', right: '›' },
-  { key: 'settings', icon: '⚙️', name: '设置', desc: '隐私与偏好', url: '/pages/profile/settings', right: '›' }
+  { key: 'letters', iconClass: 'mail', name: '信鸽驿站', desc: '历史信件往来', url: '/pages/profile/letters' },
+  { key: 'settings', iconClass: 'more', name: '设置', desc: '隐私与偏好', url: '/pages/profile/settings' }
 ]
 
 const STAT_MENUS = [
-  { key: 'chatCount', num: 0, label: '对话次数', icon: '💬' },
-  { key: 'letterCount', num: 0, label: '飞鸽书信', icon: '🕊️' },
-  { key: 'memorialCount', num: 0, label: '奏折批阅', icon: '📜' }
+  { key: 'chats', num: 0, label: '对话次数', iconClass: 'chat' },
+  { key: 'letters', num: 0, label: '飞鸽书信', iconClass: 'mail' },
+  { key: 'memorials', num: 0, label: '奏折批阅', iconClass: 'daipiyue' }
 ]
 
 Page({

@@ -7,7 +7,7 @@
   >
     <view class="nav-left" style="top: {{menuTop}}px; height: {{menuHeight}}px; line-height: {{menuHeight}}px;">
       <view wx:if="{{showBack}}" class="nav-back" bindtap="onBack" hover-class="nav-hover" style="color: {{textColor}};">
-        <text class="nav-back-icon">‹</text>
+        <text class="iconfont nav-back-icon icon-left"></text>
         <text wx:if="{{backText}}" class="nav-back-text">{{backText}}</text>
       </view>
       <slot name="left"></slot>
@@ -25,7 +25,7 @@
 
     <view class="nav-right" style="top: {{menuTop}}px; height: {{menuHeight}}px;">
       <view wx:if="{{showHome}}" class="nav-home" bindtap="onHome" hover-class="nav-hover">
-        <text>🏠</text>
+        <text class="iconfont icon-cyc"></text>
       </view>
       <slot name="right"></slot>
     </view>

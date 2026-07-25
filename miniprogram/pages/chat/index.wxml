@@ -1,5 +1,5 @@
 <custom-nav-bar
-  title="穿越聊天"
+  title="聊天"
   showBack="{{false}}"
   bgColor="#fff"
 >

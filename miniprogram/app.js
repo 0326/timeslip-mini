@@ -16,7 +16,7 @@ App({
   },
 
   tabList: [
-    { pagePath: 'pages/chat/index', name: '聊天', icon: '💬' },
+    { pagePath: 'pages/chat/index', name: '穿越', icon: '💬' },
     { pagePath: 'pages/lantai/index', name: '兰台', icon: '📖' },
     { pagePath: 'pages/discover/index', name: '发现', icon: '🧭' },
     { pagePath: 'pages/profile/index', name: '我的', icon: '👤' }
