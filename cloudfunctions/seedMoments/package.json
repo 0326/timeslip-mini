@@ -1,0 +1,9 @@
+{
+  "name": "seedMoments",
+  "version": "1.0.0",
+  "description": "seed moments and moment_comments for timeslip-mini",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

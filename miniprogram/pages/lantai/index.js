@@ -54,7 +54,7 @@ async function loadAll(queryFactory, pageSize = PAGE_SIZE, max = 300) {
       .limit(pageSize)
       .get()
     const rows = res.data || []
-    all.push(...rows)
+    Array.prototype.push.apply(all, rows)
     if (rows.length < pageSize) break
   }
   return all

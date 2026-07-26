@@ -4,99 +4,271 @@
   bgColor="{{navBgColor}}"
   textColor="{{navTextColor}}"
   translucent="{{!navOpaque}}"
->
-  <view slot="right" class="nav-camera" bindtap="onPublish">
-    <text class="iconfont camera-icon icon-picture"></text>
-  </view>
-</custom-nav-bar>
+/>
 
 <view class="moments-page" bindtap="closeActionMenu">
   <view class="cover-area">
-    <image class="cover-bg" src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=ancient%20chinese%20landscape%20painting%20mountains%20rivers%20misty%20ink%20wash%20style&image_size=landscape_16_9" mode="aspectFill"></image>
+    <block wx:if="{{coverImg}}">
+      <image class="cover-bg" src="{{coverImg}}" mode="aspectFill" binderror="onCoverError"></image>
+    </block>
+    <block wx:else>
+      <view class="cover-bg cover-bg-fallback" style="background:{{coverFallbackBg}};"></view>
+    </block>
     <view class="cover-user">
       <view class="cover-name">{{userInfo.nickName || '穿越者'}}</view>
-      <image class="cover-avatar" src="{{userInfo.avatarUrl || 'https://img.icons8.com/color/96/user-male-circle--v1.png'}}" mode="aspectFill"></image>
+      <view class="cover-avatar-wrap">
+        <figure-avatar
+          figure="{{coverFigure}}"
+          size="xl"
+          shape="square"
+          show-border="{{true}}"
+          lazy-load="{{false}}"
+        ></figure-avatar>
+      </view>
     </view>
   </view>
 
-  <view wx:if="{{refreshing}}" class="refreshing-tip">刷新中...</view>
-
-  <view wx:if="{{!loading && moments.length === 0}}" class="empty-moments">
-    <text class="iconfont em-icon icon-mail"></text>
-    <text class="em-text">暂无历史朋友圈</text>
-    <text class="em-sub">下拉刷新查看更多内容</text>
+  <view class="dynasty-filter {{filterSticky ? 'is-sticky' : ''}}" catchtap="stopPropagation">
+    <scroll-view scroll-x="true" class="filter-scroll" enhanced show-scrollbar="{{false}}">
+      <view class="filter-row">
+        <view
+          wx:for="{{dynastyFilters}}"
+          wx:key="key"
+          class="filter-item {{selectedDynasty === item.key ? 'is-active' : ''}}"
+          data-key="{{item.key}}"
+          bindtap="onSelectDynasty"
+        >{{item.name}}</view>
+      </view>
+    </scroll-view>
   </view>
 
-  <view class="moments-list">
+  <view wx:if="{{filterSticky}}" class="filter-placeholder"></view>
+
+  <view wx:if="{{initialLoading}}" class="state-wrap">
+    <view class="skeleton-list">
+      <view wx:for="{{[1,2,3]}}" wx:key="*this" class="skeleton-item">
+        <view class="sk-avatar"></view>
+        <view class="sk-body">
+          <view class="sk-line sk-name"></view>
+          <view class="sk-line sk-c1"></view>
+          <view class="sk-line sk-c2"></view>
+          <view class="sk-line sk-c3"></view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:elif="{{loadError}}" class="state-wrap">
+    <view class="error-box">
+      <text class="iconfont error-icon icon-info"></text>
+      <text class="error-text">加载失败</text>
+      <text class="error-sub">请检查网络后重试</text>
+      <button class="error-btn" bindtap="onRetryLoad">重新加载</button>
+    </view>
+  </view>
+
+  <view wx:elif="{{!loading && moments.length === 0}}" class="state-wrap">
+    <view class="empty-box">
+      <text class="iconfont empty-icon icon-mail"></text>
+      <text class="empty-text">暂无历史朋友圈</text>
+      <text class="empty-sub">下拉刷新或切换朝代试试</text>
+    </view>
+  </view>
+
+  <view wx:else class="moments-list">
     <view
       wx:for="{{moments}}"
       wx:key="_id"
       class="moment-item"
+      data-id="{{item._id}}"
+      bindtap="openMomentDetail"
     >
-      <image class="mi-avatar" src="{{item.avatar || 'https://img.icons8.com/color/96/user-male-circle--v1.png'}}" mode="aspectFill"></image>
-
-      <view class="mi-body">
-        <view class="mi-name">{{item.figureName}}</view>
-
-        <view class="mi-content" data-id="{{item._id}}" bindtap="openMomentDetail">
-          <text class="mic-text">{{item.content}}</text>
-        </view>
-
-        <view wx:if="{{item.historicalEvent}}" class="mi-event">
-          <text class="mie-text">{{item.historicalEvent}} · {{item.historicalDate}}</text>
-        </view>
-
-        <view class="mi-footer">
-          <text class="mif-time">{{item.displayTime}}</text>
-          <view class="mif-actions" catchtap="toggleActionMenu" data-id="{{item._id}}">
-            <view class="action-dots">
-              <view class="dot"></view>
-              <view class="dot"></view>
-            </view>
-          </view>
-        </view>
-
-        <view wx:if="{{(item.likes && item.likes.length) || (item.comments && item.comments.length)}}" class="mi-bubble">
-          <view wx:if="{{item.likes && item.likes.length}}" class="mb-likes">
-            <text class="mbl-icon">♥</text>
-            <text class="mbl-names">
-              <block wx:for="{{item.likes}}" wx:for-item="l" wx:key="openid">
-                <text class="mbl-name">{{l.name}}</text><text wx:if="{{index < item.likes.length - 1}}" class="mbl-comma">，</text>
-              </block>
-            </text>
-          </view>
-          <view wx:if="{{item.likes && item.likes.length && item.comments && item.comments.length}}" class="mb-divider"></view>
-          <view wx:if="{{item.comments && item.comments.length}}" class="mb-comments">
-            <view
-              wx:for="{{item.comments}}"
-              wx:for-item="c"
-              wx:key="openid"
-              class="mbc-item"
-            >
-              <text class="mbc-name">{{c.name}}</text>
-              <text class="mbc-colon">：</text>
-              <text class="mbc-content">{{c.content}}</text>
-            </view>
-          </view>
-        </view>
+      <view
+        class="mi-avatar"
+        catchtap="onFigureTap"
+        data-figureid="{{item.figure.id}}"
+      >
+        <figure-avatar
+          figure="{{item.figure}}"
+          size="md"
+          shape="square"
+          lazy-load="{{true}}"
+        ></figure-avatar>
       </view>
 
-      <view wx:if="{{actionMenuId === item._id}}" class="action-menu" catchtap="stopPropagation">
-        <view class="am-item" catchtap="onLike" data-id="{{item._id}}">
-          <text class="iconfont ami-icon icon-good {{item._liked ? 'is-liked' : ''}}"></text>
-          <text class="ami-text">{{item._liked ? '取消' : '赞'}}</text>
+      <view class="mi-body">
+        <view
+          class="mi-name-row"
+          catchtap="onFigureTap"
+          data-figureid="{{item.figure.id}}"
+        >
+          <text class="mi-name">{{item.figure.name}}</text>
+          <text wx:if="{{item.figure.title}}" class="mi-title">· {{item.figure.title}}</text>
         </view>
-        <view class="am-split"></view>
-        <view class="am-item" catchtap="openCommentInput" data-id="{{item._id}}">
-          <text class="iconfont ami-icon icon-chat"></text>
-          <text class="ami-text">评论</text>
+
+        <view class="mi-content-wrap">
+          <view
+            class="mi-content {{collapseMap[item._id] ? 'is-expand' : ''}} {{item.hasCollapse ? 'can-clamp' : ''}}"
+            data-id="{{item._id}}"
+            catchtap="toggleContentCollapse"
+          >
+            <text class="mic-text">{{item.content}}</text>
+          </view>
+          <view
+            wx:if="{{item.hasCollapse}}"
+            class="expand-toggle"
+            data-id="{{item._id}}"
+            catchtap="toggleContentCollapse"
+          >
+            <text class="et-text {{collapseMap[item._id] ? 'is-collapse' : 'is-expand'}}">{{collapseMap[item._id] ? '收起' : '全文'}}</text>
+          </view>
+        </view>
+
+        <view
+          wx:if="{{item.images && item.images.length}}"
+          class="mi-images mi-grid-{{item.imageGridType}}"
+        >
+          <block wx:for="{{item.images}}" wx:for-item="img" wx:for-index="idx" wx:key="*this">
+            <image
+              class="mi-img"
+              src="{{img}}"
+              mode="aspectFill"
+              lazy-load="{{true}}"
+              data-idx="{{idx}}"
+              data-id="{{item._id}}"
+              binderror="onImageError"
+              catchtap="onPreviewImage"
+            ></image>
+          </block>
+        </view>
+
+        <view wx:if="{{item.historical && (item.historical.event || item.historical.date)}}" class="mi-historical" data-id="{{item._id}}" catchtap="openMomentDetail">
+          <text class="mih-dot">📜</text>
+          <view class="mih-info">
+            <text wx:if="{{item.historical.event}}" class="mih-event">{{item.historical.event}}</text>
+            <text wx:if="{{item.historical.date}}" class="mih-date"> · {{item.historical.date}}</text>
+          </view>
+        </view>
+
+        <view class="mi-footer" catchtap="stopPropagation">
+          <view class="mif-left">
+            <text class="mif-time">{{item.displayTime}}</text>
+            <text wx:if="{{item.location}}" class="mif-loc"> · {{item.location}}</text>
+            <text wx:if="{{pendingLikeIds[item._id]}}" class="mif-pending">（处理中…）</text>
+          </view>
+          <view class="mif-actions" data-id="{{item._id}}" catchtap="toggleActionMenu">
+            <view class="action-triple-btn">
+              <text class="iconfont icon-more action-triple-icon"></text>
+            </view>
+          </view>
+        </view>
+
+        <view
+          wx:if="{{actionMenuId === item._id}}"
+          class="action-menu"
+          catchtap="stopPropagation"
+        >
+          <view class="am-arrow"></view>
+          <view
+            class="am-item {{item.interaction.liked ? 'is-liked' : ''}}"
+            catchtap="onLike"
+            data-id="{{item._id}}"
+          >
+            <text class="iconfont ami-icon {{item.interaction.liked ? 'icon-goodfill' : 'icon-good'}}"></text>
+            <text class="ami-text">{{item.interaction.liked ? '取消' : '赞'}}</text>
+          </view>
+          <view class="am-split"></view>
+          <view
+            class="am-item"
+            catchtap="openCommentInput"
+            data-id="{{item._id}}"
+          >
+            <text class="iconfont ami-icon icon-chat"></text>
+            <text class="ami-text">评论</text>
+          </view>
+        </view>
+
+        <view
+          wx:if="{{(item.interaction.likeCount > 0) || (item.interaction.commentCount > 0)}}"
+          class="mi-bubble"
+          data-id="{{item._id}}"
+          catchtap="openMomentDetail"
+        >
+          <view wx:if="{{item.interaction.likeCount > 0}}" class="mb-likes">
+            <text class="iconfont mbl-icon icon-heart mbl-heart"></text>
+            <text class="mbl-names">
+              <block wx:for="{{item.interaction.likePreview}}" wx:for-item="lp" wx:key="id">
+                <text class="mbl-name">{{lp.name}}</text>
+                <text wx:if="{{index < item.interaction.likePreview.length - 1}}" class="mbl-comma">，</text>
+              </block>
+              <text wx:if="{{item.interaction.likeCount > item.interaction.likePreview.length}}" class="mbl-more"> 等{{item.interaction.likeCount}}人</text>
+              <text wx:if="{{item.interaction.likeCount <= item.interaction.likePreview.length}}" class="mbl-more"> 觉得很赞</text>
+            </text>
+          </view>
+
+          <view wx:if="{{item.interaction.likeCount > 0 && item.interaction.commentCount > 0}}" class="mb-divider"></view>
+
+          <view wx:if="{{item.interaction.commentCount > 0}}" class="mb-comments">
+            <block wx:for="{{item.interaction.commentPreview}}" wx:for-item="cp" wx:key="id">
+              <view
+                class="mbc-item"
+                data-id="{{item._id}}"
+                data-replyto="{{cp.id}}"
+                data-replyname="{{cp.name}}"
+                catchtap="openCommentInput"
+              >
+                <text
+                  class="mbc-name"
+                  catchtap="onFigureTap"
+                  data-figureid="{{cp.figureId}}"
+                >{{cp.name}}</text>
+                <text wx:if="{{cp.replyName}}" class="mbc-reply" catchtap="onFigureTap" data-figureid="{{cp.replyTo}}"> 回复 {{cp.replyName}}</text>
+                <text class="mbc-colon">：</text>
+                <text class="mbc-content">{{cp.content}}</text>
+              </view>
+            </block>
+            <view
+              wx:if="{{item.interaction.commentCount > item.interaction.commentPreview.length}}"
+              class="mbc-more"
+              data-id="{{item._id}}"
+              catchtap="openMomentDetail"
+            >查看全部 {{item.interaction.commentCount}} 条评论</view>
+          </view>
         </view>
       </view>
     </view>
   </view>
 
-  <view wx:if="{{loading}}" class="load-more">加载中...</view>
-  <view wx:elif="{{!hasMore && moments.length}}" class="load-more is-end">— 没有更多了 —</view>
+  <view wx:if="{{refreshing && !initialLoading}}" class="loading-tip">刷新中...</view>
+  <view wx:if="{{!initialLoading && !refreshing && loading}}" class="loading-tip">加载更多...</view>
+  <view wx:if="{{!hasMore && moments.length}}" class="loading-tip is-end">— 没有更多了 —</view>
 
   <view class="bottom-pad"></view>
+
+  <view wx:if="{{showCommentBar}}" class="cm-mask" bindtap="hideCommentInput"></view>
+  <view class="cm-input-bar {{showCommentBar ? 'is-show' : ''}}">
+    <view wx:if="{{commentReplyName}}" class="cm-reply-hint">
+      回复 <text class="cm-reply-name">{{commentReplyName}}</text>
+      <text class="cm-cancel" bindtap="hideCommentInput">取消</text>
+    </view>
+    <view class="cm-row">
+      <input
+        class="cm-input"
+        placeholder="{{commentReplyName ? '友善回复...' : '友善评论，穿越时空的对话...'}}"
+        placeholder-style="color:#aaa"
+        value="{{commentInput}}"
+        bindinput="onCommentInput"
+        bindfocus="onCommentFocus"
+        bindconfirm="onSubmitComment"
+        confirm-type="send"
+        auto-focus="{{showCommentBar}}"
+        cursor-spacing="20"
+        adjust-position="{{true}}"
+      />
+      <view
+        class="cm-send {{commentInput ? 'is-active' : ''}}"
+        bindtap="onSubmitComment"
+      >{{commentSubmitting ? '发布中' : '发送'}}</view>
+    </view>
+  </view>
 </view>

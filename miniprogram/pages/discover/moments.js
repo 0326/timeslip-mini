@@ -1,117 +1,62 @@
 const { requestCloud } = require('../../utils/cloudRequest')
-const { formatRelative, getDynastyInfo } = require('../../utils/date')
-const { PAGINATION } = require('../../utils/constants')
-const { storage } = require('../../utils/storage')
-const { throttle } = require('../../utils/helpers')
+const { PAGINATION, DYNASTY_FILTERS, CONTENT_SECURITY } = require('../../utils/constants')
+const {
+  USE_MOCK_FALLBACK,
+  enrichMomentView,
+  enrichCommentView,
+  mockListMoments,
+  mockToggleLike,
+  mockCreateComment
+} = require('../../utils/momentAdapter')
 const loginGuard = require('../../utils/loginGuard')
+const { throttle } = require('../../utils/helpers')
 
-const MOCK_MOMENTS = [
-  {
-    _id: 'm1',
-    figureId: 'liubang',
-    figureName: '刘邦',
-    figureTitle: '汉高祖',
-    avatar: 'https://img.icons8.com/color/96/king.png',
-    dynasty: 'han',
-    content: '今日鸿门，气氛有点微妙。项庄舞剑，意在沛公啊！幸好项伯出来解围，不然今日要交代在这里了...😅',
-    images: [],
-    historicalEvent: '鸿门宴',
-    historicalDate: '公元前206年',
-    likes: [
-      { openid: 'fan_kuai', name: '樊哙', avatar: '' },
-      { openid: 'zhang_liang', name: '张良', avatar: '' },
-      { openid: 'xiao_he', name: '萧何', avatar: '' }
-    ],
-    likeCount: 3,
-    comments: [
-      { openid: 'fan_zeng', name: '范增', content: '竖子不足与谋！唉，错失良机啊！' },
-      { openid: 'xiang_yu', name: '项羽', content: '大哥别走啊，再来喝两杯🤔' },
-      { openid: 'zhang_liang', name: '张良', content: '主公吉人天相，此一劫过，后必有大福。' }
-    ],
-    commentCount: 3,
-    createdAt: Date.now() - 3600000 * 2
-  },
-  {
-    _id: 'm2',
-    figureId: 'zhugeliang',
-    figureName: '诸葛亮',
-    figureTitle: '武乡侯',
-    avatar: 'https://img.icons8.com/color/96/general.png',
-    dynasty: 'sanguo',
-    content: '臣本布衣，躬耕于南阳，苟全性命于乱世，不求闻达于诸侯。先帝不以臣卑鄙，猥自枉屈，三顾臣于草庐之中...',
-    images: [],
-    historicalEvent: '三顾茅庐',
-    historicalDate: '公元207年',
-    likes: [],
-    likeCount: 88,
-    comments: [
-      { openid: 'liubei', name: '刘备', content: '孔明先生，备得先生，如鱼得水也！' },
-      { openid: 'guanyu', name: '关羽', content: '嗯......确实有几分本事。' },
-      { openid: 'zhangfei', name: '张飞', content: '俺也觉得军师说的对！' }
-    ],
-    commentCount: 3,
-    createdAt: Date.now() - 86400000
-  },
-  {
-    _id: 'm3',
-    figureId: 'libai',
-    figureName: '李白',
-    figureTitle: '诗仙',
-    avatar: 'https://img.icons8.com/color/96/poet.png',
-    dynasty: 'tang',
-    content: '桃花潭水深千尺，不及汪伦送我情。\n今日一别，不知何日再聚，唯有诗酒相赠！🍶',
-    images: [],
-    historicalEvent: '赠汪伦',
-    historicalDate: '天宝年间',
-    likes: [],
-    likeCount: 1024,
-    comments: [
-      { openid: 'dufu', name: '杜甫', content: '白也诗无敌，飘然思不群！' },
-      { openid: 'wanglun', name: '汪伦', content: '先生下次一定要再来啊！我这里还有万家酒店！' }
-    ],
-    commentCount: 2,
-    createdAt: Date.now() - 86400000 * 2
-  },
-  {
-    _id: 'm4',
-    figureId: 'sushi',
-    figureName: '苏轼',
-    figureTitle: '东坡居士',
-    avatar: 'https://img.icons8.com/color/96/writer.png',
-    dynasty: 'song',
-    content: '黄州好猪肉，价贱如泥土。贵者不肯吃，贫者不解煮，早晨起来打两碗，饱得自家君莫管。🥩',
-    images: [],
-    historicalEvent: '东坡肉',
-    historicalDate: '元丰年间',
-    likes: [],
-    likeCount: 520,
-    comments: [
-      { openid: 'fo_yin', name: '佛印', content: '居士又在研究吃了？哈哈哈！' },
-      { openid: 'huangtingjian', name: '黄庭坚', content: '老师！求秘方！' }
-    ],
-    commentCount: 2,
-    createdAt: Date.now() - 86400000 * 3
-  }
-]
+const MAX_COLLAPSE_LINES = 6
 
 Page({
   data: {
+    dynastyFilters: DYNASTY_FILTERS,
+    selectedDynasty: 'all',
+    filterSticky: false,
     moments: [],
-    page: 0,
+    cursor: '',
     hasMore: true,
     loading: false,
     refreshing: false,
+    initialLoading: true,
+    loadError: false,
     actionMenuId: '',
     navOpaque: false,
     navBgColor: 'transparent',
     navTextColor: '#ffffff',
-    userInfo: {}
+    userInfo: {},
+    coverFigure: { name: '穿越者', avatar: '', dynasty: '汉' },
+    openid: '',
+    collapseMap: {},
+    pendingLikeIds: {},
+    pendingCommentIds: {},
+    showCommentBar: false,
+    commentTargetId: '',
+    commentReplyTo: '',
+    commentReplyName: '',
+    commentInput: '',
+    commentSubmitting: false,
+    coverImg: '/images/pyq.png',
+    coverFallbackBg: 'linear-gradient(135deg, #2c3e50 0%, #4a6582 50%, #6b8db0 100%)'
   },
 
   onLoad() {
     const app = getApp()
+    const userInfo = (app.globalData && app.globalData.userInfo) || {}
+    const openid = (app.globalData && app.globalData.openid) || ''
     this.setData({
-      userInfo: (app.globalData && app.globalData.userInfo) || {}
+      userInfo,
+      openid,
+      coverFigure: {
+        name: userInfo.nickName || '穿越者',
+        avatar: userInfo.avatarUrl || '',
+        dynasty: '汉'
+      }
     })
     this.loadMoments(true)
   },
@@ -126,15 +71,21 @@ Page({
 
   onPageScroll(e) {
     const scrollTop = e.scrollTop
-    const threshold = 100
-    const shouldOpaque = scrollTop > threshold
+    const navThreshold = 280
+    const stickyThreshold = 560
 
+    const shouldOpaque = scrollTop > navThreshold
     if (shouldOpaque !== this.data.navOpaque) {
       this.setData({
         navOpaque: shouldOpaque,
         navBgColor: shouldOpaque ? '#ffffff' : 'transparent',
         navTextColor: shouldOpaque ? '#191919' : '#ffffff'
       })
+    }
+
+    const shouldSticky = scrollTop > stickyThreshold
+    if (shouldSticky !== this.data.filterSticky) {
+      this.setData({ filterSticky: shouldSticky })
     }
 
     if (this.data.actionMenuId) {
@@ -148,44 +99,95 @@ Page({
     }
   },
 
+  onRetryLoad() {
+    this.setData({ loadError: false })
+    this.loadMoments(true)
+  },
+
   async loadMoments(reset) {
     if (this.data.loading) return
-    this.setData({ loading: true, refreshing: reset })
+    const cursor = reset ? '' : this.data.cursor
+    const limit = PAGINATION.MOMENT_PAGE_SIZE
+    const dynasty = this.data.selectedDynasty
+
+    this.setData({
+      loading: true,
+      refreshing: reset,
+      initialLoading: reset && this.data.moments.length === 0,
+      loadError: false
+    })
+
+    let result = null
     try {
-      const page = reset ? 0 : this.data.page
-      let data
-      try {
-        data = await requestCloud('moment', 'list', {
-          page,
-          pageSize: PAGINATION.MOMENT_PAGE_SIZE
-        }, { throwError: false })
-      } catch (e) {}
-
-      let list
-      if (data && data.moments && data.moments.length) {
-        list = data.moments
-      } else {
-        list = reset ? MOCK_MOMENTS.slice(0, PAGINATION.MOMENT_PAGE_SIZE) : []
+      const data = await requestCloud('moment', 'list', {
+        cursor, limit, dynasty
+      }, { throwError: false })
+      if (data && Array.isArray(data.moments)) {
+        const moments = data.moments.map(m => enrichMomentView(m))
+        result = {
+          moments,
+          nextCursor: data.nextCursor || '',
+          hasMore: !!data.hasMore
+        }
       }
-
-      list = list.map(m => ({
-        ...m,
-        dynastyInfo: getDynastyInfo(m.dynasty),
-        displayTime: formatRelative(m.createdAt),
-        likeText: m.likeCount > 999 ? (m.likeCount / 1000).toFixed(1) + 'k' : m.likeCount
-      }))
-
-      this.setData({
-        moments: reset ? list : this.data.moments.concat(list),
-        page: page + 1,
-        hasMore: list.length === PAGINATION.MOMENT_PAGE_SIZE,
-        loading: false,
-        refreshing: false
-      })
     } catch (e) {
-      this.setData({ loading: false, refreshing: false })
+      console.warn('[moments] cloud list failed:', e && e.message)
     }
+
+    if (!result && USE_MOCK_FALLBACK) {
+      result = mockListMoments({ cursor, limit, dynasty })
+    }
+
+    if (!result) {
+      this.setData({
+        loading: false,
+        refreshing: false,
+        initialLoading: false,
+        loadError: true
+      })
+      wx.stopPullDownRefresh()
+      return
+    }
+
+    const merged = reset ? result.moments : this.data.moments.concat(result.moments)
+    this.setData({
+      moments: merged,
+      cursor: result.nextCursor,
+      hasMore: result.hasMore,
+      loading: false,
+      refreshing: false,
+      initialLoading: false,
+      loadError: false
+    })
     wx.stopPullDownRefresh()
+  },
+
+  onSelectDynasty(e) {
+    const key = e.currentTarget.dataset.key
+    if (key === this.data.selectedDynasty) return
+    this.setData({ selectedDynasty: key, actionMenuId: '' }, () => {
+      this.loadMoments(true)
+      wx.pageScrollTo({ scrollTop: 560, duration: 200 })
+    })
+  },
+
+  openMomentDetail(e) {
+    if (this.data.actionMenuId) {
+      this.setData({ actionMenuId: '' })
+      return
+    }
+    const id = e.currentTarget.dataset.id
+    wx.navigateTo({ url: `/pages/discover/moment-detail?id=${id}` })
+  },
+
+  onFigureTap(e) {
+    if (this.data.actionMenuId) {
+      this.setData({ actionMenuId: '' })
+      return
+    }
+    const figureId = e.currentTarget.dataset.figureid
+    if (!figureId) return
+    wx.navigateTo({ url: `/pages/lantai/figure-detail?id=${figureId}` })
   },
 
   toggleActionMenu(e) {
@@ -198,81 +200,299 @@ Page({
   stopPropagation() {},
 
   closeActionMenu() {
-    if (this.data.actionMenuId) {
-      this.setData({ actionMenuId: '' })
+    if (this.data.actionMenuId) this.setData({ actionMenuId: '' })
+  },
+
+  toggleContentCollapse(e) {
+    const id = e.currentTarget.dataset.id
+    const map = { ...this.data.collapseMap }
+    map[id] = !map[id]
+    this.setData({ collapseMap: map })
+  },
+
+  onImageError(e) {
+    const id = e.currentTarget && e.currentTarget.dataset.id
+    if (id) {
+      console.warn('[moments] 图片加载失败，动态:', id, e.detail)
     }
+  },
+
+  onCoverError() {
+    this.setData({ coverImg: '' })
   },
 
   _onLike: null,
   onLike(e) {
-    if (!this._onLike) this._onLike = throttle(this.handleLike.bind(this), 300)
+    if (!this._onLike) this._onLike = throttle(this.handleLike.bind(this), 350)
     this._onLike(e)
   },
 
   async handleLike(e) {
     const id = e.currentTarget.dataset.id
-    const moments = this.data.moments.slice()
-    const idx = moments.findIndex(m => m._id === id)
+    const idx = this.data.moments.findIndex(m => m._id === id)
     if (idx < 0) return
-    const moment = moments[idx]
-    const nowLiked = !moment._liked
-    const app = getApp()
-    const openid = (app.globalData && app.globalData.openid) || 'me'
-    const likes = moment.likes || []
-    if (nowLiked) {
-      likes.unshift({ openid, name: '我', avatar: '' })
-      moment.likeCount = (moment.likeCount || 0) + 1
+    const moment = this.data.moments[idx]
+    const originalInteraction = JSON.parse(JSON.stringify(moment.interaction || {}))
+    const nextLiked = !originalInteraction.liked
+    const nextCount = Math.max(0, originalInteraction.likeCount + (nextLiked ? 1 : -1))
+    const previewNames = (originalInteraction.likePreview || []).slice()
+    const openid = this.data.openid || 'local_user'
+    if (nextLiked) {
+      previewNames.unshift({ id: openid, name: '我' })
     } else {
-      const newLikes = likes.filter(l => l.openid !== openid)
-      moment.likes = newLikes
-      moment.likeCount = Math.max(0, (moment.likeCount || 0) - 1)
+      const i = previewNames.findIndex(x => x.id === openid)
+      if (i >= 0) previewNames.splice(i, 1)
     }
-    moment._liked = nowLiked
-    moment.likeText = moment.likeCount > 999 ? (moment.likeCount / 1000).toFixed(1) + 'k' : moment.likeCount
-    moments[idx] = moment
-    this.setData({ moments, actionMenuId: '' })
-    try {
-      await requestCloud('moment', nowLiked ? 'like' : 'unlike', { momentId: id }, { throwError: false })
-    } catch (e) {}
-  },
 
-  openMomentDetail(e) {
-    if (this.data.actionMenuId) {
-      this.setData({ actionMenuId: '' })
+    const pendingLikeIds = { ...this.data.pendingLikeIds, [id]: true }
+    const updatedMoments = this.data.moments.slice()
+    updatedMoments[idx] = {
+      ...moment,
+      likeText: nextCount > 999 ? (nextCount / 1000).toFixed(1) + 'k' : nextCount,
+      interaction: {
+        ...originalInteraction,
+        liked: nextLiked,
+        likeCount: nextCount,
+        likePreview: previewNames.slice(0, 3)
+      }
+    }
+    this.setData({ moments: updatedMoments, pendingLikeIds, actionMenuId: '' })
+
+    let result = null
+    try {
+      result = await requestCloud('moment', 'like', { momentId: id }, { throwError: false })
+    } catch (e) {
+      console.warn('[moments] like failed:', e && e.message)
+    }
+
+    if (!result && USE_MOCK_FALLBACK) {
+      result = mockToggleLike({ momentId: id, openid })
+    }
+
+    const curr = this.data.moments[idx]
+    const cleanedPending = { ...this.data.pendingLikeIds }
+    delete cleanedPending[id]
+    if (!result) {
+      const rollbackMoments = this.data.moments.slice()
+      rollbackMoments[idx] = {
+        ...curr,
+        interaction: originalInteraction,
+        likeText: originalInteraction.likeCount > 999
+          ? (originalInteraction.likeCount / 1000).toFixed(1) + 'k'
+          : originalInteraction.likeCount
+      }
+      this.setData({ moments: rollbackMoments, pendingLikeIds: cleanedPending })
+      wx.showToast({ title: '操作未成功', icon: 'none' })
       return
     }
-    const id = e.currentTarget.dataset.id
-    wx.navigateTo({ url: `/pages/discover/moment-detail?id=${id}` })
+
+    const finalMoments = this.data.moments.slice()
+    const finalLiked = typeof result.liked === 'boolean' ? result.liked : nextLiked
+    const finalCount = typeof result.likeCount === 'number' ? result.likeCount : nextCount
+    const finalPreview = Array.isArray(result.likePreview) ? result.likePreview : previewNames
+    finalMoments[idx] = {
+      ...finalMoments[idx],
+      likeText: finalCount > 999 ? (finalCount / 1000).toFixed(1) + 'k' : finalCount,
+      interaction: {
+        ...(finalMoments[idx].interaction || {}),
+        liked: finalLiked,
+        likeCount: finalCount,
+        likePreview: finalPreview.slice(0, 3)
+      }
+    }
+    this.setData({ moments: finalMoments, pendingLikeIds: cleanedPending })
   },
 
   openCommentInput(e) {
     const id = e.currentTarget.dataset.id
-    this.setData({ actionMenuId: '' })
-    wx.showModal({
-      title: '发表评论',
-      editable: true,
-      placeholderText: '友善评论，穿越时空的对话...',
-      success: async (r) => {
-        if (!r.confirm || !r.content) return
-        if (r.content.length > 200) {
-          wx.showToast({ title: '最多200字', icon: 'none' })
-          return
-        }
-        const moments = this.data.moments.slice()
-        const idx = moments.findIndex(m => m._id === id)
-        if (idx < 0) return
-        const m = moments[idx]
-        m.comments = m.comments || []
-        m.comments.push({ openid: 'me', name: '我', content: r.content })
-        m.commentCount = (m.commentCount || 0) + 1
-        moments[idx] = m
-        this.setData({ moments })
-        wx.showToast({ title: '已发布', icon: 'success' })
-      }
+    const replyTo = (e.currentTarget.dataset && e.currentTarget.dataset.replyto) || ''
+    const replyName = (e.currentTarget.dataset && e.currentTarget.dataset.replyname) || ''
+    this.setData({
+      showCommentBar: true,
+      commentTargetId: id,
+      commentReplyTo: replyTo,
+      commentReplyName: replyName,
+      commentInput: '',
+      actionMenuId: ''
     })
   },
 
-  onPublish() {
-    wx.showToast({ title: '发布功能开发中...', icon: 'none' })
+  hideCommentInput() {
+    this.setData({
+      showCommentBar: false,
+      commentTargetId: '',
+      commentReplyTo: '',
+      commentReplyName: '',
+      commentInput: ''
+    })
+  },
+
+  onCommentInput(e) {
+    this.setData({ commentInput: e.detail.value })
+  },
+
+  onCommentFocus() {},
+
+  async onSubmitComment() {
+    const text = (this.data.commentInput || '').trim()
+    const momentId = this.data.commentTargetId
+    if (!text || !momentId || this.data.commentSubmitting) return
+    if (text.length > CONTENT_SECURITY.maxCommentLength) {
+      wx.showToast({ title: `最多${CONTENT_SECURITY.maxCommentLength}字`, icon: 'none' })
+      return
+    }
+
+    this.setData({ commentSubmitting: true })
+
+    const idx = this.data.moments.findIndex(m => m._id === momentId)
+    const originalInteraction = idx >= 0
+      ? JSON.parse(JSON.stringify(this.data.moments[idx].interaction || {}))
+      : null
+
+    const tempId = 'tmp_' + Date.now()
+    const openid = this.data.openid || 'local_user'
+    const userInfo = this.data.userInfo || {}
+    const tempComment = enrichCommentView({
+      _id: tempId,
+      momentId,
+      figure: {
+        id: openid,
+        name: userInfo.nickName || '我',
+        title: '',
+        avatar: userInfo.avatarUrl || '',
+        dynasty: ''
+      },
+      content: text,
+      replyTo: this.data.commentReplyTo,
+      replyName: this.data.commentReplyName,
+      likeCount: 0,
+      createdAt: Date.now(),
+      canDelete: true
+    })
+
+    let updatedPreview = []
+    let updatedCount = 0
+    if (idx >= 0) {
+      const interaction = this.data.moments[idx].interaction || {}
+      const prev = (interaction.commentPreview || []).slice()
+      if (prev.length < 2) {
+        updatedPreview = prev.concat([{
+          id: tempId,
+          name: tempComment.figure.name,
+          avatar: tempComment.figure.avatar,
+          dynasty: tempComment.figure.dynasty,
+          content: text,
+          replyTo: tempComment.replyTo,
+          replyName: tempComment.replyName
+        }])
+      } else {
+        updatedPreview = prev
+      }
+      updatedCount = (interaction.commentCount || 0) + 1
+      const pendingCommentIds = { ...this.data.pendingCommentIds, [tempId]: true }
+      const nextMoments = this.data.moments.slice()
+      nextMoments[idx] = {
+        ...nextMoments[idx],
+        interaction: {
+          ...interaction,
+          commentCount: updatedCount,
+          commentPreview: updatedPreview
+        }
+      }
+      this.setData({ moments: nextMoments, pendingCommentIds })
+    }
+
+    let result = null
+    try {
+      result = await requestCloud('moment', 'commentCreate', {
+        momentId,
+        content: text,
+        replyTo: this.data.commentReplyTo,
+        replyName: this.data.commentReplyName
+      }, { throwError: false })
+    } catch (e) {
+      console.warn('[moments] commentCreate failed:', e && e.message)
+    }
+
+    if (!result && USE_MOCK_FALLBACK) {
+      result = mockCreateComment({
+        momentId,
+        content: text,
+        replyTo: this.data.commentReplyTo,
+        replyName: this.data.commentReplyName
+      })
+    }
+
+    if (!result) {
+      if (idx >= 0 && originalInteraction) {
+        const rollback = this.data.moments.slice()
+        rollback[idx] = {
+          ...rollback[idx],
+          interaction: originalInteraction
+        }
+        const cleanedPending = { ...this.data.pendingCommentIds }
+        delete cleanedPending[tempId]
+        this.setData({
+          moments: rollback,
+          commentSubmitting: false,
+          pendingCommentIds: cleanedPending
+        })
+      } else {
+        this.setData({ commentSubmitting: false })
+      }
+      wx.showToast({ title: '发布失败，请重试', icon: 'none' })
+      return
+    }
+
+    const finalComment = enrichCommentView(result.comment)
+    const finalCount = typeof result.commentCount === 'number' ? result.commentCount : updatedCount
+
+    if (idx >= 0) {
+      const interaction = this.data.moments[idx].interaction || {}
+      const prev = (interaction.commentPreview || []).slice()
+      const updated = prev.map(c => c.id === tempId ? {
+        id: finalComment._id,
+        name: finalComment.figure.name,
+        avatar: finalComment.figure.avatar,
+        dynasty: finalComment.figure.dynasty,
+        content: finalComment.content,
+        replyTo: finalComment.replyTo,
+        replyName: finalComment.replyName
+      } : c)
+      const cleanedPending = { ...this.data.pendingCommentIds }
+      delete cleanedPending[tempId]
+      const finalMoments = this.data.moments.slice()
+      finalMoments[idx] = {
+        ...finalMoments[idx],
+        interaction: {
+          ...interaction,
+          commentCount: finalCount,
+          commentPreview: updated
+        }
+      }
+      this.setData({ moments: finalMoments, pendingCommentIds: cleanedPending })
+    }
+
+    this.setData({
+      commentSubmitting: false,
+      showCommentBar: false,
+      commentTargetId: '',
+      commentReplyTo: '',
+      commentReplyName: '',
+      commentInput: ''
+    })
+    wx.showToast({ title: '已发布', icon: 'success' })
+  },
+
+  onPreviewImage(e) {
+    const idx = Number(e.currentTarget.dataset.idx || 0)
+    const id = e.currentTarget.dataset.id
+    const moment = this.data.moments.find(m => m._id === id)
+    const images = (moment && moment.images) || []
+    if (!images.length) return
+    wx.previewImage({
+      current: images[idx] || images[0],
+      urls: images
+    })
   }
 })

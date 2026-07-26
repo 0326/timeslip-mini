@@ -4,11 +4,12 @@
   bindtap="onTap"
 >
   <image
-    wx:if="{{figure.avatar || fallback}}"
+    wx:if="{{showImage}}"
     class="avatar-img"
-    src="{{figure.avatar || fallback}}"
+    src="{{figure.avatar || figure.avatarUrl || figure.miniAvatarUrl}}"
     mode="aspectFill"
     lazy-load="{{lazyLoad}}"
+    binderror="onImageError"
   />
   <view wx:else class="avatar-text">
     <text class="initials">{{initials}}</text>

@@ -3,6 +3,8 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
+const MAX_LIMIT = 100
+
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext()
   const { action = 'list' } = event
@@ -11,6 +13,7 @@ exports.main = async (event, context) => {
   try {
     switch (action) {
       case 'list': return await listMoments(OPENID, data)
+      case 'detail': return await getDetail(OPENID, data)
       case 'create': return await createMoment(OPENID, data)
       case 'remove': return await removeMoment(OPENID, data)
       case 'like': return await toggleLike(OPENID, data)
@@ -30,6 +33,22 @@ function normalizeEventData(event) {
   return data && typeof data === 'object' ? { ...rest, ...data } : rest
 }
 
+function normalizeRemoteAssetUrl(url) {
+  if (!url || typeof url !== 'string') return ''
+  const value = url.trim()
+  if (!value) return ''
+  if (/^(wxfile|http:\/\/tmp|https?:\/\/tmp|https?:\/\/127\.0\.0\.1|https?:\/\/localhost|\/tmp\/|tmp\/)/i.test(value)) {
+    return ''
+  }
+  if (/^(https?:\/\/|cloud:\/\/)/i.test(value)) return value
+  return ''
+}
+
+function normalizeImageList(images) {
+  if (!Array.isArray(images)) return []
+  return images.map(normalizeRemoteAssetUrl).filter(Boolean).slice(0, 9)
+}
+
 async function secCheckText(text, openid) {
   if (!text) return { ok: true }
   try {
@@ -46,45 +65,147 @@ async function secCheckText(text, openid) {
   }
 }
 
-async function listMoments(OPENID, data) {
-  const { figureId, lastId = '', limit = 20, type = 'all' } = data
-  let where = {}
-  if (figureId) where.figureId = figureId
-  if (type === 'following') where._openid = OPENID
-
-  const q = db.collection('moments').where(where)
-    .orderBy('createdAt', 'desc')
-    .limit(Math.min(limit, 50))
-
-  const res = await q.get()
-  const rows = await populateMoments(res.data, OPENID)
-  return { code: 0, message: 'ok', data: rows }
+function buildFigureView(row) {
+  return {
+    id: row.figureId || row._openid || '',
+    name: row.figureName || row.name || row.authorName || '匿名古人',
+    title: row.figureTitle || row.authorTitle || '',
+    avatar: normalizeRemoteAssetUrl(row.avatar || row.authorAvatar || ''),
+    dynasty: row.dynasty || ''
+  }
 }
 
-async function populateMoments(rows, openid) {
-  if (!rows.length) return rows
-  const userIds = [...new Set(rows.map(r => r._openid).filter(Boolean))]
-  let users = {}
-  if (userIds.length) {
+function buildHistoricalView(row) {
+  if (!row.historicalEvent && !row.historicalDate) return null
+  return {
+    event: row.historicalEvent || '',
+    date: row.historicalDate || '',
+    articleId: row.historicalArticleId || '',
+    chapterId: row.historicalChapterId || ''
+  }
+}
+
+function buildLikePreview(likes, limit = 3) {
+  if (!likes || !likes.length) return []
+  const list = []
+  for (let i = 0; i < Math.min(likes.length, limit); i++) {
+    const l = likes[i]
+    if (typeof l === 'string') {
+      list.push({ id: l, name: l })
+    } else {
+      list.push({
+        id: l.openid || l.id || '',
+        name: l.name || l.figureName || '匿名'
+      })
+    }
+  }
+  return list
+}
+
+async function buildCommentPreview(momentId, limit = 2) {
+  try {
+    const r = await db.collection('moment_comments')
+      .where({ momentId })
+      .orderBy('createdAt', 'asc')
+      .limit(limit)
+      .get()
+    return r.data.map(c => ({
+      id: c._id,
+      name: c.name || c.authorSnapshot?.name || '匿名',
+      avatar: normalizeRemoteAssetUrl(c.avatar || c.authorSnapshot?.avatar || ''),
+      dynasty: c.dynasty || '',
+      content: c.content || '',
+      replyTo: c.replyTo || '',
+      replyName: c.replyName || ''
+    }))
+  } catch (e) {
+    return []
+  }
+}
+
+async function buildMomentView(row, openid, options = {}) {
+  const { withCommentPreview = true } = options
+  const likes = row.likes || []
+  const liked = likes.some(l => (typeof l === 'string' ? l : l.openid) === openid)
+  const likeCount = likes.length
+  const likePreview = buildLikePreview(likes)
+  const commentCount = typeof row.commentCount === 'number' ? row.commentCount : 0
+  let commentPreview = []
+  if (withCommentPreview && commentCount > 0) {
+    commentPreview = await buildCommentPreview(row._id, 2)
+  }
+
+  const ts = row.createdAt
+  let createdAtMs = 0
+  if (ts instanceof Date) createdAtMs = ts.getTime()
+  else if (typeof ts === 'number') createdAtMs = ts > 1e12 ? ts : ts * 1000
+
+  return {
+    _id: row._id,
+    figure: buildFigureView(row),
+    content: row.content || '',
+    images: normalizeImageList(row.images),
+    historical: buildHistoricalView(row),
+    location: row.location || '',
+    createdAt: createdAtMs,
+    interaction: {
+      liked,
+      likeCount,
+      likePreview,
+      commentCount,
+      commentPreview
+    }
+  }
+}
+
+async function listMoments(OPENID, data) {
+  const { figureId, cursor = '', limit = 20, dynasty = '' } = data
+  const pageLimit = Math.min(limit, 50)
+  let where = {}
+  if (figureId) where.figureId = figureId
+  if (dynasty && dynasty !== 'all') where.dynasty = dynasty
+
+  let q = db.collection('moments').where(where).orderBy('createdAt', 'desc')
+  if (cursor) {
     try {
-      const u = await db.collection('users').where({
-        _openid: _.in(userIds)
-      }).get()
-      u.data.forEach(x => { users[x._openid] = x })
+      const last = await db.collection('moments').doc(cursor).get()
+      if (last && last.data) {
+        const ts = last.data.createdAt instanceof Date
+          ? last.data.createdAt
+          : new Date(last.data.createdAt)
+        where.createdAt = _.lte(ts)
+        where._id = _.neq(cursor)
+        q = db.collection('moments').where(where).orderBy('createdAt', 'desc')
+      }
     } catch (_) {}
   }
-  return rows.map(r => {
-    const u = users[r._openid] || {}
-    const likes = r.likes || []
-    return {
-      ...r,
-      authorName: r.name || u.nickname || '匿名古人',
-      authorAvatar: r.avatar || u.avatar || '',
-      authorTitle: r.figureTitle || '',
-      liked: likes.some(l => (typeof l === 'string' ? l : l.openid) === openid),
-      likeCount: likes.length
-    }
-  })
+  q = q.limit(pageLimit + 1)
+
+  const res = await q.get()
+  const rows = res.data || []
+  const hasMore = rows.length > pageLimit
+  const sliced = hasMore ? rows.slice(0, pageLimit) : rows
+
+  const moments = []
+  for (const r of sliced) {
+    moments.push(await buildMomentView(r, OPENID))
+  }
+  const nextCursor = hasMore ? sliced[sliced.length - 1]._id : ''
+
+  return {
+    code: 0,
+    message: 'ok',
+    data: { moments, nextCursor, hasMore }
+  }
+}
+
+async function getDetail(OPENID, data) {
+  const { momentId } = data
+  if (!momentId) return { code: -1, message: '缺少 momentId' }
+  const doc = await db.collection('moments').doc(momentId).get()
+  if (!doc.data) return { code: -1, message: '动态不存在' }
+  const moment = await buildMomentView(doc.data, OPENID, { withCommentPreview: false })
+  return { code: 0, message: 'ok', data: { moment } }
 }
 
 async function createMoment(OPENID, data) {
@@ -97,11 +218,11 @@ async function createMoment(OPENID, data) {
   const doc = {
     figureId: figureId || '',
     name: name || '',
-    avatar: avatar || '',
+    avatar: normalizeRemoteAssetUrl(avatar),
     figureTitle: figureTitle || '',
     dynasty: dynasty || '',
     content: content.trim(),
-    images: images.slice(0, 9),
+    images: normalizeImageList(images),
     location,
     visibility,
     likes: [],
@@ -129,54 +250,187 @@ async function removeMoment(OPENID, data) {
 async function toggleLike(OPENID, data) {
   const { momentId } = data
   if (!momentId) return { code: -1, message: '缺少 momentId' }
-  const doc = await db.collection('moments').doc(momentId).get()
-  if (!doc.data) return { code: -1, message: '动态不存在' }
-  const likes = doc.data.likes || []
-  const idx = likes.findIndex(l => (typeof l === 'string' ? l : l.openid) === OPENID)
-  let newLikes
-  if (idx === -1) newLikes = _.push([{ openid: OPENID, at: new Date() }])
-  else newLikes = _.pull({ openid: OPENID })
-  await db.collection('moments').doc(momentId).update({
-    data: { likes: newLikes, updatedAt: db.serverDate() }
-  })
-  return { code: 0, message: 'ok', data: { liked: idx === -1 } }
+
+  try {
+    const result = await db.runTransaction(async transaction => {
+      const docRef = db.collection('moments').doc(momentId)
+      const snapshot = await transaction.get(docRef)
+      if (!snapshot.data) {
+        await transaction.rollback('动态不存在')
+        return null
+      }
+      const doc = snapshot.data
+      const likes = Array.isArray(doc.likes) ? doc.likes : []
+      const idx = likes.findIndex(l => (typeof l === 'string' ? l : l.openid) === OPENID)
+      const liked = idx === -1
+      let nextLikes
+      if (liked) {
+        nextLikes = likes.concat([{ openid: OPENID, at: new Date() }])
+      } else {
+        nextLikes = likes.filter(l => (typeof l === 'string' ? l : l.openid) !== OPENID)
+      }
+      await transaction.update(docRef, {
+        likes: nextLikes,
+        updatedAt: new Date()
+      })
+      return {
+        liked,
+        likes: nextLikes
+      }
+    })
+
+    if (!result) return { code: -1, message: '动态不存在' }
+
+    const latestLikes = result.likes || []
+    const likeCount = latestLikes.length
+    const likePreview = buildLikePreview(latestLikes)
+
+    return {
+      code: 0,
+      message: 'ok',
+      data: { liked: result.liked, likeCount, likePreview }
+    }
+  } catch (e) {
+    console.error('toggleLike transaction error:', e)
+    return { code: -1, message: e && e.message ? e.message : '点赞失败' }
+  }
 }
 
 async function listComments(OPENID, data) {
-  const { momentId, limit = 30 } = data
+  const { momentId, cursor = '', limit = 30 } = data
   if (!momentId) return { code: -1, message: '缺少 momentId' }
-  const r = await db.collection('moment_comments')
-    .where({ momentId })
-    .orderBy('createdAt', 'asc')
-    .limit(Math.min(limit, 100))
-    .get()
-  return { code: 0, message: 'ok', data: r.data }
+  const pageLimit = Math.min(limit, MAX_LIMIT)
+  let where = { momentId }
+  let q = db.collection('moment_comments').where(where).orderBy('createdAt', 'asc')
+  if (cursor) {
+    try {
+      const last = await db.collection('moment_comments').doc(cursor).get()
+      if (last && last.data) {
+        const ts = last.data.createdAt instanceof Date
+          ? last.data.createdAt
+          : new Date(last.data.createdAt)
+        where.createdAt = _.gte(ts)
+        where._id = _.neq(cursor)
+        q = db.collection('moment_comments').where(where).orderBy('createdAt', 'asc')
+      }
+    } catch (_) {}
+  }
+  q = q.limit(pageLimit + 1)
+
+  const res = await q.get()
+  const rows = res.data || []
+  const hasMore = rows.length > pageLimit
+  const sliced = hasMore ? rows.slice(0, pageLimit) : rows
+
+  const comments = sliced.map(c => {
+    const ts = c.createdAt
+    let createdAtMs = 0
+    if (ts instanceof Date) createdAtMs = ts.getTime()
+    else if (typeof ts === 'number') createdAtMs = ts > 1e12 ? ts : ts * 1000
+    return {
+      _id: c._id,
+      momentId: c.momentId,
+      figure: {
+        id: c.figureId || c._openid || '',
+        name: c.name || c.authorSnapshot?.name || '匿名',
+        title: c.figureTitle || '',
+        avatar: normalizeRemoteAssetUrl(c.avatar || c.authorSnapshot?.avatar || ''),
+        dynasty: c.dynasty || ''
+      },
+      content: c.content || '',
+      replyTo: c.replyTo || '',
+      replyName: c.replyName || '',
+      likeCount: (c.likes || []).length,
+      createdAt: createdAtMs,
+      canDelete: c._openid === OPENID
+    }
+  })
+  const nextCursor = hasMore ? sliced[sliced.length - 1]._id : ''
+
+  return {
+    code: 0,
+    message: 'ok',
+    data: { comments, nextCursor, hasMore }
+  }
 }
 
 async function createComment(OPENID, data) {
-  const { momentId, content, replyTo = '', replyName = '', name = '', avatar = '', dynasty = '' } = data
+  const { momentId, content, replyTo = '', replyName = '' } = data
   if (!momentId || !content || !content.trim()) return { code: -1, message: '参数不全' }
+
   const sec = await secCheckText(content, OPENID)
   if (!sec.ok) return { code: 403, message: sec.reason }
+
+  let nickname = '匿名'
+  let avatar = ''
+  let dynasty = ''
+  let figureId = ''
+  let figureTitle = ''
+  try {
+    const u = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
+    if (u && u.data && u.data.length) {
+      const user = u.data[0]
+      nickname = user.nickname || user.name || nickname
+      avatar = normalizeRemoteAssetUrl(user.avatar || avatar)
+      dynasty = user.dynasty || ''
+      figureId = user.figureId || ''
+      figureTitle = user.figureTitle || ''
+    }
+  } catch (_) {}
 
   const doc = {
     momentId,
     content: content.trim(),
     replyTo,
     replyName,
-    name: name || '匿名',
-    avatar,
+    figureId,
+    figureTitle,
     dynasty,
+    name: nickname,
+    avatar,
+    authorSnapshot: { name: nickname, avatar, openid: OPENID },
     likes: [],
     createdAt: db.serverDate()
   }
   const r = await db.collection('moment_comments').add({ data: doc })
+
+  let finalCommentCount = 0
   try {
-    await db.collection('moments').doc(momentId).update({
+    const up = await db.collection('moments').doc(momentId).update({
       data: { commentCount: _.inc(1), updatedAt: db.serverDate() }
     })
+    try {
+      const md = await db.collection('moments').doc(momentId).get()
+      if (md && md.data) finalCommentCount = typeof md.data.commentCount === 'number' ? md.data.commentCount : 0
+    } catch (_) {
+      finalCommentCount = up.stats?.updated ? 1 : 0
+    }
   } catch (_) {}
-  return { code: 0, message: 'ok', data: { _id: r._id, ...doc } }
+
+  const ts = doc.createdAt instanceof Date ? doc.createdAt.getTime() : Date.now()
+  const comment = {
+    _id: r._id,
+    momentId,
+    figure: {
+      id: figureId || OPENID,
+      name: nickname,
+      title: figureTitle,
+      avatar,
+      dynasty
+    },
+    content: doc.content,
+    replyTo,
+    replyName,
+    likeCount: 0,
+    createdAt: ts,
+    canDelete: true
+  }
+
+  return {
+    code: 0,
+    message: 'ok',
+    data: { comment, commentCount: finalCommentCount }
+  }
 }
 
 async function removeComment(OPENID, data) {
@@ -185,11 +439,17 @@ async function removeComment(OPENID, data) {
   const c = await db.collection('moment_comments').doc(commentId).get()
   if (!c.data) return { code: -1, message: '评论不存在' }
   if (c.data._openid !== OPENID) return { code: 403, message: '无权删除' }
+  const momentId = c.data.momentId
   await db.collection('moment_comments').doc(commentId).remove()
+  let finalCommentCount = 0
   try {
-    await db.collection('moments').doc(c.data.momentId).update({
+    await db.collection('moments').doc(momentId).update({
       data: { commentCount: _.inc(-1), updatedAt: db.serverDate() }
     })
+    try {
+      const md = await db.collection('moments').doc(momentId).get()
+      if (md && md.data) finalCommentCount = typeof md.data.commentCount === 'number' ? md.data.commentCount : 0
+    } catch (_) {}
   } catch (_) {}
-  return { code: 0, message: 'ok' }
+  return { code: 0, message: 'ok', data: { commentCount: finalCommentCount } }
 }

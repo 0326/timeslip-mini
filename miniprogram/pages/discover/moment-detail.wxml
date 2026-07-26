@@ -1,100 +1,190 @@
-<custom-nav-bar
-  title="穿越朋友圈"
-  bgColor="#fff"
->
-  <view slot="right" class="actions" bindtap="onShare">
-    <text class="action-icon">↗</text>
+<view class="page">
+  <view wx:if="{{initialLoading}}" class="initial-skeleton">
+    <view class="sk-head">
+      <view class="sk-avatar"></view>
+      <view class="sk-head-col">
+        <view class="sk-line lg"></view>
+        <view class="sk-line md"></view>
+      </view>
+    </view>
+    <view class="sk-block"></view>
+    <view class="sk-grid">
+      <view class="sk-item"></view><view class="sk-item"></view><view class="sk-item"></view>
+    </view>
+    <view class="sk-block sm"></view>
+    <view class="sk-block sm"></view>
   </view>
-</custom-nav-bar>
 
-<view class="md-page">
-  <view wx:if="{{!moment}}" class="loading">加载中...</view>
+  <view wx:elif="{{loadError}}" class="empty-wrap">
+    <text class="empty-emoji">📜</text>
+    <text class="empty-title">内容加载失败</text>
+    <text class="empty-desc">可能是网络波动或历史被改写了～</text>
+    <button class="empty-btn" bindtap="onRetryLoad">重新加载</button>
+  </view>
 
-  <view wx:else class="md-content">
-    <view class="md-hero">
-      <figure-avatar figure="{{moment}}" size="100" round="{{true}}"></figure-avatar>
-      <view class="hero-info">
-        <view class="hero-name-row">
-          <text class="h-name">{{moment.figureName}}</text>
-          <text wx:if="{{moment.figureTitle}}" class="h-title">· {{moment.figureTitle}}</text>
+  <block wx:else>
+    <view class="moment-hero">
+      <figure-avatar
+        wx:if="{{moment}}"
+        class="hero-avatar"
+        figure="{{moment.figure}}"
+        size="xl"
+        shape="circle"
+        show-dynasty="{{true}}"
+        bind:tap="onFigureTap"
+        data-figureid="{{moment.figure && moment.figure.id}}"
+      />
+      <view
+        class="hero-meta"
+        wx:if="{{moment}}"
+        catchtap="onFigureTap"
+        data-figureid="{{moment.figure && moment.figure.id}}"
+      >
+        <text class="hero-name">{{moment.figure && moment.figure.name}}</text>
+        <view class="hero-title-row" wx:if="{{moment.figure && moment.figure.title}}">
+          <text class="hero-title">{{moment.figure.title}}</text>
+          <text wx:if="{{moment.figure && moment.figure.dynasty}}" class="hero-dynasty">{{moment.figure.dynasty}}</text>
         </view>
-        <view class="hero-meta">
-          <text wx:if="{{dynastyInfo}}" class="h-dy" style="background:{{dynastyInfo.color}}15;color:{{dynastyInfo.color}};">{{dynastyInfo.name}}</text>
-          <text class="h-time">{{displayTime || moment.displayTime}}</text>
-        </view>
+        <text class="hero-time">{{moment.createdAtText}}</text>
       </view>
     </view>
 
-    <view wx:if="{{moment.historicalEvent}}" class="md-event">
-      <text class="ev-icon">📜</text>
-      <view class="ev-info">
-        <text class="ev-event">{{moment.historicalEvent}}</text>
-        <text class="ev-date">{{moment.historicalDate}}</text>
-      </view>
-    </view>
-
-    <view class="md-body">
-      <text class="body-text">{{moment.content}}</text>
-    </view>
-
-    <view class="md-stats">
-      <view class="s-item {{moment._liked ? 'is-liked' : ''}}" bindtap="onLike">
-        <text class="s-icon">{{moment._liked ? '❤️' : '🤍'}}</text>
-        <text class="s-text">{{moment.likeCount}} 人觉得赞</text>
-      </view>
-    </view>
-
-    <view wx:if="{{moment.likes && moment.likes.length}}" class="md-likes">
-      <text class="lk-tip">❤️</text>
-      <text class="lk-list">
-        <text wx:for="{{moment.likes}}" wx:for-item="l" wx:key="openid" class="lk-name">{{l.name}}</text>
-      </text>
-    </view>
-
-    <view class="divider-row"></view>
-
-    <view class="comments-section">
-      <view class="cs-title">
-        <text class="cs-t">全部评论（{{moment.commentCount || 0}}）</text>
-      </view>
+    <view class="detail-body">
+      <view wx:if="{{moment.content}}" class="moment-content">{{moment.content}}</view>
 
       <view
-        wx:for="{{comments}}"
-        wx:key="_id"
-        class="cm-row"
+        wx:if="{{moment.images && moment.images.length}}"
+        class="img-grid grid-type-{{moment.imageGridType}}"
       >
-        <view class="cm-avatar">{{item.name[0]}}</view>
-        <view class="cm-body">
-          <view class="cm-head">
-            <text class="cm-name">{{item.name}}</text>
-            <text class="cm-time">{{item.displayTime}}</text>
-          </view>
-          <text class="cm-content">{{item.content}}</text>
+        <view
+          wx:for="{{moment.images}}"
+          wx:key="*this"
+          wx:for-item="img"
+          wx:for-index="i"
+          class="img-cell img-type-{{moment.imageGridType}}"
+          bindtap="onPreviewImage"
+          data-idx="{{i}}"
+        >
+          <image class="img" src="{{img}}" mode="aspectFill" lazy-load binderror="onImageError" />
         </view>
       </view>
 
-      <view wx:if="{{comments.length === 0}}" class="empty-cm">
-        <text>暂无评论，快来抢沙发～</text>
+      <view class="foot-row">
+        <text class="foot-source" wx:if="{{moment.sourceText}}">{{moment.sourceText}}</text>
+        <text class="foot-date">{{moment.createdAtRelative}}</text>
+      </view>
+
+      <view class="bubble" wx:if="{{(moment.interaction && (moment.interaction.likePreview && moment.interaction.likePreview.length)) || comments.length}}">
+        <view class="bubble-section like-section" wx:if="{{moment.interaction && moment.interaction.likePreview && moment.interaction.likePreview.length}}">
+          <view class="bubble-row">
+            <image class="bubble-icon" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23576B95' stroke-width='2'%3E%3Cpath d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z'/%3E%3C/svg%3E" mode="aspectFit" />
+            <view class="bubble-names">
+              <block wx:for="{{moment.interaction.likePreview}}" wx:for-item="u" wx:key="id">
+                <text class="name-link">{{u.name}}</text>
+                <text wx:if="{{index < moment.interaction.likePreview.length - 1}}" class="name-sep">、</text>
+              </block>
+              <text wx:if="{{moment.interaction.likeCount > moment.interaction.likePreview.length}}" class="name-sep">等 {{moment.interaction.likeCount}} 人</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="bubble-divider" wx:if="{{moment.interaction && moment.interaction.likePreview && moment.interaction.likePreview.length && comments.length}}"></view>
+
+        <view class="bubble-section comment-section" wx:if="{{comments.length}}">
+          <block wx:for="{{comments}}" wx:for-item="c" wx:key="_id">
+            <view
+              class="bubble-row comment-item {{deletingCommentIds[c._id] ? 'deleting' : ''}}"
+              data-id="{{c._id}}"
+              data-replyto="{{c.figure && c.figure.id}}"
+              data-replyname="{{c.figure && c.figure.name}}"
+              bindtap="openCommentInput"
+            >
+              <view class="comment-main">
+                <text
+                  class="name-link reply-from"
+                  catchtap="onFigureTap"
+                  data-figureid="{{c.figure && c.figure.id}}"
+                >{{c.figure && c.figure.name}}</text>
+                <text wx:if="{{c.replyName}}" class="reply-prefix">回复</text>
+                <text
+                  wx:if="{{c.replyName}}"
+                  class="name-link reply-to"
+                  catchtap="onFigureTap"
+                  data-figureid="{{c.replyTo}}"
+                >{{c.replyName}}</text>
+                <text wx:if="{{c.replyName}}" class="colon-sep">：</text>
+                <text wx:else class="colon-sep">：</text>
+                <text class="comment-text">{{c.content}}</text>
+              </view>
+              <view class="comment-right">
+                <text class="comment-time">{{c.createdAtRelative}}</text>
+                <view wx:if="{{c.canDelete}}" class="delete-trigger" catchtap="onDeleteComment" data-id="{{c._id}}">
+                  <text class="delete-text">删除</text>
+                </view>
+              </view>
+              <view wx:if="{{pendingCommentIds[c._id]}}" class="comment-badge">发布中...</view>
+            </view>
+          </block>
+        </view>
+      </view>
+
+      <view class="action-bar">
+        <view class="action-btn {{moment.interaction.liked ? 'active' : ''}}" bindtap="onLike">
+          <image
+            wx:if="{{moment.interaction.liked}}"
+            class="action-icon"
+            src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23FA5151'%3E%3Cpath d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z'/%3E%3C/svg%3E"
+            mode="aspectFit"
+          />
+          <image
+            wx:else
+            class="action-icon"
+            src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23576B95' stroke-width='2'%3E%3Cpath d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z'/%3E%3C/svg%3E"
+            mode="aspectFit"
+          />
+          <text class="action-label">{{moment.likeText}}</text>
+        </view>
+
+        <view class="action-btn" bindtap="openCommentInput">
+          <image
+            class="action-icon"
+            src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23576B95' stroke-width='2'%3E%3Cpath d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/%3E%3C/svg%3E"
+            mode="aspectFit"
+          />
+          <text class="action-label">{{moment.interaction.commentCount || ''}}</text>
+        </view>
+
+        <button class="action-btn share-btn" open-type="share">
+          <image
+            class="action-icon"
+            src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23576B95' stroke-width='2'%3E%3Ccircle cx='18' cy='5' r='3'/%3E%3Ccircle cx='6' cy='12' r='3'/%3E%3Ccircle cx='18' cy='19' r='3'/%3E%3Cpath d='M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98'/%3E%3C/svg%3E"
+            mode="aspectFit"
+          />
+          <text class="action-label">分享</text>
+        </button>
       </view>
     </view>
+  </block>
 
-    <view style="height: 220rpx;"></view>
-  </view>
-
-  <view class="md-input-bar">
+  <view class="comment-mask {{showInput ? 'show' : ''}}" bindtap="hideCommentInput"></view>
+  <view class="comment-input-bar {{showInput ? 'show' : ''}}">
     <input
-      class="cm-input"
-      placeholder="说点什么穿越时空的评论..."
-      placeholder-style="color:#bbb"
-      value="{{commentInput}}"
-      bindinput="onInput"
-      bindconfirm="onSubmitComment"
+      class="comment-input"
+      placeholder="{{replyName ? '回复 ' + replyName : '说点什么...'}}"
+      placeholder-class="comment-input-placeholder"
+      auto-focus="{{showInput}}"
       confirm-type="send"
+      value="{{commentInput}}"
+      bindinput="onCommentInput"
+      bindconfirm="onSubmitComment"
+      cursor-spacing="32"
+      adjust-position="{{true}}"
+      maxlength="1000"
     />
     <button
-      class="send-btn {{commentInput ? 'is-active' : ''}}"
+      class="comment-send {{commentInput ? 'active' : ''}} {{submitting ? 'loading' : ''}}"
       bindtap="onSubmitComment"
       disabled="{{!commentInput || submitting}}"
-    >发布</button>
+    >{{submitting ? '...' : '发送'}}</button>
   </view>
 </view>

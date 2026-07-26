@@ -13,9 +13,9 @@ const DYNASTY_BG = {
   song: ['#228B22', '#6B8E23'],
   sanguo: ['#2F4F4F', '#708090'],
   ming: ['#8B0000', '#CD5C5C'],
-  qing: ['#FFD700', '#DAA520'],
+  qing: ['#B8860B', '#DAA520'],
   xianqin: ['#4B0082', '#7B68EE'],
-  default: ['#8B4513', '#CD853F']
+  default: ['#6b7280', '#9ca3af']
 }
 
 Component({
@@ -28,19 +28,18 @@ Component({
     showBorder: { type: Boolean, value: false },
     showDynasty: { type: Boolean, value: false },
     lazyLoad: { type: Boolean, value: true },
-    fallback: {
-      type: String,
-      value: 'https://img.icons8.com/color/96/emperor.png'
-    }
+    round: { type: Boolean, value: false }
   },
   data: {
     initials: '',
     dynastyShort: '',
     bgStyle: '',
-    shapeClass: 'circle'
+    shapeClass: 'circle',
+    imageError: false,
+    showImage: false
   },
   observers: {
-    'figure, size, shape': function () {
+    'figure, size, shape, round': function () {
       const f = this.properties.figure || {}
       const name = f.figureName || f.name || ''
       const initials = name ? name.slice(0, 1) : '古'
@@ -48,11 +47,25 @@ Component({
       const dynastyShort = (DYNASTY_MAP[dynasty] || '').slice(0, 2) || ''
       const bg = DYNASTY_BG[dynasty] || DYNASTY_BG.default
       const bgStyle = `background: linear-gradient(135deg, ${bg[0]} 0%, ${bg[1]} 100%);`
-      const shapeClass = this.properties.shape === 'square' ? 'shape-square' : this.properties.shape
-      this.setData({ initials, dynastyShort, bgStyle, shapeClass })
+      const isSquare = this.properties.shape === 'square' || this.properties.round === false
+      const shapeClass = isSquare ? 'shape-square' : 'shape-circle'
+      const avatarSrc = f.avatar || f.avatarUrl || f.miniAvatarUrl || ''
+      const showImage = !!avatarSrc && !this.data.imageError
+      this.setData({ initials, dynastyShort, bgStyle, shapeClass, showImage })
+    }
+  },
+  lifetimes: {
+    attached() {
+      const f = this.properties.figure || {}
+      const avatarSrc = f.avatar || f.avatarUrl || f.miniAvatarUrl || ''
+      this.setData({ showImage: !!avatarSrc && !this.data.imageError })
     }
   },
   methods: {
+    onImageError() {
+      this.setData({ imageError: true, showImage: false })
+      this.triggerEvent('error', { figure: this.properties.figure })
+    },
     onTap(e) {
       this.triggerEvent('tap', { figure: this.properties.figure }, e)
     }
