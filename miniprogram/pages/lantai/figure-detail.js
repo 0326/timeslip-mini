@@ -34,12 +34,15 @@ Page({
     figure: null,
     dynastyInfo: null,
     tab: 'bio',
-    loading: true
+    loading: true,
+    channelInfo: null,
+    channelVideos: []
   },
 
   onLoad(options) {
     const id = options.id || 'simaqian'
-    this.setData({ id })
+    const tab = options.tab || 'bio'
+    this.setData({ id, tab })
     this.loadDetail(id)
   },
 
@@ -62,9 +65,22 @@ Page({
         dynastyInfo: getDynastyInfo(figure.dynasty),
         loading: false
       })
+      this.loadChannel(id)
     } catch (e) {
       this.setData({ figure: MOCK_FIGURE, dynastyInfo: getDynastyInfo(MOCK_FIGURE.dynasty), loading: false })
     }
+  },
+
+  async loadChannel(figureId) {
+    try {
+      const data = await requestCloud('videoChannel', 'channelByFigure', { figureId }, { throwError: false })
+      if (data && data.channel) {
+        this.setData({
+          channelInfo: data.channel,
+          channelVideos: data.videos || []
+        })
+      }
+    } catch (e) {}
   },
 
   switchTab(e) {
@@ -102,6 +118,28 @@ Page({
   goMoment(e) {
     const id = e.currentTarget.dataset.id
     wx.navigateTo({ url: `/pages/discover/moment-detail?id=${id}` })
+  },
+
+  onChannelFollow() {
+    const channel = this.data.channelInfo
+    if (!channel || !loginGuard.checkLogin(this)) return
+
+    requestCloud('videoChannel', 'toggleFollow', { channelId: channel._id }, { throwError: false })
+      .then(res => {
+        if (res && typeof res.followed !== 'undefined') {
+          channel.followed = res.followed
+          this.setData({ channelInfo: channel })
+          wx.showToast({ title: res.followed ? '已关注' : '已取消关注', icon: 'none' })
+        }
+      })
+      .catch(() => {})
+  },
+
+  goVideoDetail(e) {
+    const id = e.currentTarget.dataset.id
+    wx.navigateTo({
+      url: `/pages/discover/channels/index?videoId=${id}`
+    })
   },
 
   onShareAppMessage() {

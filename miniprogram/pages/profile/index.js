@@ -18,7 +18,8 @@ Page({
     userInfo: null,
     menus: MENU_LIST,
     stats: STAT_MENUS,
-    statusBarHeight: 40
+    statusBarHeight: 40,
+    isAdmin: false
   },
 
   onLoad() {
@@ -46,7 +47,10 @@ Page({
     try {
       const userInfo = await getUserInfo()
       if (userInfo && userInfo._openid) {
-        this.setData({ userInfo })
+        this.setData({
+          userInfo,
+          isAdmin: userInfo.role === 'admin' || userInfo.role === 'superadmin'
+        })
         if (!app.globalData) app.globalData = {}
         app.globalData.openid = userInfo._openid
         app.globalData.userInfo = userInfo

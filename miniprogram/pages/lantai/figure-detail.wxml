@@ -45,8 +45,8 @@
 
   <view class="sub-tabs">
     <view class="st {{tab === 'bio' ? 'is-active' : ''}}" data-tab="bio" bindtap="switchTab">生平简介</view>
-    <view class="st {{tab === 'works' ? 'is-active' : ''}}" data-tab="works" bindtap="switchTab">著作名言</view>
-    <view class="st {{tab === 'related' ? 'is-active' : ''}}" data-tab="related" bindtap="switchTab">关联阅读</view>
+    <view class="st {{tab === 'works' ? 'is-active' : ''}}" data-tab="works" bindtap="switchTab">相关内容</view>
+    <view class="st {{tab === 'videos' ? 'is-active' : ''}}" data-tab="videos" bindtap="switchTab">视频号</view>
   </view>
 
   <view class="tab-body">
@@ -79,9 +79,7 @@
           <text class="quote-mark">」</text>
         </view>
       </view>
-    </block>
 
-    <block wx:else>
       <view wx:if="{{figure.relatedBooks && figure.relatedBooks.length}}" class="section-card">
         <view class="card-title">相关典籍</view>
         <view
@@ -116,6 +114,66 @@
           <text class="rm-desc">{{item.desc}}</text>
           <text class="rm-who">— 关联：{{item.figureName}}</text>
         </view>
+      </view>
+
+      <view wx:if="!figure.masterpieces || !figure.masterpieces.length || !figure.famousQuotes || !figure.famousQuotes.length || !figure.relatedBooks || !figure.relatedBooks.length || !figure.relatedMoments || !figure.relatedMoments.length" class="empty-hint">
+        暂无相关内容
+      </view>
+    </block>
+
+    <block wx:elif="{{tab === 'videos'}}">
+      <view wx:if="{{channelInfo}}">
+        <view class="section-card channel-header">
+          <image class="ch-avatar" src="{{channelInfo.avatar || '/images/icons/avatar.png'}}" mode="aspectFill"></image>
+          <view class="ch-info">
+            <view class="ch-name">{{channelInfo.figureName}}
+              <text wx:if="{{channelInfo.figureTitle}}" class="ch-title">· {{channelInfo.figureTitle}}</text>
+            </view>
+            <view class="ch-bio" wx:if="{{channelInfo.bio}}">{{channelInfo.bio}}</view>
+            <view class="ch-stats">
+              <text>{{channelInfo.videoCount || 0}}作品</text>
+              <text class="dot">·</text>
+              <text>{{channelInfo.followerCount || 0}}粉丝</text>
+            </view>
+          </view>
+          <view class="ch-follow {{channelInfo.followed ? 'followed' : ''}}" bindtap="onChannelFollow">
+            {{channelInfo.followed ? '已关注' : '+关注'}}
+          </view>
+        </view>
+
+        <view wx:if="{{channelVideos && channelVideos.length > 0}}" class="video-grid">
+          <view
+            wx:for="{{channelVideos}}"
+            wx:key="_id"
+            class="video-grid-item"
+            bindtap="goVideoDetail"
+            data-id="{{item._id}}"
+          >
+            <view class="vg-cover">
+              <image wx:if="{{item.coverUrl}}" class="vg-img" src="{{item.coverUrl}}" mode="aspectFill"></image>
+              <view wx:else class="vg-placeholder">
+                <text class="vg-title">{{item.title}}</text>
+              </view>
+              <view class="vg-duration" wx:if="{{item.duration}}">{{item.duration}}"</view>
+              <view class="vg-play-icon">
+                <text class="iconfont icon-play"></text>
+              </view>
+            </view>
+            <text class="vg-text">{{item.title}}</text>
+            <text class="vg-stats">♥ {{item.likeCount || 0}}</text>
+          </view>
+        </view>
+
+        <view wx:else class="empty-card">
+          <text class="empty-icon">🎬</text>
+          <text class="empty-text">暂无视频</text>
+        </view>
+      </view>
+
+      <view wx:else class="empty-card">
+        <text class="empty-icon">🎬</text>
+        <text class="empty-text">暂无视频号</text>
+        <text class="empty-desc">该人物尚未开通视频号</text>
       </view>
     </block>
   </view>

@@ -30,5 +30,5 @@
       <slot name="right"></slot>
     </view>
   </view>
-  <view wx:if="{{fixed}}" class="nav-placeholder" style="height: {{statusBarHeight + navBarHeight}}px;"></view>
+  <view wx:if="{{fixed && !noPlaceholder}}" class="nav-placeholder" style="height: {{statusBarHeight + navBarHeight}}px;"></view>
 </view>

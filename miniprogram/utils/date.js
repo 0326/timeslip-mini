@@ -47,15 +47,18 @@ function formatRelative(ts) {
 
 function formatChatTime(ts) {
   if (!ts) return ''
+  const ms = typeof ts === 'number' ? (ts > 1e12 ? ts : ts * 1000) : new Date(ts).getTime()
+  if (isNaN(ms)) return ''
   const now = new Date()
-  const d = typeof ts === 'number' ? new Date(ts * 1000) : new Date(ts)
+  const d = new Date(ms)
+  const t = pad(d.getHours()) + ':' + pad(d.getMinutes())
   const sameDay = d.toDateString() === now.toDateString()
-  if (sameDay) return formatDate(ts, 'HH:mm')
+  if (sameDay) return t
   const yesterday = new Date(now.getTime() - 86400000)
-  if (d.toDateString() === yesterday.toDateString()) return '昨天 ' + formatDate(ts, 'HH:mm')
+  if (d.toDateString() === yesterday.toDateString()) return '昨天 ' + t
   const diffDay = Math.floor((now - d) / 86400000)
   if (diffDay < 7) return diffDay + '天前'
-  return formatDate(ts, 'YY/MM/DD')
+  return pad(d.getMonth() + 1) + '/' + pad(d.getDate())
 }
 
 function getDynastyInfo(key) {

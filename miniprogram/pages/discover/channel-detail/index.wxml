@@ -1,0 +1,79 @@
+<custom-nav-bar
+  title="视频号"
+  showBack="{{true}}"
+  bgColor="#ffffff"
+></custom-nav-bar>
+
+<view wx:if="{{channel}}" class="channel-page">
+  <view class="header">
+    <view class="header-bg"></view>
+    <view class="header-content">
+      <image class="channel-avatar" src="{{channel.avatar || '/images/icons/avatar.png'}}" mode="aspectFill"></image>
+      <view class="channel-info">
+        <view class="channel-name">
+          {{channel.figureName}}
+          <text wx:if="{{channel.figureTitle}}" class="channel-title"> · {{channel.figureTitle}}</text>
+        </view>
+        <view class="channel-dynasty" wx:if="{{channel.dynastyName}}">{{channel.dynastyName}}</view>
+      </view>
+      <view
+        class="follow-btn {{channel.followed ? 'followed' : ''}}"
+        bindtap="onFollow"
+      >
+        {{channel.followed ? '已关注' : '+ 关注'}}
+      </view>
+    </view>
+    <view class="channel-bio" wx:if="{{channel.bio}}">{{channel.bio}}</view>
+    <view class="channel-stats">
+      <view class="stat-item">
+        <text class="stat-num">{{channel.videoCount || 0}}</text>
+        <text class="stat-label">作品</text>
+      </view>
+      <view class="stat-divider"></view>
+      <view class="stat-item">
+        <text class="stat-num">{{channel.followerCount || 0}}</text>
+        <text class="stat-label">粉丝</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="tab-bar">
+    <view class="tab-item {{tab === 'videos' ? 'active' : ''}}" data-tab="videos" bindtap="switchTab">
+      作品
+    </view>
+  </view>
+
+  <view class="video-grid">
+    <view
+      wx:for="{{videoList}}"
+      wx:key="_id"
+      class="video-grid-item"
+      data-id="{{item._id}}"
+      bindtap="onVideoTap"
+    >
+      <view class="video-cover">
+        <image wx:if="{{item.coverUrl}}" class="cover-img" src="{{item.coverUrl}}" mode="aspectFill"></image>
+        <view wx:else class="cover-placeholder">
+          <text class="placeholder-text">{{item.title}}</text>
+        </view>
+        <view class="video-duration" wx:if="{{item.duration}}">
+          {{item.duration}}"
+        </view>
+      </view>
+      <view class="video-info">
+        <text class="video-grid-title">{{item.title}}</text>
+        <view class="video-stats">
+          <text class="stat">♥ {{item.likeCount || 0}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{!loading && videoList.length === 0}}" class="empty-state">
+    <text class="empty-text">暂无作品</text>
+  </view>
+</view>
+
+<view wx:if="{{loading}}" class="loading">
+  加载中...
+</view>

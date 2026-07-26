@@ -39,6 +39,28 @@
     </view>
   </view>
 
+  <view class="section-title" wx:if="{{isAdmin}}">
+    <text class="st-line"></text>
+    <text class="st-text">管理员</text>
+    <text class="st-line"></text>
+  </view>
+
+  <view class="menu-group card" wx:if="{{isAdmin}}">
+    <view
+      class="menu-item"
+      data-url="/pages/admin/video-manage/index"
+      bindtap="onMenuTap"
+      hover-class="menu-hover"
+    >
+      <text class="iconfont m-icon icon-shipinhao" style="color:#FA5151;"></text>
+      <view class="m-text">
+        <text class="m-name">视频管理</text>
+        <text class="m-desc">视频号内容管理</text>
+      </view>
+      <text class="iconfont m-arrow icon-right"></text>
+    </view>
+  </view>
+
   <view class="section-title">
     <text class="st-line"></text>
     <text class="st-text">功能菜单</text>

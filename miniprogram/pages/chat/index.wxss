@@ -3,16 +3,16 @@ page {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background-color: #fcf9f2;
+  background-color: #ededed;
 }
 
 .chat-list-page {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding-bottom: calc(110rpx + env(safe-area-inset-bottom));
-  overflow-y: auto;
-  background-color: #fcf9f2;
+  min-height: 0;
+  overflow: hidden;
+  background-color: #ededed;
 }
 
 .nav-actions {
@@ -28,7 +28,8 @@ page {
 
 .search-wrap {
   padding: 16rpx 32rpx;
-  background-color: #fcf9f2;
+  background-color: #ededed;
+  flex-shrink: 0;
 }
 
 .search-bar {
@@ -36,9 +37,8 @@ page {
   align-items: center;
   height: 68rpx;
   background: #ffffff;
-  border-radius: 8rpx;
+  border-radius: 10rpx;
   padding: 0 24rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.03);
 }
 
 .search-icon {
@@ -71,7 +71,7 @@ page {
   display: inline-block;
   font-size: 48rpx;
   animation: dotBounce 1.4s infinite;
-  color: var(--wechat-green);
+  color: #07c160;
 }
 .loading-dots .dot:nth-child(2) { animation-delay: 0.2s; }
 .loading-dots .dot:nth-child(3) { animation-delay: 0.4s; }
@@ -123,6 +123,7 @@ page {
 .session-list {
   background-color: #ffffff;
   flex: 1;
+  min-height: 0;
 }
 
 .session-item {
@@ -130,7 +131,10 @@ page {
   align-items: center;
   background-color: #ffffff;
   padding-left: 32rpx;
-  transition: background 0.15s;
+}
+
+.session-item:active {
+  background-color: #f5f5f5;
 }
 
 .session-hover {
@@ -139,53 +143,49 @@ page {
 
 .avatar-wrap {
   position: relative;
-  width: 96rpx;
-  height: 96rpx;
+  width: 88rpx;
+  height: 88rpx;
   margin-right: 24rpx;
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  margin-top: 24rpx;
-  margin-bottom: 24rpx;
 }
 
 .avatar {
-  width: 96rpx;
-  height: 96rpx;
+  width: 88rpx;
+  height: 88rpx;
   border-radius: 12rpx;
   background-color: #f0e6d6;
   overflow: hidden;
+  display: block;
 }
 
 .unread-badge {
   position: absolute;
-  top: -6rpx;
-  right: -6rpx;
-  min-width: 36rpx;
-  height: 36rpx;
-  padding: 0 10rpx;
-  background: #FA5151;
+  top: -10rpx;
+  right: -10rpx;
+  min-width: 32rpx;
+  height: 32rpx;
+  padding: 0 8rpx;
+  background: #fa5151;
   color: #fff;
   font-size: 22rpx;
-  line-height: 36rpx;
+  line-height: 32rpx;
   text-align: center;
-  border-radius: 999rpx;
-  font-weight: 600;
-  box-shadow: 0 2rpx 6rpx rgba(250, 81, 81, 0.3);
+  border-radius: 16rpx;
+  font-weight: 500;
   z-index: 10;
-  border: 3rpx solid #ffffff;
+  border: 4rpx solid #ffffff;
+  box-sizing: border-box;
 }
 
 .session-info {
   flex: 1;
   min-width: 0;
-  overflow: hidden;
-  height: 96rpx;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding: 4rpx 32rpx 4rpx 0;
-  border-bottom: 1rpx solid #eeeeee;
+  justify-content: center;
+  padding: 24rpx 32rpx 24rpx 0;
+  border-bottom: 1rpx solid #e5e5e5;
+  overflow: hidden;
 }
 
 .session-top {
@@ -205,50 +205,54 @@ page {
 }
 
 .session-name {
-  font-size: 34rpx;
-  color: #333333;
+  font-size: 32rpx;
+  color: #191919;
   font-weight: 500;
-  max-width: 240rpx;
+  flex-shrink: 0;
+  max-width: 280rpx;
 }
 
 .session-title {
   font-size: 24rpx;
   color: #999999;
-  margin-left: 4rpx;
-  max-width: 200rpx;
-  background-color: #f5f5f5;
-  padding: 2rpx 10rpx;
-  border-radius: 6rpx;
-  border: 1rpx solid #eeeeee;
+  margin-left: 8rpx;
+  flex-shrink: 0;
+  max-width: 240rpx;
 }
 
 .session-time {
   font-size: 24rpx;
-  color: #bbbbbb;
+  color: #b2b2b2;
   flex-shrink: 0;
-  margin-left: 12rpx;
+  margin-left: 16rpx;
 }
 
 .session-preview {
   display: block;
   width: 100%;
-  font-size: 26rpx;
+  font-size: 28rpx;
   color: #999999;
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
   line-height: 1.4;
-  max-width: 100%;
 }
 
 .list-footer {
-  padding: 40rpx 24rpx 60rpx;
+  padding: 32rpx 24rpx;
   display: flex;
   justify-content: center;
   background-color: #ffffff;
+  flex-shrink: 0;
 }
 
 .footer-text {
   font-size: 22rpx;
   color: #ccc;
+}
+
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

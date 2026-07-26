@@ -1,6 +1,7 @@
 const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
+const _ = db.command
 
 const COLLECTIONS = [
   'users',
@@ -24,7 +25,12 @@ const COLLECTIONS = [
   'book_favorites',
   'books',
   'book_chapters',
-  'system_config'
+  'system_config',
+  'video_channels',
+  'videos',
+  'video_likes',
+  'video_comments',
+  'video_follows'
 ]
 
 // ============================================================
@@ -132,6 +138,59 @@ const ACHIEVEMENT_SEED = [
   { _id: 'ach_read_10', name: '博览群书', desc: '阅读 10 部典籍', icon: '📚', rarity: 'rare', points: 50 }
 ]
 
+// ============================================================
+// 视频号种子：6 位古人开通视频号
+// ============================================================
+const VIDEO_CHANNEL_SEED = [
+  { figureId: 'fig-libai', figureName: '李白', figureTitle: '诗仙', avatar: '', dynasty: 'tang', dynastyName: '盛唐', bio: '斗酒诗百篇，剑气纵横三万里。' },
+  { figureId: 'fig-sushi', figureName: '苏轼', figureTitle: '东坡居士', avatar: '', dynasty: 'song', dynastyName: '北宋', bio: '一蓑烟雨任平生，人间有味是清欢。' },
+  { figureId: 'fig-zhugeliang', figureName: '诸葛亮', figureTitle: '武乡侯', avatar: '', dynasty: 'sanguo', dynastyName: '三国·蜀', bio: '鞠躬尽瘁，死而后已。' },
+  { figureId: 'fig-liubang', figureName: '刘邦', figureTitle: '汉高祖', avatar: '', dynasty: 'han', dynastyName: '西汉', bio: '大风起兮云飞扬，威加海内兮归故乡。' },
+  { figureId: 'fig-wuzetian', figureName: '武则天', figureTitle: '则天大圣皇帝', avatar: '', dynasty: 'tang', dynastyName: '唐·武周', bio: '巾帼不让须眉，一代女皇。' },
+  { figureId: 'fig-simqian', figureName: '司马迁', figureTitle: '太史公', avatar: '', dynasty: 'han', dynastyName: '西汉', bio: '史家之绝唱，无韵之离骚。' }
+]
+
+// ============================================================
+// 视频种子：每个视频号 2-3 条示例视频（无真实文件，占位用）
+// ============================================================
+const VIDEO_SEED = [
+  // 李白
+  { figureId: 'fig-libai', title: '将进酒', description: '君不见黄河之水天上来，奔流到海不复回！', historicalEvent: '将进酒', tags: ['唐诗', '酒', '豪放'], duration: 45 },
+  { figureId: 'fig-libai', title: '望庐山瀑布', description: '飞流直下三千尺，疑是银河落九天。', historicalEvent: '游庐山', tags: ['唐诗', '山水'], duration: 30 },
+  { figureId: 'fig-libai', title: '赠汪伦', description: '桃花潭水深千尺，不及汪伦送我情。', historicalEvent: '赠汪伦', tags: ['唐诗', '友情'], duration: 25 },
+  // 苏轼
+  { figureId: 'fig-sushi', title: '赤壁怀古', description: '大江东去，浪淘尽，千古风流人物。', historicalEvent: '念奴娇·赤壁怀古', tags: ['宋词', '豪放'], duration: 40 },
+  { figureId: 'fig-sushi', title: '东坡肉秘方', description: '黄州好猪肉，价贱如泥土。慢着火，少着水，火候足时它自美。', historicalEvent: '东坡肉', tags: ['美食', '生活'], duration: 35 },
+  // 诸葛亮
+  { figureId: 'fig-zhugeliang', title: '出师表', description: '臣本布衣，躬耕于南阳，苟全性命于乱世...', historicalEvent: '出师表', tags: ['三国', '忠义'], duration: 60 },
+  { figureId: 'fig-zhugeliang', title: '空城计', description: '瑶琴三尺胜雄师，诸葛西城退敌时。', historicalEvent: '空城计', tags: ['三国', '谋略'], duration: 38 },
+  // 刘邦
+  { figureId: 'fig-liubang', title: '大风歌', description: '大风起兮云飞扬，威加海内兮归故乡，安得猛士兮守四方！', historicalEvent: '大风歌', tags: ['汉朝', '诗歌'], duration: 28 },
+  { figureId: 'fig-liubang', title: '鸿门宴惊魂', description: '项庄舞剑，意在沛公。今日之险，终生难忘。', historicalEvent: '鸿门宴', tags: ['汉朝', '历史'], duration: 50 },
+  // 武则天
+  { figureId: 'fig-wuzetian', title: '无字碑', description: '千秋功过，留待后人评说。', historicalEvent: '无字碑', tags: ['唐朝', '女皇'], duration: 32 },
+  // 司马迁
+  { figureId: 'fig-simqian', title: '史记自序', description: '究天人之际，通古今之变，成一家之言。', historicalEvent: '史记', tags: ['史学', '文学'], duration: 55 }
+]
+
+// ============================================================
+// AI评论种子
+// ============================================================
+const VIDEO_COMMENT_SEED = [
+  // 李白《将进酒》
+  { videoIdx: 0, fromFigureId: 'fig-dufu', fromFigureName: '杜甫', fromFigureTitle: '诗圣', fromDynasty: 'tang', content: '白也诗无敌，飘然思不群！' },
+  { videoIdx: 0, fromFigureId: 'fig-baijuyi', fromFigureName: '白居易', fromFigureTitle: '诗魔', fromDynasty: 'tang', content: '酒入豪肠，七分酿成了月光。' },
+  // 李白《赠汪伦》
+  { videoIdx: 2, fromFigureId: 'fig-dufu', fromFigureName: '杜甫', fromFigureTitle: '诗圣', fromDynasty: 'tang', content: '何时一樽酒，重与细论文？' },
+  // 苏轼《赤壁怀古》
+  { videoIdx: 3, fromFigureId: 'fig-xin-qiji', fromFigureName: '辛弃疾', fromFigureTitle: '词中之龙', fromDynasty: 'song', content: '东坡真乃豪放派鼻祖也！' },
+  // 诸葛亮《出师表》
+  { videoIdx: 5, fromFigureId: 'fig-yuefei', fromFigureName: '岳飞', fromFigureTitle: '岳武穆', fromDynasty: 'song', content: '读《出师表》不下泪者，其人必不忠。' },
+  { videoIdx: 5, fromFigureId: 'fig-wuzetian', fromFigureName: '武则天', fromFigureTitle: '则天大圣皇帝', fromDynasty: 'tang', content: '鞠躬尽瘁，千古忠臣。' },
+  // 刘邦《大风歌》
+  { videoIdx: 7, fromFigureId: 'fig-xiangyu', fromFigureName: '项羽', fromFigureTitle: '西楚霸王', fromDynasty: 'sanguo', content: '沛公...此景竟让我想起当年。' }
+]
+
 exports.main = async (event, context) => {
   const { action = 'init', data = {} } = event
   try {
@@ -143,6 +202,9 @@ exports.main = async (event, context) => {
       case 'seedBooks': return await seedBooks()
       case 'seedMemorials': return await seedMemorials()
       case 'seedAchievements': return await seedAchievements()
+      case 'seedVideoChannels': return await seedVideoChannels()
+      case 'seedVideos': return await seedVideos()
+      case 'seedVideoComments': return await seedVideoComments()
       default: return { code: -1, message: '未知 action: ' + action }
     }
   } catch (e) {
@@ -160,10 +222,7 @@ async function initAll(data) {
     try {
       if (drop) {
         try {
-          const list = await db.collection(c).limit(1).get()
-          if (list.data.length) {
-            await db.collection(c).where({ _openid: /./ }).remove()
-          }
+          await db.collection(c).where({ _id: /./ }).remove()
         } catch (_) {}
       }
       await db.createCollection(c)
@@ -177,12 +236,28 @@ async function initAll(data) {
     }
   }
 
-  const seedResult = seed ? {
-    figures: await seedFigures(),
-    books: await seedBooks(),
-    memorials: await seedMemorials(),
-    achievements: await seedAchievements()
-  } : null
+  if (!seed) {
+    return { code: 0, message: '初始化完成', data: { created, failed, seed: null } }
+  }
+
+  const seedResult = {}
+  const seedTasks = [
+    { key: 'figures', fn: seedFigures },
+    { key: 'books', fn: seedBooks },
+    { key: 'memorials', fn: seedMemorials },
+    { key: 'achievements', fn: seedAchievements },
+    { key: 'videoChannels', fn: seedVideoChannels },
+    { key: 'videos', fn: seedVideos },
+    { key: 'videoComments', fn: seedVideoComments }
+  ]
+
+  for (const task of seedTasks) {
+    try {
+      seedResult[task.key] = await task.fn()
+    } catch (e) {
+      seedResult[task.key] = { ok: 0, fail: -1, error: e.message }
+    }
+  }
 
   return {
     code: 0,
@@ -205,15 +280,14 @@ async function checkStatus() {
 }
 
 async function seedFigures() {
+  const count = await db.collection('historical_figures').count()
+  if (count.total > 0) {
+    return { ok: 0, fail: 0, skipped: true, reason: '已有数据，跳过' }
+  }
   let ok = 0, fail = 0
   for (const f of FIGURE_SEED) {
     try {
-      const exists = await db.collection('historical_figures').where({ figureId: f.figureId }).count()
-      if (exists.total > 0) {
-        await db.collection('historical_figures').where({ figureId: f.figureId }).update({ data: f })
-      } else {
-        await db.collection('historical_figures').add({ data: f })
-      }
+      await db.collection('historical_figures').add({ data: f })
       ok++
     } catch (e) { fail++ }
   }
@@ -221,15 +295,14 @@ async function seedFigures() {
 }
 
 async function seedBooks() {
+  const count = await db.collection('books').count()
+  if (count.total > 0) {
+    return { ok: 0, fail: 0, skipped: true, reason: '已有数据，跳过' }
+  }
   let ok = 0, fail = 0
   for (const b of BOOK_SEED) {
     try {
-      const exists = await db.collection('books').where({ bookId: b.bookId }).count()
-      if (exists.total > 0) {
-        await db.collection('books').where({ bookId: b.bookId }).update({ data: b })
-      } else {
-        await db.collection('books').add({ data: b })
-      }
+      await db.collection('books').add({ data: { _id: b._id, ...b } })
       ok++
     } catch (e) { fail++ }
   }
@@ -237,43 +310,156 @@ async function seedBooks() {
 }
 
 async function seedMemorials() {
+  const count = await db.collection('memorials').count()
+  if (count.total > 0) {
+    return { ok: 0, fail: 0, skipped: true, reason: '已有数据，跳过' }
+  }
   let ok = 0, fail = 0
   for (const m of MEMORIAL_SEED) {
     try {
-      const exists = await db.collection('memorials').doc(m._id).get()
-      if (exists.data) {
-        await db.collection('memorials').doc(m._id).set({ data: m })
-      } else {
-        await db.collection('memorials').add({ data: { _id: m._id, ...m } })
-      }
+      await db.collection('memorials').add({ data: { _id: m._id, ...m } })
       ok++
-    } catch (e) {
-      try {
-        await db.collection('memorials').add({ data: { _id: m._id, ...m } })
-        ok++
-      } catch (_) { fail++ }
-    }
+    } catch (e) { fail++ }
   }
   return { ok, fail }
 }
 
 async function seedAchievements() {
+  const count = await db.collection('achievements').count()
+  if (count.total > 0) {
+    return { ok: 0, fail: 0, skipped: true, reason: '已有数据，跳过' }
+  }
   let ok = 0, fail = 0
   for (const a of ACHIEVEMENT_SEED) {
     try {
-      const exists = await db.collection('achievements').doc(a._id).get()
-      if (exists.data) {
-        await db.collection('achievements').doc(a._id).set({ data: a })
-      } else {
-        await db.collection('achievements').add({ data: { _id: a._id, ...a } })
-      }
+      await db.collection('achievements').add({ data: { _id: a._id, ...a } })
+      ok++
+    } catch (e) { fail++ }
+  }
+  return { ok, fail }
+}
+
+async function seedVideoChannels() {
+  const count = await db.collection('video_channels').count()
+  if (count.total > 0) {
+    return { ok: 0, fail: 0, skipped: true, reason: '已有数据，跳过' }
+  }
+  let ok = 0, fail = 0
+  for (const c of VIDEO_CHANNEL_SEED) {
+    try {
+      const res = await db.collection('video_channels').add({
+        data: {
+          ...c,
+          followerCount: 0,
+          videoCount: 0,
+          createdAt: db.serverDate(),
+          updatedAt: db.serverDate()
+        }
+      })
+      try {
+        await db.collection('historical_figures').where({ figureId: c.figureId }).update({
+          data: { hasChannel: true, channelId: res._id }
+        })
+      } catch (_) {}
       ok++
     } catch (e) {
-      try {
-        await db.collection('achievements').add({ data: { _id: a._id, ...a } })
-        ok++
-      } catch (_) { fail++ }
+      console.warn('seedVideoChannels err:', e)
+      fail++
     }
+  }
+  return { ok, fail }
+}
+
+async function seedVideos() {
+  const count = await db.collection('videos').count()
+  if (count.total > 0) {
+    return { ok: 0, fail: 0, skipped: true, reason: '已有数据，跳过' }
+  }
+  let ok = 0, fail = 0
+  const channelMap = {}
+  try {
+    const channels = await db.collection('video_channels').get()
+    channels.data.forEach(c => { channelMap[c.figureId] = c })
+  } catch (e) {
+    return { ok: 0, fail: VIDEO_SEED.length, error: e.message }
+  }
+
+  for (let i = 0; i < VIDEO_SEED.length; i++) {
+    const v = VIDEO_SEED[i]
+    const channel = channelMap[v.figureId]
+    if (!channel) { fail++; continue }
+    try {
+      await db.collection('videos').add({
+        data: {
+          channelId: channel._id,
+          figureId: v.figureId,
+          figureName: channel.figureName || '',
+          figureTitle: channel.figureTitle || '',
+          avatar: channel.avatar || '',
+          dynasty: channel.dynasty || '',
+          title: v.title,
+          description: v.description,
+          coverUrl: '',
+          videoUrl: '',
+          duration: v.duration || 30,
+          historicalEvent: v.historicalEvent || '',
+          tags: v.tags || [],
+          likeCount: Math.floor(Math.random() * 5000) + 100,
+          viewCount: Math.floor(Math.random() * 50000) + 1000,
+          status: 'published',
+          createdAt: db.serverDate()
+        }
+      })
+      try {
+        await db.collection('video_channels').doc(channel._id).update({
+          data: { videoCount: _.inc(1) }
+        })
+      } catch (_) {}
+      ok++
+    } catch (e) {
+      console.warn('seedVideos err:', e)
+      fail++
+    }
+  }
+  return { ok, fail }
+}
+
+async function seedVideoComments() {
+  const count = await db.collection('video_comments').count()
+  if (count.total > 0) {
+    return { ok: 0, fail: 0, skipped: true, reason: '已有数据，跳过' }
+  }
+  let ok = 0, fail = 0
+  try {
+    const videos = await db.collection('videos').orderBy('createdAt', 'asc').get()
+    const videoList = videos.data
+
+    for (const c of VIDEO_COMMENT_SEED) {
+      const video = videoList[c.videoIdx]
+      if (!video) { fail++; continue }
+      try {
+        await db.collection('video_comments').add({
+          data: {
+            videoId: video._id,
+            fromFigureId: c.fromFigureId,
+            fromFigureName: c.fromFigureName,
+            fromFigureTitle: c.fromFigureTitle,
+            fromAvatar: '',
+            fromDynasty: c.fromDynasty,
+            toFigureId: video.figureId,
+            toFigureName: video.figureName,
+            content: c.content,
+            createdAt: db.serverDate()
+          }
+        })
+        ok++
+      } catch (e) {
+        console.warn('seedVideoComments err:', e)
+        fail++
+      }
+    }
+  } catch (e) {
+    return { ok: 0, fail: VIDEO_COMMENT_SEED.length, error: e.message }
   }
   return { ok, fail }
 }

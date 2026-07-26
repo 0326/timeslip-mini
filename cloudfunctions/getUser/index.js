@@ -45,6 +45,7 @@ exports.main = async (event, context) => {
         _openid: OPENID,
         nickName,
         avatarUrl,
+        role: 'user',
         crossNo: generateCrossNo(),
         points: 10,
         memberLevel: '布衣',

@@ -1,0 +1,94 @@
+<custom-nav-bar
+  title="视频号管理"
+  showBack="{{true}}"
+  rightText="新建"
+  bindRightTap="openCreate"
+></custom-nav-bar>
+
+<view class="page">
+  <view wx:if="{{channelList.length === 0 && !loading}}" class="empty">
+    <text class="empty-text">暂无视频号</text>
+    <view class="empty-btn" bindtap="openCreate">创建第一个视频号</view>
+  </view>
+
+  <view class="channel-list" wx:if="{{channelList.length > 0}}">
+    <view
+      wx:for="{{channelList}}"
+      wx:key="_id"
+      class="channel-item"
+      data-id="{{item._id}}"
+      bindtap="onChannelTap"
+    >
+      <image class="channel-avatar" src="{{item.avatar || '/images/icons/avatar.png'}}" mode="aspectFill"></image>
+      <view class="channel-info">
+        <view class="channel-name">
+          {{item.figureName}}
+          <text wx:if="{{item.figureTitle}}" class="channel-title"> · {{item.figureTitle}}</text>
+        </view>
+        <view class="channel-desc" wx:if="{{item.bio}}">{{item.bio}}</view>
+        <view class="channel-stats">
+          <text>{{item.videoCount || 0}} 作品</text>
+          <text class="dot">·</text>
+          <text>{{item.followerCount || 0}} 粉丝</text>
+        </view>
+      </view>
+      <text class="iconfont icon-right arrow"></text>
+    </view>
+  </view>
+</view>
+
+<view wx:if="{{showCreate}}" class="modal-mask" bindtap="closeCreate">
+  <view class="modal-panel" catchtap="stopPropagation">
+    <view class="modal-title">创建视频号</view>
+
+    <view class="form-row">
+      <text class="form-label">人物ID *</text>
+      <input
+        class="form-input"
+        placeholder="如：fig-libai"
+        value="{{createForm.figureId}}"
+        data-field="figureId"
+        bindinput="onInput"
+      />
+    </view>
+
+    <view class="form-row">
+      <text class="form-label">人物名称 *</text>
+      <input
+        class="form-input"
+        placeholder="如：李白"
+        value="{{createForm.figureName}}"
+        data-field="figureName"
+        bindinput="onInput"
+      />
+    </view>
+
+    <view class="form-row">
+      <text class="form-label">头衔</text>
+      <input
+        class="form-input"
+        placeholder="如：诗仙"
+        value="{{createForm.figureTitle}}"
+        data-field="figureTitle"
+        bindinput="onInput"
+      />
+    </view>
+
+    <view class="form-row">
+      <text class="form-label">简介</text>
+      <textarea
+        class="form-textarea"
+        placeholder="视频号简介（选填）"
+        value="{{createForm.bio}}"
+        data-field="bio"
+        bindinput="onInput"
+        maxlength="100"
+      />
+    </view>
+
+    <view class="modal-footer">
+      <view class="btn-cancel" bindtap="closeCreate">取消</view>
+      <view class="btn-confirm" bindtap="submitCreate">创建</view>
+    </view>
+  </view>
+</view>

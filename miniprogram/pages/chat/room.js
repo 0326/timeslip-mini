@@ -1,22 +1,17 @@
 const { requestCloud } = require('../../utils/cloudRequest')
-const { formatChatTime } = require('../../utils/date')
+const chatSession = require('../../utils/chatSession')
+const { AI_CONFIG, QINGYUE } = require('../../utils/constants')
 const { storage } = require('../../utils/storage')
-const { AI_CONFIG } = require('../../utils/constants')
 const { uid, sleep } = require('../../utils/helpers')
 const loginGuard = require('../../utils/loginGuard')
-
-const MOCK_MESSAGES = [
-  { _id: 'm1', role: 'figure', figureId: 'simaqian', content: '吾乃司马迁，太史公司马迁是也。承蒙足下相邀，愿与君促膝长谈。不知君欲从何史问起？', createdAt: Date.now() - 3600000 * 2 },
-  { _id: 'm2', role: 'user', content: '太史公，史记一百三十篇，您最钟爱哪一篇？', createdAt: Date.now() - 3600000 * 1.5 },
-  { _id: 'm3', role: 'figure', figureId: 'simaqian', content: '哈哈，足下此问，正中吾心。每一篇皆吾心血所注，然最动人心魄者，莫过《项羽本纪》。乌江自刎一折，每思及此，未尝不废书而叹也！', createdAt: Date.now() - 3600000 }
-]
 
 Page({
   data: {
     figureId: '',
-    figureName: '司马迁',
-    figureTitle: '太史公',
-    avatar: 'https://img.icons8.com/color/96/emperor.png',
+    figureName: '',
+    figureTitle: '',
+    avatar: '',
+    isSystem: false,
     messages: [],
     inputValue: '',
     inputText: '',
@@ -24,58 +19,49 @@ Page({
     scrollTop: 0,
     scrollTo: '',
     aiTyping: false,
-    safeBottom: 0,
     chatStatus: 0,
     showTools: false,
-    manualScroll: false,
-    footerBoxHeight: 92,
-    inputBoxHeight: 44
+    manualScroll: false
   },
 
   onLoad(options) {
-    const figureId = options.figureId || 'simaqian'
-    const figureName = decodeURIComponent(options.figureName || '司马迁')
+    const figureId = options.figureId || QINGYUE.figureId
+    const figureName = decodeURIComponent(options.figureName || QINGYUE.name)
     const [name, title] = figureName.split(' · ')
-    try {
-      const sys = wx.getSystemInfoSync()
-      const pxPerRpx = sys.windowWidth / 750
-      const safeBottomPx = sys.safeAreaInsets ? sys.safeAreaInsets.bottom : 0
-      this.setData({
-        safeBottom: Math.round(safeBottomPx / pxPerRpx),
-        footerBoxHeight: Math.round(65 + safeBottomPx + 12 * pxPerRpx)
-      })
-    } catch (e) {}
+
+    const isSystem = figureId === QINGYUE.figureId
+    let avatar = isSystem ? QINGYUE.avatar : ''
+    if (!avatar) {
+      const fig = storage.get('figure_' + figureId)
+      if (fig && fig.avatar) avatar = fig.avatar
+    }
+
     this.setData({
       figureId,
       figureName: name,
-      figureTitle: title || ''
+      figureTitle: title || '',
+      avatar,
+      isSystem
     })
     wx.setNavigationBarTitle({ title: figureName })
+
+    // 确保青月会话与欢迎消息存在
+    if (isSystem) chatSession.initQingyueSession()
     this.loadHistory()
   },
 
   onShow() {
-    if (!loginGuard.checkLogin(this)) return
+    // 青月（系统引导）无需登录
+    if (!this.data.isSystem && !loginGuard.checkLogin(this)) return
     const app = getApp()
     app.setCurrentTab(this, 0)
+    // 进入房间清除未读
+    chatSession.clearUnread(this.data.figureId)
   },
 
-  async loadHistory() {
-    const cacheKey = `chat_${this.data.figureId}`
-    const cached = storage.get(cacheKey)
-    if (cached && cached.length) {
-      this.setData({ messages: cached })
-      this.scrollToBottom()
-      return
-    }
-    try {
-      const data = await requestCloud('chat', 'history', { figureId: this.data.figureId }, { throwError: false })
-      const messages = (data && data.messages) || MOCK_MESSAGES
-      this.setData({ messages })
-      storage.set(cacheKey, messages, 300)
-    } catch (e) {
-      this.setData({ messages: MOCK_MESSAGES })
-    }
+  loadHistory() {
+    const messages = chatSession.getMessages(this.data.figureId)
+    this.setData({ messages })
     this.scrollToBottom()
   },
 
@@ -95,14 +81,6 @@ Page({
     this.setData({ showTools: false })
   },
 
-  handleLineChange(e) {
-    const { height } = e.detail
-    if (height) {
-      const h = Math.max(44, Math.min(160, height))
-      this.setData({ inputBoxHeight: h })
-    }
-  },
-
   toggleTools() {
     this.setData({ showTools: !this.data.showTools })
   },
@@ -113,8 +91,8 @@ Page({
       content: '确定要清除全部对话记录吗？',
       success: (res) => {
         if (res.confirm) {
-          const cacheKey = `chat_${this.data.figureId}`
-          storage.remove(cacheKey)
+          chatSession.clearMessages(this.data.figureId)
+          chatSession.bumpSession(this.data.figureId, '', Date.now())
           this.setData({ messages: [], showTools: false })
         }
       }
@@ -127,8 +105,7 @@ Page({
       clearTimeout(this._typeTimer)
       this._typeTimer = null
     }
-    const cacheKey = `chat_${this.data.figureId}`
-    storage.set(cacheKey, this.data.messages, 600)
+    chatSession.saveMessages(this.data.figureId, this.data.messages)
   },
 
   onScrollMsg(e) {
@@ -152,11 +129,12 @@ Page({
       return
     }
 
+    const now = Date.now()
     const userMsg = {
       _id: uid('u_'),
       role: 'user',
       content: text,
-      createdAt: Date.now()
+      createdAt: now
     }
     const messages = this.data.messages.concat([userMsg])
     this.setData({
@@ -169,32 +147,43 @@ Page({
       manualScroll: false
     })
     this.scrollToBottom()
+    this.persistMessages(messages)
+    this.bumpSession(text, now)
 
     try {
-      await sleep(800)
-      const data = await requestCloud('chat', 'send', {
-        figureId: this.data.figureId,
-        figureName: this.data.figureName,
-        figureTitle: this.data.figureTitle,
-        userInput: text,
-        history: this.data.messages.slice(-AI_CONFIG.maxHistoryPairs * 2)
-      }, { throwError: false })
-
-      let aiContent = (data && data.content) || this.generateMockReply(text, this.data.figureName)
+      let aiContent
+      if (this.data.isSystem) {
+        await sleep(600)
+        aiContent = this.generateQingyueReply(text)
+      } else {
+        await sleep(800)
+        const data = await requestCloud('chat', 'send', {
+          figureId: this.data.figureId,
+          figureName: this.data.figureName,
+          figureTitle: this.data.figureTitle,
+          content: text,
+          userInput: text,
+          history: this.data.messages.slice(-AI_CONFIG.maxHistoryPairs * 2)
+        }, { throwError: false })
+        aiContent = (data && data.content) || this.generateMockReply(text, this.data.figureName)
+      }
       this.addAiMessage(aiContent)
     } catch (e) {
-      const fallback = this.generateMockReply(text, this.data.figureName)
+      const fallback = this.data.isSystem
+        ? this.generateQingyueReply(text)
+        : this.generateMockReply(text, this.data.figureName)
       this.addAiMessage(fallback)
     }
   },
 
   addAiMessage(content) {
+    const now = Date.now()
     const fullMsg = {
       _id: uid('a_'),
       role: 'figure',
       figureId: this.data.figureId,
       content: '',
-      createdAt: Date.now()
+      createdAt: now
     }
     const messages = this.data.messages.concat([fullMsg])
     this.setData({ messages, sending: false, chatStatus: 2 })
@@ -207,8 +196,8 @@ Page({
     const speed = AI_CONFIG.typingSpeedMs || 40
     if (i >= content.length) {
       this.setData({ aiTyping: false, chatStatus: 0 })
-      const cacheKey = `chat_${this.data.figureId}`
-      storage.set(cacheKey, this.data.messages, 600)
+      this.persistMessages(this.data.messages)
+      this.bumpSession(content, Date.now())
       return
     }
     const messages = this.data.messages.map(m =>
@@ -217,6 +206,65 @@ Page({
     this.setData({ messages })
     if (i % 5 === 0 && !this.data.manualScroll) this.scrollToBottom()
     this._typeTimer = setTimeout(() => this.typeEffect(msgId, content, i + 1), speed)
+  },
+
+  // 持久化消息到本地
+  persistMessages(messages) {
+    chatSession.saveMessages(this.data.figureId, messages)
+  },
+
+  // 更新首页会话列表（最后消息 + 时间），首次聊天自动创建会话
+  bumpSession(lastMessage, lastTime) {
+    chatSession.upsertSession({
+      figureId: this.data.figureId,
+      figureName: this.data.figureName,
+      figureTitle: this.data.figureTitle,
+      avatar: this.data.avatar,
+      lastMessage: lastMessage,
+      lastTime: lastTime,
+      isSystem: this.data.isSystem
+    })
+    chatSession.clearUnread(this.data.figureId)
+  },
+
+  onAvatarTap() {
+    wx.navigateTo({
+      url: `/pages/lantai/figure-detail?id=${this.data.figureId}&name=${encodeURIComponent(this.data.figureName)}`
+    })
+  },
+
+  // 青月引导回复：关键词匹配 + 功能介绍
+  generateQingyueReply(text) {
+    const t = (text || '').toLowerCase()
+    const has = kw => t.indexOf(kw) >= 0
+    if (has('兰台') || has('人物') || has('历史人物')) {
+      return '「兰台」是穿越圈的人物殿堂，你可以在这里结识孔子、司马迁、李白、苏轼等历代先贤。\n\n点击底部「兰台」Tab，选择一位人物进入详情页，即可开始对话。每位人物都有独特的性格与口吻哦～'
+    }
+    if (has('发现') || has('朋友圈') || has('动态')) {
+      return '「发现」页有穿越朋友圈，历史人物会在这里发布动态，你可以点赞、评论，与他们互动。\n\n还有「飞鸽传书」可以给古人写信，「奏折推演」体验朝堂决策。点击底部「发现」Tab 即可探索。'
+    }
+    if (has('飞鸽') || has('信') || has('写信')) {
+      return '「飞鸽传书」让你可以给历史人物写一封信，他们会以古人的口吻回信给你。\n\n在「发现」页找到飞鸽传书入口，选择收信人即可开始。信件会保存在「我的」-「书信集」中。'
+    }
+    if (has('dna') || has('测试') || has('灵魂') || has('匹配')) {
+      return '「DNA 测试」会通过几道趣味问题，找到与你灵魂最契合的历史人物。\n\n在「发现」页进入「DNA 殿堂」即可开始测试，测完还能直接与匹配的人物对话。'
+    }
+    if (has('视频') || has('视频号')) {
+      return '「视频号」里有历史人物的主题视频频道，可以观看、点赞、评论。\n\n在「发现」页找到「视频号」入口，或在人物详情页查看该人物的相关视频。'
+    }
+    if (has('奏折') || has('朝堂')) {
+      return '「奏折推演」让你化身决策者，批阅古人的奏折并做出选择，系统会推演你的决策对历史走向的影响。\n\n前往「发现」页即可体验。'
+    }
+    if (has('成就')) {
+      return '在「我的」-「成就」中，可以查看你的穿越足迹。每一次对话、每一封信、每一次互动都可能解锁新成就。'
+    }
+    if (has('怎么') || has('如何') || has('帮助') || has('功能') || has('能做')) {
+      return '穿越圈目前有这些核心功能：\n\n1. 「兰台」— 结识历史人物并与之对话\n2. 「发现」— 朋友圈、飞鸽传书、奏折推演、DNA 测试、视频号\n3. 「我的」— 个人资料、成就、书信集\n\n你可以直接告诉我感兴趣的方向，我来为你指路～'
+    }
+    if (has('你好') || has('hi') || has('哈喽') || has('在吗')) {
+      return '你好呀～我是青月，穿越圈的向导。你可以问我「兰台是什么」「怎么飞鸽传书」「DNA 测试怎么玩」之类的问题，我会一一为你解答。'
+    }
+    return '这个问题我可能不太确定，不过穿越圈的功能你都可以试试看：\n· 去「兰台」找一位历史人物聊天\n· 在「发现」刷朋友圈、写信、做 DNA 测试\n\n如果想了解某项功能，直接告诉我名字就好～'
   },
 
   generateMockReply(text, name) {

@@ -29,6 +29,15 @@ const AI_CONFIG = {
   typingSpeedMs: 40
 }
 
+// 系统引导 AI 角色：青月
+const QINGYUE = {
+  figureId: 'sys_qingyue',
+  name: '青月',
+  title: '穿越向导',
+  avatar: 'https://img.icons8.com/color/96/crescent-moon.png',
+  isSystem: true
+}
+
 const CONTENT_SECURITY = {
   maxTextLength: 2000,
   maxCommentLength: 500,
@@ -53,6 +62,7 @@ module.exports = {
   PAGINATION,
   DYNASTY_FILTERS,
   AI_CONFIG,
+  QINGYUE,
   CONTENT_SECURITY,
   ACHIEVEMENT_KEYS
 }

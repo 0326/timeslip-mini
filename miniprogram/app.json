@@ -15,10 +15,15 @@
     "pages/discover/dna-result/index",
     "pages/discover/pigeon",
     "pages/discover/memorial",
+    "pages/discover/channels/index",
+    "pages/discover/channel-detail/index",
     "pages/profile/index",
     "pages/profile/letters",
     "pages/profile/achievements",
-    "pages/profile/settings"
+    "pages/profile/settings",
+    "pages/admin/video-upload/index",
+    "pages/admin/video-manage/index",
+    "pages/admin/channel-manage/index"
   ],
   "tabBar": {
     "custom": true,

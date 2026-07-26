@@ -14,7 +14,8 @@ Component({
     textColor: { type: String, value: '#191919' },
     fixed: { type: Boolean, value: true },
     translucent: { type: Boolean, value: false },
-    capsule: { type: Boolean, value: false }
+    capsule: { type: Boolean, value: false },
+    noPlaceholder: { type: Boolean, value: false }
   },
 
   data: {

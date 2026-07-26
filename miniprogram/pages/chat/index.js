@@ -1,6 +1,6 @@
-const { requestCloud } = require('../../utils/cloudRequest')
 const { formatChatTime } = require('../../utils/date')
-const { storage } = require('../../utils/storage')
+const chatSession = require('../../utils/chatSession')
+const { QINGYUE } = require('../../utils/constants')
 const loginGuard = require('../../utils/loginGuard')
 
 Page({
@@ -21,66 +21,46 @@ Page({
     const app = getApp()
     app.setCurrentTab(this, 0)
     this.refreshLoginState()
-    if (this.data.isLoggedIn && !this.data.loading) this.loadSessions()
   },
 
   onPullDownRefresh() {
-    if (this.data.isLoggedIn) {
-      this.loadSessions(true)
-    } else {
-      wx.stopPullDownRefresh()
-    }
+    this.loadSessions()
+    wx.stopPullDownRefresh()
   },
 
   refreshLoginState() {
     const loggedIn = loginGuard.isLoggedIn()
     this.setData({ isLoggedIn: loggedIn })
-    if (loggedIn) {
-      this.loadSessions()
-    } else {
-      this.setData({ sessions: [], filteredSessions: [], loading: false, loadError: false })
-    }
+    // 无论登录与否，都确保青月会话存在并展示
+    chatSession.initQingyueSession()
+    this.loadSessions()
   },
 
-  async loadSessions(forceRefresh = false) {
-    this.setData({ loading: true, loadError: false })
-    try {
-      const cached = !forceRefresh ? storage.get('chat_sessions') : null
-      if (cached && cached.length) {
-        const processed = this.processSessions(cached)
-        this.setData({
-          sessions: processed,
-          filteredSessions: this.filterBySearch(processed, this.data.searchText)
-        })
-      }
-
-      const data = await requestCloud('chat', 'listSessions', {}, { throwError: false })
-      const sessions = (data && data.sessions) || []
-      if (sessions.length) storage.set('chat_sessions', sessions, 1800)
-      const processed = this.processSessions(sessions)
-      this.setData({
-        sessions: processed,
-        filteredSessions: this.filterBySearch(processed, this.data.searchText),
-        loading: false
-      })
-    } catch (e) {
-      this.setData({
-        sessions: [],
-        filteredSessions: [],
-        loading: false,
-        loadError: true
-      })
-    }
-    wx.stopPullDownRefresh()
+  loadSessions() {
+    this.setData({ loading: false, loadError: false })
+    const sessions = chatSession.getSessions()
+    const processed = this.processSessions(sessions)
+    this.setData({
+      sessions: processed,
+      filteredSessions: this.filterBySearch(processed, this.data.searchText)
+    })
   },
 
   processSessions(list) {
     return list
-      .map(s => ({
-        ...s,
-        displayTime: formatChatTime(s.lastTime),
-        fullName: s.figureTitle ? `${s.figureName} · ${s.figureTitle}` : s.figureName
-      }))
+      .map(s => {
+        let lastMsg = s.lastMessage || ''
+        lastMsg = lastMsg.split('\n')[0]
+        if (lastMsg.length > 60) {
+          lastMsg = lastMsg.slice(0, 60) + '...'
+        }
+        return {
+          ...s,
+          lastMessage: lastMsg,
+          displayTime: formatChatTime(s.lastTime),
+          fullName: s.figureTitle ? `${s.figureName} · ${s.figureTitle}` : s.figureName
+        }
+      })
       .sort((a, b) => (b.lastTime || 0) - (a.lastTime || 0))
   },
 
@@ -107,11 +87,12 @@ Page({
   },
 
   openRoom(e) {
-    if (!this.data.isLoggedIn) {
+    const { id, name } = e.currentTarget.dataset
+    // 青月（系统引导）无需登录即可对话
+    if (id !== QINGYUE.figureId && !this.data.isLoggedIn) {
       this.goLogin()
       return
     }
-    const { id, name } = e.currentTarget.dataset
     wx.navigateTo({
       url: `/pages/chat/room?figureId=${id}&figureName=${encodeURIComponent(name || '')}`
     })

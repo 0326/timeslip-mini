@@ -40,6 +40,8 @@ App({
 
     // 仅从本地缓存恢复用户态，未登录时由 loginGuard 跳转到登录页
     restoreFromCache()
+    // 确保青月（系统引导）会话存在
+    require('./utils/chatSession').initQingyueSession()
     this.preloadCommonData()
   },
 

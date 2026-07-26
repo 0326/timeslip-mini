@@ -1,0 +1,152 @@
+<custom-nav-bar
+  title=""
+  showBack="{{true}}"
+  bgColor="transparent"
+  textColor="#ffffff"
+  translucent="{{true}}"
+  fixed="{{true}}"
+  noPlaceholder="{{true}}"
+></custom-nav-bar>
+
+<view wx:if="{{loading && videoList.length === 0}}" class="loading-wrap">
+  <view class="spinner"></view>
+  <text class="loading-text">加载中...</text>
+</view>
+
+<view wx:elif="{{videoList.length === 0}}" class="empty-wrap">
+  <text class="empty-icon">🎬</text>
+  <text class="empty-text">暂无视频</text>
+  <text class="empty-desc">下拉刷新试试</text>
+</view>
+
+<swiper
+  wx:else
+  class="video-swiper"
+  vertical="{{true}}"
+  current="{{currentIndex}}"
+  bindchange="onSwiperChange"
+  style="height: {{windowHeight}}px;"
+>
+  <swiper-item
+    wx:for="{{videoList}}"
+    wx:key="_id"
+    wx:for-item="video"
+    wx:for-index="idx"
+  >
+    <view class="video-item" data-id="{{video._id}}" bindtap="onVideoTap" bindlongpress="onDoubleTap">
+      <block wx:if="{{video.videoUrl}}">
+        <video
+          id="video-{{idx}}"
+          class="video-player"
+          src="{{video.videoUrl}}"
+          poster="{{video.coverUrl}}"
+          autoplay="{{idx === currentIndex}}"
+          loop="{{true}}"
+          show-center-play-btn="{{false}}"
+          show-play-btn="{{false}}"
+          controls="{{false}}"
+          object-fit="cover"
+          enable-progress-gesture="{{false}}"
+          show-fullscreen-btn="{{false}}"
+        />
+      </block>
+      <block wx:else>
+        <view class="video-placeholder">
+          <image wx:if="{{video.coverUrl}}" class="cover-img" src="{{video.coverUrl}}" mode="aspectFill"></image>
+          <view wx:else class="placeholder-bg">
+            <text class="placeholder-title">{{video.title}}</text>
+            <text class="placeholder-desc">视频内容准备中...</text>
+          </view>
+        </view>
+      </block>
+
+      <view class="video-overlay" catchtap="stopPropagation">
+        <view class="bottom-info">
+          <view class="author-row" bindtap="goChannel" data-channel-id="{{video.channelId}}" data-figure-id="{{video.figureId}}">
+            <image class="author-avatar" src="{{video.avatar || '/images/icons/avatar.png'}}" mode="aspectFill"></image>
+            <view class="author-meta">
+              <text class="author-name">{{video.figureName}}</text>
+              <text class="author-title" wx:if="{{video.figureTitle}}">· {{video.figureTitle}}</text>
+            </view>
+            <view
+              class="follow-btn {{video.followed ? 'followed' : ''}}"
+              catchtap="onFollow"
+              data-channel-id="{{video.channelId}}"
+            >
+              {{video.followed ? '已关注' : '+ 关注'}}
+            </view>
+          </view>
+          <view class="video-title">{{video.title}}</view>
+          <view class="video-desc" wx:if="{{video.description}}">{{video.description}}</view>
+          <view class="video-tags" wx:if="{{video.tags && video.tags.length > 0}}">
+            <text class="tag" wx:for="{{video.tags}}" wx:key="*this" wx:for-item="tag">#{{tag}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="right-actions" catchtap="stopPropagation">
+        <view class="action-item" catchtap="onLike" data-id="{{video._id}}">
+          <view class="action-icon {{video.liked ? 'liked' : ''}}">
+            <text class="iconfont icon-good"></text>
+          </view>
+          <text class="action-text">{{video.likeCountText}}</text>
+        </view>
+
+        <view class="action-item" catchtap="openComments" data-id="{{video._id}}">
+          <view class="action-icon">
+            <text class="iconfont icon-chat"></text>
+          </view>
+          <text class="action-text">评论</text>
+        </view>
+
+        <button
+          class="action-btn"
+          open-type="share"
+          data-id="{{video._id}}"
+        >
+          <view class="action-icon">
+            <text class="iconfont icon-upload"></text>
+          </view>
+          <text class="action-text">分享</text>
+        </button>
+      </view>
+    </view>
+  </swiper-item>
+</swiper>
+
+<view wx:if="{{showHeart}}" class="double-heart" style="left: {{heartX}}px; top: {{heartY}}px;">
+  <text class="heart-text">♥</text>
+</view>
+
+<view wx:if="{{showComments}}" class="comment-mask" bindtap="closeComments">
+  <view class="comment-panel" catchtap="stopPropagation">
+    <view class="comment-header">
+      <text class="comment-title">评论</text>
+      <view class="comment-close" bindtap="closeComments">
+        <text class="iconfont icon-close"></text>
+      </view>
+    </view>
+    <scroll-view class="comment-list" scroll-y="{{true}}">
+      <view wx:if="{{commentList.length === 0 && !commentLoading}}" class="empty-tip">
+        暂无评论
+      </view>
+      <view
+        wx:for="{{commentList}}"
+        wx:key="_id"
+        class="comment-item"
+      >
+        <image class="comment-avatar" src="{{item.fromAvatar || '/images/icons/avatar.png'}}" mode="aspectFill"></image>
+        <view class="comment-content">
+          <view class="comment-meta">
+            <text class="comment-name">{{item.fromFigureName}}</text>
+            <text class="comment-title" wx:if="{{item.fromFigureTitle}}">· {{item.fromFigureTitle}}</text>
+          </view>
+          <view class="comment-text">
+            <text wx:if="{{item.toFigureName}}" class="reply-to">回复 {{item.toFigureName}}：</text>
+            {{item.content}}
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

@@ -4,7 +4,7 @@
   bind:back="onBack"
 ></custom-nav-bar>
 
-<view class="room-page" style="padding-bottom: {{footerBoxHeight + safeBottom}}px;">
+<view class="room-page">
   <scroll-view
     class="msg-scroll main"
     scroll-y
@@ -25,7 +25,7 @@
           class="msg-row {{item.role === 'user' ? 'is-right userContent' : 'is-left system'}}"
         >
           <block wx:if="{{item.role !== 'user'}}">
-            <view class="avatar-left">
+            <view class="avatar-left" bindtap="onAvatarTap">
               <image class="avatar-img" src="{{avatar}}" mode="aspectFill"></image>
             </view>
             <view class="system_bubble">
@@ -56,7 +56,7 @@
       </block>
 
       <view wx:if="{{aiTyping && messages.length && messages[messages.length - 1].role !== 'figure' && chatStatus !== 1}}" class="msg-row is-left system">
-        <view class="avatar-left">
+        <view class="avatar-left" bindtap="onAvatarTap">
           <image class="avatar-img" src="{{avatar}}" mode="aspectFill"></image>
         </view>
         <view class="system_bubble bubble-typing">
@@ -76,7 +76,7 @@
     mode="aspectFit"
   />
 
-  <view class="footer" style="padding-bottom: {{safeBottom + 12}}rpx;">
+  <view class="footer">
     <view wx:if="{{showTools}}" class="tool_box">
       <view class="function" bindtap="onClearChat">
         <text class="tool-icon">🧹</text>
@@ -85,8 +85,8 @@
     </view>
 
     <view class="foot_function">
-      <view class="input_box" style="min-height: {{inputBoxHeight}}px;">
-        <view class="right_btns">
+      <view class="input_box">
+        <view class="left_btns">
           <image
             wx:if="{{!showTools}}"
             class="set"
@@ -100,24 +100,6 @@
             src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='4' width='20' height='16' rx='2' ry='2'/%3E%3Cline x1='22' y1='7' x2='2' y2='7'/%3E%3Cline x1='16' y1='2' x2='16' y2='6'/%3E%3Cline x1='8' y1='2' x2='8' y2='6'/%3E%3C/svg%3E"
             mode="widthFix"
             bindtap="toggleTools"
-          />
-          <view
-            wx:if="{{!!inputValue && chatStatus === 0}}"
-            class="send-btn-wrap"
-            bindtap="onSend"
-          >
-            <image
-              class="send-set"
-              src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='19' height='19' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='22' y1='2' x2='11' y2='13'/%3E%3Cpolygon points='22 2 15 22 11 13 2 9 22 2'/%3E%3C/svg%3E"
-              mode="widthFix"
-            />
-          </view>
-          <image
-            wx:if="{{chatStatus !== 0}}"
-            class="set"
-            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='6' y='6' width='12' height='12'/%3E%3C/svg%3E"
-            mode="widthFix"
-            bindtap="onStopGen"
           />
         </view>
         <view class="input_inner_box">
@@ -135,7 +117,26 @@
             cursor-spacing="40"
             auto-height="{{true}}"
             show-confirm-bar="{{false}}"
-            bindlinechange="handleLineChange"
+          />
+        </view>
+        <view class="right_btns">
+          <view
+            wx:if="{{!!inputValue && chatStatus === 0}}"
+            class="send-btn-wrap"
+            bindtap="onSend"
+          >
+            <image
+              class="send-set"
+              src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='19' height='19' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='22' y1='2' x2='11' y2='13'/%3E%3Cpolygon points='22 2 15 22 11 13 2 9 22 2'/%3E%3C/svg%3E"
+              mode="widthFix"
+            />
+          </view>
+          <image
+            wx:if="{{chatStatus !== 0}}"
+            class="set"
+            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='6' y='6' width='12' height='12'/%3E%3C/svg%3E"
+            mode="widthFix"
+            bindtap="onStopGen"
           />
         </view>
       </view>
