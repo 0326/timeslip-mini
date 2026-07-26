@@ -14,20 +14,7 @@
       source="{{block.source}}"
     />
 
-    <!-- 人物卡片 -->
-    <view
-      wx:elif="{{block.type === 'figure_card'}}"
-      class="block-figure-card"
-      data-id="{{block.figureId}}"
-      bindtap="onFigureTap"
-    >
-      <figure-avatar figure="{{block.figure}}" />
-      <view class="fc-info">
-        <view class="fc-name">{{block.name}}</view>
-        <view class="fc-desc">{{block.dynasty}} · {{block.title}}</view>
-      </view>
-      <view class="fc-arrow">›</view>
-    </view>
+    <!-- 人物卡片（已移除，不再渲染） -->
 
     <!-- 时间线 -->
     <timeline-vertical

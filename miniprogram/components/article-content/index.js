@@ -10,9 +10,5 @@ Component({
   },
   data: {},
   observers: {},
-  methods: {
-    onFigureTap(e) {
-      this.triggerEvent('figuretap', { id: e.currentTarget.dataset.id })
-    }
-  }
+  methods: {}
 })

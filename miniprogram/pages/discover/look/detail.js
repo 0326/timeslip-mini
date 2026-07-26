@@ -2,23 +2,13 @@ const { requestCloud } = require('../../../utils/cloudRequest')
 const { storage } = require('../../../utils/storage')
 const loginGuard = require('../../../utils/loginGuard')
 const { throttle } = require('../../../utils/helpers')
-const { formatCount, processArticle } = require('../../../utils/articleData')
+const { getArticleDetail, formatCount, processArticle } = require('../../../utils/articleData')
 
 const DETAIL_CACHE_TTL = 10 * 60
-const RELATED_CACHE_TTL = 10 * 60
-const FIGURE_CACHE_TTL = 60 * 60
 const CACHE_VERSION = 'v4'
 
 function detailCacheKey(id) {
   return `look_detail_${CACHE_VERSION}_${id}`
-}
-
-function relatedCacheKey(id) {
-  return `look_related_${CACHE_VERSION}_${id}`
-}
-
-function figureCacheKey(id) {
-  return `look_figure_${id}`
 }
 
 Page({
@@ -29,140 +19,89 @@ Page({
     liked: false,
     bookmarked: false,
     loading: true,
-    relatedArticles: [],
     pollVoted: false,
     pollResults: null,
-    windowHeight: 600
+    windowHeight: 600,
+    statusBarHeight: 20,
+    menuTop: 24,
+    menuHeight: 32
   },
 
   onLoad(options) {
     const sys = wx.getSystemInfoSync()
-    this.setData({ windowHeight: sys.windowHeight })
-    if (options.id && options.id.indexOf('article_') !== 0) {
+    const statusBarHeight = sys.statusBarHeight || 20
+    let menuTop = statusBarHeight + 4
+    let menuHeight = 32
+    try {
+      const rect = wx.getMenuButtonBoundingClientRect()
+      menuTop = rect.top
+      menuHeight = rect.height
+    } catch (e) {}
+    this.setData({ windowHeight: sys.windowHeight, statusBarHeight, menuTop, menuHeight })
+    if (options.id) {
       this.setData({ articleId: options.id })
       this.loadDetail(options.id)
     } else {
       this.setData({ loading: false })
-      wx.showToast({ title: '内容已更新，请从列表进入', icon: 'none' })
+    }
+  },
+
+  onNavBack() {
+    const pages = getCurrentPages()
+    if (pages.length > 1) {
+      wx.navigateBack({ fail: () => { wx.switchTab({ url: '/pages/chat/index' }) } })
+    } else {
+      wx.switchTab({ url: '/pages/chat/index' })
     }
   },
 
   async loadDetail(id) {
+    // 先尝试云函数（有缓存就用缓存）
     const key = detailCacheKey(id)
-
     try {
       const data = await requestCloud('look', 'articleDetail', { articleId: id }, { throwError: false })
 
-      if (!data || !data.article) {
-        throw new Error('empty online article detail')
+      if (data && data.article) {
+        storage.set(key, data, DETAIL_CACHE_TTL)
+        await this.renderDetail(data)
+        requestCloud('look', 'increaseView', { articleId: id }, { throwError: false })
+        return
       }
+    } catch (e) {}
 
-      storage.set(key, data, DETAIL_CACHE_TTL)
-      await this.renderDetail(data)
-      requestCloud('look', 'increaseView', { articleId: this.data.articleId }, { throwError: false })
-      this.loadRelated(this.data.articleId)
-    } catch (e) {
-      const cached = storage.get(key)
-
-      if (cached && cached.article) {
-        await this.renderDetail(cached)
-        this.loadRelated(this.data.articleId)
-      } else {
-        console.error('load look article detail failed:', e)
-        this.setData({ loading: false })
-        wx.showToast({ title: '文章加载失败', icon: 'none' })
-      }
+    // 云函数失败，尝试缓存
+    const cached = storage.get(key)
+    if (cached && cached.article) {
+      await this.renderDetail(cached)
+      return
     }
+
+    // 缓存也没有，用本地数据
+    const localArticle = getArticleDetail(id)
+    if (localArticle) {
+      await this.renderDetail({ article: localArticle, liked: false, bookmarked: false, pollVoted: false, pollResults: null })
+      return
+    }
+
+    // 本地数据也没有
+    console.error('load look article detail failed: not found')
+    this.setData({ loading: false })
+    wx.showToast({ title: '文章不存在', icon: 'none' })
+    setTimeout(() => wx.navigateBack(), 1500)
   },
 
   async renderDetail(data) {
     const article = processArticle(data.article)
-    const content = await this.enrichContent(article.content || [])
 
     this.setData({
       articleId: article._id || this.data.articleId,
       article,
-      content,
+      content: article.content || [],
       liked: data.liked || false,
       bookmarked: data.bookmarked || false,
       pollVoted: data.pollVoted || false,
       pollResults: data.pollResults || null,
       loading: false
-    })
-  },
-
-  async enrichContent(content) {
-    const figureIds = content
-      .filter(b => b.type === 'figure_card' && b.figureId)
-      .map(b => b.figureId)
-      .filter((id, idx, arr) => arr.indexOf(id) === idx)
-
-    const figureMap = {}
-    const missingIds = []
-
-    figureIds.forEach(id => {
-      const cached = storage.get(figureCacheKey(id))
-      if (cached) {
-        figureMap[id] = cached
-      } else {
-        missingIds.push(id)
-      }
-    })
-
-    if (missingIds.length) {
-      try {
-        const data = await requestCloud('shiji', 'figuresBatch', { ids: missingIds }, { throwError: false })
-        if (data && Array.isArray(data.figures)) {
-          data.figures.forEach(f => {
-            if (!f || !f._id) return
-            figureMap[f._id] = f
-            storage.set(figureCacheKey(f._id), f, FIGURE_CACHE_TTL)
-          })
-        }
-      } catch (e) {}
-    }
-
-    return content.map(block => {
-      if (block.type === 'figure_card' && figureMap[block.figureId]) {
-        const figure = figureMap[block.figureId]
-        return {
-          ...block,
-          figure,
-          name: figure.name || block.name,
-          dynasty: figure.dynastyName || figure.dynasty || block.dynasty,
-          title: figure.title || figure.identity || block.title
-        }
-      }
-      return block
-    })
-  },
-
-  async loadRelated(id) {
-    const key = relatedCacheKey(id)
-
-    try {
-      const data = await requestCloud('look', 'relatedArticles', { articleId: id, limit: 3 }, { throwError: false })
-
-      if (!data || !Array.isArray(data.list)) {
-        throw new Error('empty online related articles')
-      }
-
-      storage.set(key, data, RELATED_CACHE_TTL)
-      this.renderRelated(data.list)
-    } catch (e) {
-      const cached = storage.get(key)
-
-      if (cached && Array.isArray(cached.list)) {
-        this.renderRelated(cached.list)
-      } else {
-        console.warn('load look related articles failed:', e)
-      }
-    }
-  },
-
-  renderRelated(list) {
-    this.setData({
-      relatedArticles: (list || []).map(processArticle).filter(Boolean)
     })
   },
 
@@ -202,7 +141,6 @@ Page({
     const { optionIndex } = e.detail || {}
     if (this.data.pollVoted || optionIndex === undefined) return
 
-    // 先做乐观更新，云端结果返回后再覆盖为真实统计。
     const article = this.data.article
     if (article.poll) {
       const optionCount = article.poll.options.length
@@ -228,29 +166,6 @@ Page({
         this.setData({ pollResults: data.results })
       }
     } catch (e) {}
-  },
-
-  onFigureTap(e) {
-    const { id } = e.detail || e.currentTarget.dataset
-    if (id) {
-      wx.navigateTo({ url: `/pages/lantai/figure-detail?id=${id}` })
-    }
-  },
-
-  onComment() {
-    wx.navigateTo({
-      url: `/pages/discover/look/comment?id=${this.data.articleId}`,
-      fail: () => {
-        wx.showToast({ title: '评论功能开发中', icon: 'none' })
-      }
-    })
-  },
-
-  openRelated(e) {
-    const { id } = e.detail || e.currentTarget.dataset
-    if (id) {
-      wx.redirectTo({ url: `/pages/discover/look/detail?id=${id}` })
-    }
   },
 
   onShareAppMessage() {

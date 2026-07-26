@@ -2,7 +2,6 @@
   "component": true,
   "usingComponents": {
     "quote-origin": "../quote-origin/index",
-    "timeline-vertical": "../timeline-vertical/index",
-    "figure-avatar": "../figure-avatar/index"
+    "timeline-vertical": "../timeline-vertical/index"
   }
 }

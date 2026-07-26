@@ -1,6 +1,25 @@
-<custom-nav-bar title="看一看" showBack="{{true}}" showHome="{{true}}" />
+<!-- 沉浸式浮动导航 -->
+<view class="immersive-nav" style="padding-top: {{menuTop}}px;">
+  <view class="nav-back-btn" style="width: {{menuHeight}}px; height: {{menuHeight}}px;" bindtap="onNavBack" hover-class="nav-back-hover">
+    <text class="iconfont icon-left"></text>
+  </view>
+</view>
 
-<loading-skeleton wx:if="{{loading}}" count="4" />
+<!-- 骨架屏：匹配实际页面布局 -->
+<view wx:if="{{loading}}" class="detail-skeleton">
+  <view class="sk-cover sk-shimmer"></view>
+  <view class="sk-body">
+    <view class="sk-line sk-title sk-shimmer"></view>
+    <view class="sk-line sk-sub sk-shimmer"></view>
+    <view class="sk-line sk-meta sk-shimmer"></view>
+    <view class="sk-divider-line"></view>
+    <view class="sk-line sk-para sk-shimmer"></view>
+    <view class="sk-line sk-para sk-shimmer"></view>
+    <view class="sk-line sk-para-90 sk-shimmer"></view>
+    <view class="sk-line sk-para sk-shimmer"></view>
+    <view class="sk-line sk-para-80 sk-shimmer"></view>
+  </view>
+</view>
 
 <view wx:elif="{{article}}" class="detail-page">
   <view class="article-cover" wx:if="{{article.coverImage}}">
@@ -11,20 +30,23 @@
     <view class="ah-title">{{article.title}}</view>
     <view class="ah-subtitle" wx:if="{{article.subtitle}}">{{article.subtitle}}</view>
     <view class="ah-meta">
-      <text class="ah-cat">{{article.categoryName}}</text>
-      <text class="ah-dot" wx:if="{{article.dynastyName}}">·</text>
-      <text class="ah-dynasty" wx:if="{{article.dynastyName}}">{{article.dynastyName}}</text>
-      <text class="ah-dot">·</text>
-      <text class="ah-author">{{article.author}}</text>
-    </view>
-    <view class="ah-stats">
-      <text>👁 {{article.viewText}} 阅读</text>
+      <view class="ah-meta-left">
+        <text class="ah-cat">{{article.categoryName}}</text>
+        <text class="ah-dot" wx:if="{{article.dynastyName}}">·</text>
+        <text class="ah-dynasty" wx:if="{{article.dynastyName}}">{{article.dynastyName}}</text>
+        <text class="ah-dot">·</text>
+        <text class="ah-author">{{article.author}}</text>
+      </view>
+      <view class="ah-meta-right">
+        <text class="iconfont icon-eye ah-eye-icon"></text>
+        <text>{{article.viewText}} 阅读</text>
+      </view>
     </view>
   </view>
 
   <view class="divider"></view>
 
-  <article-content content="{{content}}" bind:figuretap="onFigureTap" />
+  <article-content content="{{content}}" />
 
   <view wx:if="{{article.poll}}" class="poll-section">
     <poll-widget
@@ -35,37 +57,25 @@
     />
   </view>
 
-  <view class="divider"></view>
-
-  <view wx:if="{{relatedArticles.length}}" class="related-section">
-    <view class="rs-title">相关文章</view>
-    <article-card
-      wx:for="{{relatedArticles}}"
-      wx:key="_id"
-      article="{{item}}"
-      bindtap="openRelated"
-    />
-  </view>
-
   <view class="bottom-pad"></view>
 </view>
 
 <view wx:else class="empty-state">
-  <text class="empty-icon">📜</text>
+  <text class="iconfont empty-icon icon-content"></text>
   <text class="empty-text">文章不存在</text>
 </view>
 
 <view wx:if="{{article}}" class="bottom-bar">
-  <view class="bb-btn {{liked ? 'active' : ''}}" bindtap="onLike">
-    <text class="bb-icon">{{liked ? '❤️' : '🤍'}}</text>
-    <text class="bb-text">{{article.likeText}}</text>
+  <view class="bb-btn" bindtap="onLike">
+    <text class="iconfont bb-icon icon-good {{liked ? 'liked' : ''}}"></text>
+    <text class="bb-text {{liked ? 'liked-text' : ''}}">{{article.likeText}}</text>
   </view>
-  <view class="bb-btn {{bookmarked ? 'active' : ''}}" bindtap="onBookmark">
-    <text class="bb-icon">{{bookmarked ? '📑' : '📄'}}</text>
-    <text class="bb-text">收藏</text>
+  <view class="bb-btn" bindtap="onBookmark">
+    <text class="iconfont bb-icon icon-collection {{bookmarked ? 'bookmarked' : ''}}"></text>
+    <text class="bb-text {{bookmarked ? 'bookmarked-text' : ''}}">{{bookmarked ? '已收藏' : '收藏'}}</text>
   </view>
-  <view class="bb-btn" bindtap="onComment">
-    <text class="bb-icon">💬</text>
-    <text class="bb-text">{{article.commentCount || 0}}</text>
-  </view>
+  <button class="bb-btn share-btn" open-type="share">
+    <text class="iconfont bb-icon icon-pyq share-icon"></text>
+    <text class="bb-text share-text">分享</text>
+  </button>
 </view>
