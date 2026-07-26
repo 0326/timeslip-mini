@@ -439,7 +439,7 @@ Page({
       return
     }
     wx.navigateTo({
-      url: '/pages/chat/room/index?figureId=' + figureId,
+      url: '/pages/chat/room?figureId=' + figureId,
       fail: () => {
         wx.showToast({ title: '对话页未就绪', icon: 'none' })
       }

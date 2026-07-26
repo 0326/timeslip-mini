@@ -3,7 +3,8 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext()
-  const { action, data = {} } = event
+  const { action } = event
+  const data = normalizeEventData(event)
   try {
     switch (action) {
       case 'text': return await checkText(OPENID, data)
@@ -15,6 +16,11 @@ exports.main = async (event, context) => {
     console.error('contentCheck err:', e)
     return { code: 0, message: 'fallthrough allow', data: { ok: true, fallthrough: true, error: e.message } }
   }
+}
+
+function normalizeEventData(event) {
+  const { action, data, ...rest } = event || {}
+  return data && typeof data === 'object' ? { ...rest, ...data } : rest
 }
 
 async function checkText(openid, data) {

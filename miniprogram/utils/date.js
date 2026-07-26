@@ -2,15 +2,36 @@ const DYNASTY_ORDER = ['xianqin', 'qin', 'han', 'sanguo', 'jin', 'tang', 'song',
 
 const DYNASTY_MAP = {
   xianqin: { name: '先秦', era: '约前2070-前221', color: '#8B4513' },
+  '先秦': { name: '先秦', era: '约前2070-前221', color: '#8B4513' },
   qin: { name: '秦', era: '前221-前207', color: '#2F2F2F' },
+  '秦': { name: '秦', era: '前221-前207', color: '#2F2F2F' },
+  '秦末汉初': { name: '秦末汉初', era: '前209-前202', color: '#7A3434' },
   han: { name: '汉', era: '前206-220', color: '#B22222' },
+  '汉': { name: '汉', era: '前206-220', color: '#B22222' },
+  '西汉': { name: '西汉', era: '前202-8', color: '#B22222' },
+  '东汉': { name: '东汉', era: '25-220', color: '#A52A2A' },
   sanguo: { name: '三国', era: '220-280', color: '#4682B4' },
+  '三国': { name: '三国', era: '220-280', color: '#4682B4' },
+  '三国蜀': { name: '三国蜀', era: '221-263', color: '#4682B4' },
+  '三国魏': { name: '三国魏', era: '220-266', color: '#4169E1' },
+  '三国吴': { name: '三国吴', era: '229-280', color: '#5F9EA0' },
   jin: { name: '晋', era: '265-420', color: '#6B8E23' },
+  '晋': { name: '晋', era: '265-420', color: '#6B8E23' },
+  '西晋': { name: '西晋', era: '266-316', color: '#6B8E23' },
+  '东晋': { name: '东晋', era: '317-420', color: '#708238' },
   tang: { name: '唐', era: '618-907', color: '#DAA520' },
+  '唐': { name: '唐', era: '618-907', color: '#DAA520' },
+  '武周': { name: '武周', era: '690-705', color: '#B8860B' },
   song: { name: '宋', era: '960-1279', color: '#87CEEB' },
+  '宋': { name: '宋', era: '960-1279', color: '#87CEEB' },
+  '北宋': { name: '北宋', era: '960-1127', color: '#5DA9C9' },
+  '南宋': { name: '南宋', era: '1127-1279', color: '#3A8FB7' },
   yuan: { name: '元', era: '1271-1368', color: '#696969' },
+  '元': { name: '元', era: '1271-1368', color: '#696969' },
   ming: { name: '明', era: '1368-1644', color: '#CD853F' },
-  qing: { name: '清', era: '1644-1912', color: '#483D8B' }
+  '明': { name: '明', era: '1368-1644', color: '#CD853F' },
+  qing: { name: '清', era: '1644-1912', color: '#483D8B' },
+  '清': { name: '清', era: '1644-1912', color: '#483D8B' }
 }
 
 const CELESTIAL_STEMS = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸']

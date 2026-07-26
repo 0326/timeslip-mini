@@ -10,21 +10,22 @@ const PAPER_STYLES = [
 ]
 
 const FIGURES = [
-  { figureId: 'fig-libai', figureName: '李白', style: '豪放飘逸' },
-  { figureId: 'fig-sushi', figureName: '苏轼', style: '旷达幽默' },
-  { figureId: 'fig-wujiang', figureName: '项羽', style: '豪迈悲壮' },
-  { figureId: 'fig-caocao', figureName: '曹操', style: '沉雄霸气' },
-  { figureId: 'fig-wuzetian', figureName: '武则天', style: '庄重威严' },
-  { figureId: 'fig-mulan', figureName: '花木兰', style: '飒爽真挚' },
-  { figureId: 'fig-simqian', figureName: '司马迁', style: '严谨深厚' },
-  { figureId: 'fig-kongzi', figureName: '孔子', style: '谆谆教诲' },
-  { figureId: 'fig-zhenghe', figureName: '郑和', style: '稳健开阔' },
-  { figureId: 'fig-baijuyi', figureName: '白居易', style: '质朴通俗' }
+  { figureId: 'libai', figureName: '李白', style: '豪放飘逸' },
+  { figureId: 'sushi', figureName: '苏轼', style: '旷达幽默' },
+  { figureId: 'xiangyu', figureName: '项羽', style: '豪迈悲壮' },
+  { figureId: 'caocao', figureName: '曹操', style: '沉雄霸气' },
+  { figureId: 'wuzetian', figureName: '武则天', style: '庄重威严' },
+  { figureId: 'mulan', figureName: '花木兰', style: '飒爽真挚' },
+  { figureId: 'simaqian', figureName: '司马迁', style: '严谨深厚' },
+  { figureId: 'kongzi', figureName: '孔子', style: '谆谆教诲' },
+  { figureId: 'zhenghe', figureName: '郑和', style: '稳健开阔' },
+  { figureId: 'baijuyi', figureName: '白居易', style: '质朴通俗' }
 ]
 
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext()
-  const { action = 'send', data = {} } = event
+  const { action = 'send' } = event
+  const data = normalizeEventData(event)
   try {
     switch (action) {
       case 'send': return await sendLetter(OPENID, data)
@@ -39,6 +40,11 @@ exports.main = async (event, context) => {
     console.error('pigeon err', err)
     return { code: -1, message: err.message }
   }
+}
+
+function normalizeEventData(event) {
+  const { action, data, ...rest } = event || {}
+  return data && typeof data === 'object' ? { ...rest, ...data } : rest
 }
 
 async function sec(text, oid) {
@@ -97,7 +103,7 @@ async function sendLetter(OPENID, data) {
     createdAt: now
   }
   await db.collection('letters').add({ data: replyDoc })
-  return { code: 0, message: 'ok', data: { userLetterId, replyId, replyContent, deliveryTime: replyDoc.deliveryTime }
+  return { code: 0, message: 'ok', data: { userLetterId, replyId, replyContent, deliveryTime: replyDoc.deliveryTime } }
 }
 
 function generateReply(fig, content, subject) {

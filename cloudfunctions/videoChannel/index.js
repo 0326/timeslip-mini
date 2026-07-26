@@ -5,7 +5,8 @@ const _ = db.command
 
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext()
-  const { action = '', data = {} } = event
+  const { action = '' } = event
+  const data = normalizeEventData(event)
 
   try {
     switch (action) {
@@ -42,6 +43,11 @@ exports.main = async (event, context) => {
     console.error('videoChannel err:', err)
     return { code: -1, message: err.message || '服务异常', data: null }
   }
+}
+
+function normalizeEventData(event) {
+  const { action, data, ...rest } = event || {}
+  return data && typeof data === 'object' ? { ...rest, ...data } : rest
 }
 
 // ==================== 管理员鉴权 ====================
@@ -349,12 +355,6 @@ async function adminChannelCreate(OPENID, data) {
   }
 
   const res = await db.collection('video_channels').add({ data: doc })
-
-  try {
-    await db.collection('historical_figures').where({ figureId }).update({
-      data: { hasChannel: true, channelId: res._id }
-    })
-  } catch (_) {}
 
   return { code: 0, message: 'ok', data: { _id: res._id, ...doc } }
 }

@@ -1,177 +1,396 @@
 const cloud = require('wx-server-sdk')
-cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
-const db = cloud.database()
 
-// 默认解锁的人物（无需 user_figures 记录即视为已解锁）
-const DEFAULT_UNLOCKED = ['fig-huangdi', 'fig-simqian', 'fig-liubang', 'fig-hanwu', 'fig-zhugeliang', 'fig-libai', 'fig-sushi', 'fig-yuefei']
+cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
+
+const db = cloud.database()
+const _ = db.command
+
+const DEFAULT_UNLOCKED = [
+  'simaqian',
+  'liubang',
+  'liuche',
+  'zhugeliang',
+  'libai',
+  'sushi',
+  'yuefei',
+  'qinshihuang',
+  'xiangyu'
+]
 
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext()
-  const { action, data = {} } = event
+  const { action } = event
+  const data = normalizeEventData(event)
+
   try {
     switch (action) {
-      case 'figure-list': return await figureList(OPENID, data)
-      case 'figure-detail': return await figureDetail(OPENID, data)
-      case 'figure-unlock': return await figureUnlock(OPENID, data)
-      case 'figures': return await figureList(OPENID, data) // 兼容旧 action
-      case 'figureDetail': return await figureDetail(OPENID, data) // 兼容旧 action
-      case 'book-list': return await bookList(OPENID, data)
-      case 'book-detail': return await bookDetail(OPENID, data)
-      case 'books': return await bookList(OPENID, data) // 兼容
-      case 'book-favorites': return await bookFavorites(OPENID, data)
-      case 'book-favoriteToggle': return await bookFavToggle(OPENID, data)
-      default: return { code: -1, message: '未知 action: ' + action }
+      case 'figure-list':
+      case 'figures':
+        return await figureList(OPENID, data)
+      case 'figure-detail':
+      case 'figureDetail':
+        return await figureDetail(OPENID, data)
+      case 'figure-unlock':
+        return await figureUnlock(OPENID, data)
+      case 'book-list':
+      case 'books':
+        return await bookList(OPENID)
+      case 'book-detail':
+        return await bookDetail(data)
+      case 'chapters':
+      case 'chapter-list':
+        return await chapterList(data)
+      case 'chapter-content':
+      case 'passages':
+        return await chapterContent(data)
+      case 'book-favorites':
+        return await bookFavorites(OPENID)
+      case 'book-favoriteToggle':
+        return await bookFavToggle(OPENID, data)
+      default:
+        return fail('未知 action: ' + action)
     }
   } catch (e) {
     console.error('shiji err:', e)
-    return { code: -1, message: e.message }
+    return fail(e.message || '服务异常')
   }
+}
+
+function normalizeEventData(event) {
+  const { action, data, ...rest } = event || {}
+  return data && typeof data === 'object' ? { ...rest, ...data } : rest
+}
+
+function ok(data) {
+  return { code: 0, message: 'ok', data }
+}
+
+function fail(message, data = null) {
+  return { code: -1, message, data }
+}
+
+function batch(list, size) {
+  const result = []
+  for (let i = 0; i < list.length; i += size) result.push(list.slice(i, i + size))
+  return result
+}
+
+async function getAll(queryFactory, pageSize = 100, max = 2000) {
+  const all = []
+  for (let skip = 0; skip < max; skip += pageSize) {
+    const res = await queryFactory()
+      .skip(skip)
+      .limit(pageSize)
+      .get()
+    const rows = res.data || []
+    all.push(...rows)
+    if (rows.length < pageSize) break
+  }
+  return all
+}
+
+function normalizeBook(b) {
+  return {
+    ...b,
+    _id: b._id || b.id,
+    id: b.id || b._id,
+    title: b.name || b.title || '',
+    desc: b.type ? `${b.type} · ${b.status === 'active' ? '已收录' : '整理中'}` : '',
+    chapters: b.volume_count || b.chapters || 0
+  }
+}
+
+function normalizeChapter(c, volume) {
+  const volumeName = volume ? volume.name : ''
+  return {
+    ...c,
+    _id: c._id || c.id,
+    id: c.id || c._id,
+    title: c.name || c.title || '',
+    subtitle: c.subtitle || volumeName || '',
+    progress: 0,
+    read: false
+  }
+}
+
+function normalizeFigure(f, unlocked) {
+  const life = formatLife(f)
+  return {
+    ...f,
+    _id: f.id || f._id,
+    figureId: f.id || f._id,
+    figureName: f.name || '',
+    name: f.name || '',
+    title: f.identity || '',
+    bio: f.bio_summary || '',
+    birth: life.birth,
+    death: life.death,
+    avatar: normalizeAvatar(f.avatar_url),
+    tags: f.keyword_tags || [],
+    initial: (f.name || '#').slice(0, 1),
+    unlocked
+  }
+}
+
+function formatLife(f) {
+  return {
+    birth: formatYear(f.birth_year),
+    death: formatYear(f.death_year)
+  }
+}
+
+function formatYear(year) {
+  if (year === null || year === undefined || year === '') return ''
+  const n = Number(year)
+  if (!Number.isFinite(n)) return String(year)
+  if (n < 0) return `公元前${Math.abs(n)}年`
+  return `${n}年`
+}
+
+function normalizeAvatar(url) {
+  if (!url) return ''
+  if (/^https?:\/\//.test(url) || /^cloud:\/\//.test(url)) return url
+  if (url.startsWith('/api/asset/')) return `https://timeslip.work${url}`
+  return ''
+}
+
+async function unlockedSet(OPENID) {
+  const unlocked = new Set(DEFAULT_UNLOCKED)
+  try {
+    const res = await db.collection('user_figures').where({ _openid: OPENID }).limit(100).get()
+    ;(res.data || []).forEach(item => {
+      if (item.figureId) unlocked.add(item.figureId)
+    })
+  } catch (_) {}
+  return unlocked
 }
 
 async function figureList(OPENID, data) {
-  const { unlockedOnly = false } = data
-  let unlocked = new Set(DEFAULT_UNLOCKED)
-  try {
-    const r = await db.collection('user_figures').where({ _openid: OPENID }).get()
-    r.data.forEach(x => unlocked.add(x.figureId))
-  } catch (_) {}
+  const { unlockedOnly = false, keyword = '', limit = 200 } = data
+  const unlocked = await unlockedSet(OPENID)
+  let query = db.collection('figures')
 
-  let list = []
-  try {
-    const r = await db.collection('historical_figures')
-      .orderBy('initial', 'asc')
-      .limit(100)
-      .get()
-    list = r.data || []
-  } catch (e) {
-    return { code: 0, message: 'ok', data: [] }
+  if (keyword) {
+    query = query.where({ name: db.RegExp({ regexp: keyword, options: 'i' }) })
   }
 
-  const result = list.map(f => ({
-    ...f,
-    _id: f.figureId, // 兼容前端旧字段
-    name: f.figureName, // 兼容前端旧字段
-    unlocked: unlocked.has(f.figureId)
-  }))
+  const res = await query
+    .orderBy('star', 'desc')
+    .orderBy('name', 'asc')
+    .limit(Math.min(Number(limit) || 200, 200))
+    .get()
 
-  return {
-    code: 0, message: 'ok',
-    data: unlockedOnly ? result.filter(f => f.unlocked) : result
-  }
+  const result = (res.data || []).map(f => normalizeFigure(f, unlocked.has(f.id || f._id)))
+  return ok(unlockedOnly ? result.filter(f => f.unlocked) : result)
 }
 
 async function figureDetail(OPENID, data) {
-  const { figureId, id } = data
-  const targetId = figureId || id
-  if (!targetId) return { code: -1, message: '缺少 figureId' }
+  const targetId = data.figureId || data.id
+  if (!targetId) return fail('缺少 figureId')
 
-  let f = null
-  try {
-    const r = await db.collection('historical_figures').where({ figureId: targetId }).limit(1).get()
-    if (r.data && r.data.length) f = r.data[0]
-  } catch (_) {}
+  const res = await db.collection('figures').where({ id: targetId }).limit(1).get()
+  if (!res.data || !res.data.length) return fail('人物不存在')
 
-  if (!f) return { code: -1, message: '人物不存在' }
+  const unlocked = await unlockedSet(OPENID)
+  const figure = normalizeFigure(res.data[0], unlocked.has(targetId))
+  const [relatedBooks, relatedPassages, relations] = await Promise.all([
+    figureRelatedBooks(figure),
+    figureRelatedPassages(targetId),
+    figureRelations(targetId)
+  ])
 
-  let unlocked = DEFAULT_UNLOCKED.includes(targetId)
-  try {
-    const r = await db.collection('user_figures').where({ _openid: OPENID, figureId: targetId }).limit(1).get()
-    if (r.data.length) unlocked = true
-  } catch (_) {}
-
-  // 关联典籍
-  let relatedBooks = []
-  try {
-    const bRes = await db.collection('books').where({ figures: db.command.in([targetId]) }).get()
-    relatedBooks = (bRes.data || []).map(b => ({
-      id: b.bookId || b._id,
-      title: b.title,
-      chapter: (b.chapters || 0) + '篇'
-    }))
-  } catch (_) {}
-
-  return {
-    code: 0, message: 'ok',
-    data: {
-      ...f,
-      _id: f.figureId,
-      name: f.figureName,
-      unlocked,
-      relatedBooks
+  return ok({
+    figure: {
+      ...figure,
+      relatedBooks,
+      relatedMoments: relatedPassages,
+      relations,
+      masterpieces: relatedBooks.map(b => b.title),
+      famousQuotes: relatedPassages.slice(0, 3).map(p => p.desc).filter(Boolean)
     }
+  })
+}
+
+async function figureRelatedBooks(figure) {
+  const ids = new Set()
+  if (figure.src_book) ids.add(figure.src_book)
+
+  try {
+    const fp = await db.collection('figure_passages')
+      .where({ figure_id: figure.id || figure._id })
+      .orderBy('sort_order', 'asc')
+      .limit(20)
+      .get()
+    ;(fp.data || []).forEach(item => {
+      const bookId = String(item.passage_id || '').split('/')[0]
+      if (bookId) ids.add(bookId)
+    })
+  } catch (_) {}
+
+  if (!ids.size) return []
+  const books = []
+  for (const part of batch([...ids], 20)) {
+    const res = await db.collection('books').where({ id: _.in(part) }).limit(part.length).get()
+    books.push(...(res.data || []))
+  }
+  return books.map(b => ({
+    id: b.id,
+    title: b.name || b.id,
+    chapter: `${b.volume_count || 0}卷`
+  }))
+}
+
+async function figureRelatedPassages(figureId) {
+  try {
+    const res = await db.collection('figure_passages')
+      .where({ figure_id: figureId })
+      .orderBy('sort_order', 'asc')
+      .limit(10)
+      .get()
+    return (res.data || []).map(item => ({
+      _id: item.id || item._id,
+      title: item.event_name || '相关原文',
+      desc: item.excerpt || '',
+      figureName: item.role || '',
+      time: item.event_year ? formatYear(item.event_year) : ''
+    }))
+  } catch (_) {
+    return []
+  }
+}
+
+async function figureRelations(figureId) {
+  try {
+    const res = await db.collection('figure_relations')
+      .where(_.or([{ figure_a: figureId }, { figure_b: figureId }]))
+      .limit(20)
+      .get()
+    return (res.data || []).map(item => ({
+      id: item.id || item._id,
+      targetId: item.figure_a === figureId ? item.figure_b : item.figure_a,
+      type: item.relation_type,
+      label: item.relation_label,
+      description: item.description || ''
+    }))
+  } catch (_) {
+    return []
   }
 }
 
 async function figureUnlock(OPENID, data) {
   const { figureId, cost = 100 } = data
-  if (!figureId) return { code: -1, message: '缺少 figureId' }
-  try {
-    const check = await db.collection('user_figures').where({ _openid: OPENID, figureId }).limit(1).get()
-    if (check.data.length) return { code: 0, message: '已解锁', data: { already: true } }
-    await db.collection('user_figures').add({
-      data: { figureId, unlockedAt: db.serverDate(), cost }
-    })
-    return { code: 0, message: '解锁成功' }
-  } catch (e) {
-    return { code: -1, message: e.message }
-  }
+  if (!figureId) return fail('缺少 figureId')
+
+  const check = await db.collection('user_figures').where({ _openid: OPENID, figureId }).limit(1).get()
+  if (check.data.length) return ok({ already: true })
+
+  await db.collection('user_figures').add({
+    data: { figureId, unlockedAt: db.serverDate(), cost }
+  })
+  return ok({ already: false })
 }
 
-async function bookList(OPENID, data) {
-  try {
-    const r = await db.collection('books').orderBy('dynasty', 'asc').limit(50).get()
-    const list = (r.data || []).map(b => ({
-      ...b,
-      id: b.bookId || b._id
-    }))
-    return { code: 0, message: 'ok', data: list }
-  } catch (e) {
-    return { code: 0, message: 'ok', data: [] }
-  }
+async function bookList() {
+  const res = await db.collection('books')
+    .orderBy('sort_order', 'asc')
+    .limit(50)
+    .get()
+  return ok((res.data || []).map(normalizeBook))
 }
 
-async function bookDetail(OPENID, data) {
-  const { bookId, _id } = data
-  const targetId = bookId || _id
-  if (!targetId) return { code: -1, message: '缺少 bookId' }
-  try {
-    const r = await db.collection('books').where(db.command.or([
-      { bookId: targetId },
-      { _id: targetId }
-    ])).limit(1).get()
-    if (!r.data || !r.data.length) return { code: -1, message: '典籍不存在' }
-    return { code: 0, message: 'ok', data: r.data[0] }
-  } catch (e) {
-    return { code: -1, message: e.message }
-  }
+async function bookDetail(data) {
+  const targetId = data.bookId || data.id || data._id
+  if (!targetId) return fail('缺少 bookId')
+
+  const res = await db.collection('books').where({ id: targetId }).limit(1).get()
+  if (!res.data || !res.data.length) return fail('典籍不存在')
+  return ok(normalizeBook(res.data[0]))
 }
 
-async function bookFavorites(OPENID, data) {
-  try {
-    const r = await db.collection('book_favorites').where({ _openid: OPENID }).get()
-    const favIds = new Set(r.data.map(x => x.bookId))
-    const bRes = await db.collection('books').limit(50).get()
-    const list = (bRes.data || []).map(b => ({ ...b, favorite: favIds.has(b.bookId || b._id) }))
-    return { code: 0, message: 'ok', data: list.filter(b => b.favorite) }
-  } catch (e) {
-    return { code: -1, message: e.message }
+async function chapterList(data) {
+  const bookId = data.bookId || data.id
+  if (!bookId) return fail('缺少 bookId')
+
+  const volumes = await getAll(
+    () => db.collection('volumes').where({ book_id: bookId }).orderBy('sort_order', 'asc'),
+    100,
+    1000
+  )
+  if (!volumes.length) return ok({ chapters: [] })
+
+  const volumeById = new Map(volumes.map(v => [v.id, v]))
+  const chapters = []
+  for (const ids of batch(volumes.map(v => v.id), 100)) {
+    const res = await db.collection('chapters')
+      .where({ volume_id: _.in(ids) })
+      .limit(100)
+      .get()
+    chapters.push(...(res.data || []))
   }
+
+  chapters.sort((a, b) => {
+    const av = volumeById.get(a.volume_id)
+    const bv = volumeById.get(b.volume_id)
+    return ((av && av.sort_order) || 0) - ((bv && bv.sort_order) || 0) || (a.sort_order || 0) - (b.sort_order || 0)
+  })
+
+  return ok({ chapters: chapters.map(c => normalizeChapter(c, volumeById.get(c.volume_id))) })
+}
+
+async function chapterContent(data) {
+  const chapterId = data.chapterId || data.id
+  if (!chapterId) return fail('缺少 chapterId')
+
+  const chapterRes = await db.collection('chapters').where({ id: chapterId }).limit(1).get()
+  if (!chapterRes.data || !chapterRes.data.length) return fail('章节不存在')
+
+  const passages = await getAll(
+    () => db.collection('passages').where({ chapter_id: chapterId }).orderBy('order_idx', 'asc'),
+    100,
+    2000
+  )
+
+  return ok({
+    chapter: normalizeChapter(chapterRes.data[0]),
+    content: {
+      original: passages.map(p => p.content).filter(Boolean).join('\n\n'),
+      translation: passages.map(p => p.vernacular).filter(Boolean).join('\n\n'),
+      notes: passages
+        .filter(p => p.annotation || p.glosses)
+        .slice(0, 20)
+        .map(p => ({
+          keyword: `第${p.order_idx || ''}段`,
+          note: p.annotation || p.glosses
+        }))
+    }
+  })
+}
+
+async function bookFavorites(OPENID) {
+  const favRes = await db.collection('book_favorites').where({ _openid: OPENID }).limit(100).get()
+  const favIds = new Set((favRes.data || []).map(x => x.bookId))
+  if (!favIds.size) return ok([])
+
+  const books = []
+  for (const ids of batch([...favIds], 20)) {
+    const res = await db.collection('books').where({ id: _.in(ids) }).limit(ids.length).get()
+    books.push(...(res.data || []))
+  }
+  return ok(books.map(b => ({ ...normalizeBook(b), favorite: true })))
 }
 
 async function bookFavToggle(OPENID, data) {
   const { bookId } = data
-  if (!bookId) return { code: -1, message: '缺少 bookId' }
-  try {
-    const r = await db.collection('book_favorites').where({ _openid: OPENID, bookId }).limit(1).get()
-    if (r.data.length) {
-      await db.collection('book_favorites').doc(r.data[0]._id).remove()
-      return { code: 0, message: 'ok', data: { favorite: false } }
-    }
-    await db.collection('book_favorites').add({
-      data: { bookId, createdAt: db.serverDate() }
-    })
-    return { code: 0, message: 'ok', data: { favorite: true } }
-  } catch (e) {
-    return { code: -1, message: e.message }
+  if (!bookId) return fail('缺少 bookId')
+
+  const res = await db.collection('book_favorites').where({ _openid: OPENID, bookId }).limit(1).get()
+  if (res.data.length) {
+    await db.collection('book_favorites').doc(res.data[0]._id).remove()
+    return ok({ favorite: false })
   }
+
+  await db.collection('book_favorites').add({
+    data: { bookId, createdAt: db.serverDate() }
+  })
+  return ok({ favorite: true })
 }

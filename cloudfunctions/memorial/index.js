@@ -4,7 +4,8 @@ const db = cloud.database()
 
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext()
-  const { action, data = {} } = event
+  const { action } = event
+  const data = normalizeEventData(event)
   try {
     switch (action) {
       case 'list': return await list(OPENID, data)
@@ -17,6 +18,11 @@ exports.main = async (event, context) => {
     console.error('memorial err:', e)
     return { code: -1, message: e.message || '服务异常' }
   }
+}
+
+function normalizeEventData(event) {
+  const { action, data, ...rest } = event || {}
+  return data && typeof data === 'object' ? { ...rest, ...data } : rest
 }
 
 async function list(OPENID, data) {

@@ -585,7 +585,8 @@ async function ensureSeed() {
 
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext()
-  const { action, data = {} } = event
+  const { action } = event
+  const data = normalizeEventData(event)
 
   await ensureSeed()
 
@@ -602,6 +603,11 @@ exports.main = async (event, context) => {
     console.error('dna err:', e)
     return { code: -1, message: e.message || '服务异常' }
   }
+}
+
+function normalizeEventData(event) {
+  const { action, data, ...rest } = event || {}
+  return data && typeof data === 'object' ? { ...rest, ...data } : rest
 }
 
 // 测试列表

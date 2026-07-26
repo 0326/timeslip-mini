@@ -14,7 +14,7 @@
     <view class="hero-bg"></view>
     <view class="hero-inner">
       <view class="hero-avatar">
-        <figure-avatar figure="{{figure}}" size="180" round="{{false}}"></figure-avatar>
+        <figure-avatar figure="{{figure}}" size="xl" shape="square"></figure-avatar>
       </view>
       <view class="hero-meta">
         <view class="h-name-row">
@@ -116,7 +116,7 @@
         </view>
       </view>
 
-      <view wx:if="!figure.masterpieces || !figure.masterpieces.length || !figure.famousQuotes || !figure.famousQuotes.length || !figure.relatedBooks || !figure.relatedBooks.length || !figure.relatedMoments || !figure.relatedMoments.length" class="empty-hint">
+      <view wx:if="{{(!figure.masterpieces || !figure.masterpieces.length) && (!figure.famousQuotes || !figure.famousQuotes.length) && (!figure.relatedBooks || !figure.relatedBooks.length) && (!figure.relatedMoments || !figure.relatedMoments.length)}}" class="empty-hint">
         暂无相关内容
       </view>
     </block>

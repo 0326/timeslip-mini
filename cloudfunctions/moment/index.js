@@ -5,7 +5,8 @@ const _ = db.command
 
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext()
-  const { action = 'list', data = {} } = event
+  const { action = 'list' } = event
+  const data = normalizeEventData(event)
 
   try {
     switch (action) {
@@ -22,6 +23,11 @@ exports.main = async (event, context) => {
     console.error('moment err:', err)
     return { code: -1, message: err.message || '动态服务异常' }
   }
+}
+
+function normalizeEventData(event) {
+  const { action, data, ...rest } = event || {}
+  return data && typeof data === 'object' ? { ...rest, ...data } : rest
 }
 
 async function secCheckText(text, openid) {

@@ -5,7 +5,6 @@ const _ = db.command
 
 const COLLECTIONS = [
   'users',
-  'historical_figures',
   'chat_messages',
   'chat_sessions',
   'moments',
@@ -23,8 +22,6 @@ const COLLECTIONS = [
   'user_figures',
   'user_points',
   'book_favorites',
-  'books',
-  'book_chapters',
   'system_config',
   'video_channels',
   'videos',
@@ -192,7 +189,8 @@ const VIDEO_COMMENT_SEED = [
 ]
 
 exports.main = async (event, context) => {
-  const { action = 'init', data = {} } = event
+  const { action = 'init' } = event
+  const data = normalizeEventData(event)
   try {
     switch (action) {
       case 'init': return await initAll(data)
@@ -211,6 +209,11 @@ exports.main = async (event, context) => {
     console.error('initDB err', e)
     return { code: -1, message: e.message }
   }
+}
+
+function normalizeEventData(event) {
+  const { action, data, ...rest } = event || {}
+  return data && typeof data === 'object' ? { ...rest, ...data } : rest
 }
 
 async function initAll(data) {
@@ -242,8 +245,6 @@ async function initAll(data) {
 
   const seedResult = {}
   const seedTasks = [
-    { key: 'figures', fn: seedFigures },
-    { key: 'books', fn: seedBooks },
     { key: 'memorials', fn: seedMemorials },
     { key: 'achievements', fn: seedAchievements },
     { key: 'videoChannels', fn: seedVideoChannels },
@@ -280,33 +281,11 @@ async function checkStatus() {
 }
 
 async function seedFigures() {
-  const count = await db.collection('historical_figures').count()
-  if (count.total > 0) {
-    return { ok: 0, fail: 0, skipped: true, reason: '已有数据，跳过' }
-  }
-  let ok = 0, fail = 0
-  for (const f of FIGURE_SEED) {
-    try {
-      await db.collection('historical_figures').add({ data: f })
-      ok++
-    } catch (e) { fail++ }
-  }
-  return { ok, fail }
+  return { ok: 0, fail: 0, skipped: true, reason: '静态人物由 scripts/data-sync/migrate_cloudbase_rebuild.js 管理' }
 }
 
 async function seedBooks() {
-  const count = await db.collection('books').count()
-  if (count.total > 0) {
-    return { ok: 0, fail: 0, skipped: true, reason: '已有数据，跳过' }
-  }
-  let ok = 0, fail = 0
-  for (const b of BOOK_SEED) {
-    try {
-      await db.collection('books').add({ data: { _id: b._id, ...b } })
-      ok++
-    } catch (e) { fail++ }
-  }
-  return { ok, fail }
+  return { ok: 0, fail: 0, skipped: true, reason: '静态典籍由 scripts/data-sync/migrate_cloudbase_rebuild.js 管理' }
 }
 
 async function seedMemorials() {
@@ -356,11 +335,6 @@ async function seedVideoChannels() {
           updatedAt: db.serverDate()
         }
       })
-      try {
-        await db.collection('historical_figures').where({ figureId: c.figureId }).update({
-          data: { hasChannel: true, channelId: res._id }
-        })
-      } catch (_) {}
       ok++
     } catch (e) {
       console.warn('seedVideoChannels err:', e)
@@ -467,7 +441,7 @@ async function seedVideoComments() {
 async function resetDB(data) {
   const keepFiguresAchievements = data.keepSeed !== false
   const removeCols = keepFiguresAchievements
-    ? COLLECTIONS.filter(c => !['historical_figures', 'achievements', 'books', 'memorials'].includes(c))
+    ? COLLECTIONS.filter(c => !['achievements', 'memorials'].includes(c))
     : COLLECTIONS
   const result = {}
   for (const c of removeCols) {

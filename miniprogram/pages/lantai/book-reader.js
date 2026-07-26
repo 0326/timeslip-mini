@@ -69,11 +69,16 @@ Page({
     }
   },
 
-  openChapter(e) {
+  async openChapter(e) {
     const id = e.currentTarget.dataset.id
     const chapter = this.data.chapters.find(c => c.id === id)
     if (!chapter) return
-    const content = storage.get('content_' + id) || MOCK_CONTENT
+    let content = storage.get('content_' + id)
+    if (!content) {
+      const data = await requestCloud('shiji', 'chapter-content', { chapterId: id }, { showLoading: true, loadingText: '加载正文...', throwError: false })
+      content = (data && data.content) || MOCK_CONTENT
+      if (data && data.content) storage.set('content_' + id, content, 86400)
+    }
     this.setData({
       currentChapter: chapter,
       currentChapterId: id,
