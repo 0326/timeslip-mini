@@ -1,0 +1,48 @@
+<custom-nav-bar title="看一看" bgColor="{{navOpaque ? '#FFFFFF' : 'transparent'}}" translucent></custom-nav-bar>
+
+<view class="look-page">
+  <scroll-view class="category-bar" scroll-x enhanced show-scrollbar="{{false}}">
+    <view class="cat-item {{activeCategory === item.key ? 'active' : ''}}"
+      wx:for="{{categories}}" wx:key="key"
+      data-key="{{item.key}}" bindtap="switchCategory">
+      {{item.name}}
+    </view>
+  </scroll-view>
+
+  <loading-skeleton wx:if="{{loading && articles.length === 0}}" count="4" />
+
+  <view wx:elif="{{articles.length === 0 && !loading}}" class="empty-state">
+    <text class="empty-icon">📜</text>
+    <text class="empty-text">暂无文章</text>
+    <text class="empty-desc">下拉刷新试试</text>
+  </view>
+
+  <!-- 双列瀑布流 -->
+  <view class="feeds-grid" wx:else>
+    <view class="feeds-column">
+      <article-card
+        wx:for="{{leftColumn}}"
+        wx:key="_id"
+        article="{{item}}"
+        bindtap="openArticle"
+      />
+    </view>
+    <view class="feeds-column">
+      <article-card
+        wx:for="{{rightColumn}}"
+        wx:key="_id"
+        article="{{item}}"
+        bindtap="openArticle"
+      />
+    </view>
+  </view>
+
+  <view wx:if="{{loading && articles.length > 0}}" class="loading-more">
+    <view class="spinner-small"></view>
+    <text>加载中...</text>
+  </view>
+
+  <view wx:if="{{!hasMore && articles.length > 0}}" class="no-more">
+    — 没有更多了 —
+  </view>
+</view>

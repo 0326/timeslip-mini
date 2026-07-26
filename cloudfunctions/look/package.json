@@ -1,0 +1,9 @@
+{
+  "name": "look",
+  "version": "1.0.0",
+  "description": "look (看一看) cloud function for timeslip-mini",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

@@ -1,0 +1,47 @@
+<view class="poll-widget">
+  <view class="pw-title">{{poll.question}}</view>
+
+  <!-- 未投票状态 -->
+  <block wx:if="{{!voted}}">
+    <view
+      wx:for="{{poll.options}}"
+      wx:key="index"
+      class="pw-option {{selectedOption === index ? 'selected' : ''}}"
+      data-index="{{index}}"
+      bindtap="onSelect"
+    >
+      <view class="pw-radio">
+        <view wx:if="{{selectedOption === index}}" class="pw-radio-inner"></view>
+      </view>
+      <view class="pw-text">{{item}}</view>
+    </view>
+    <view
+      class="pw-vote-btn {{selectedOption < 0 ? 'disabled' : ''}}"
+      bindtap="onVote"
+    >
+      投票
+    </view>
+  </block>
+
+  <!-- 已投票状态 -->
+  <block wx:else>
+    <view
+      wx:for="{{poll.options}}"
+      wx:key="index"
+      class="pw-option-result"
+    >
+      <view
+        class="pw-option-bar"
+        style="width: {{results.percentages[index]}}%"
+      ></view>
+      <view class="pw-option-text">
+        <text>{{item}}</text>
+        <text>{{results.percentages[index]}}%</text>
+      </view>
+      <view wx:if="{{results.counts[index] > 0}}" class="pw-option-count">
+        {{results.counts[index]}} 票
+      </view>
+    </view>
+    <view class="pw-total">共 {{results.total}} 人参与</view>
+  </block>
+</view>

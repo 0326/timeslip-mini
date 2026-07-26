@@ -1,0 +1,37 @@
+.quote-origin {
+  margin: 32rpx 0;
+  padding: 32rpx;
+  background: #FDF6E3;
+  border-left: 8rpx solid #C9A24D;
+  border-radius: 8rpx;
+}
+
+.qo-original {
+  font-size: 30rpx;
+  line-height: 1.8;
+  color: #5C3D1A;
+  font-weight: 500;
+}
+
+.qo-translation {
+  font-size: 28rpx;
+  line-height: 1.6;
+  color: #888;
+  margin-top: 16rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx dashed #D4B896;
+}
+
+.qo-source {
+  font-size: 24rpx;
+  color: #B0B0B0;
+  margin-top: 16rpx;
+  text-align: right;
+}
+
+.qo-toggle {
+  font-size: 24rpx;
+  color: #C9A24D;
+  margin-top: 12rpx;
+  text-align: center;
+}

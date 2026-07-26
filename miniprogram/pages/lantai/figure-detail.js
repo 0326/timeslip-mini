@@ -36,7 +36,8 @@ Page({
     tab: 'bio',
     loading: true,
     channelInfo: null,
-    channelVideos: []
+    channelVideos: [],
+    relatedArticles: []
   },
 
   onLoad(options) {
@@ -66,6 +67,7 @@ Page({
         loading: false
       })
       this.loadChannel(id)
+      this.loadRelatedArticles(id)
     } catch (e) {
       this.setData({ figure: MOCK_FIGURE, dynastyInfo: getDynastyInfo(MOCK_FIGURE.dynasty), loading: false })
     }
@@ -81,6 +83,47 @@ Page({
         })
       }
     } catch (e) {}
+  },
+
+  async loadRelatedArticles(figureId) {
+    try {
+      const data = await requestCloud('look', 'articlesByFigure', { figureId, limit: 3 }, { throwError: false })
+      if (data && data.list) {
+        const CATEGORY_NAMES = {
+          figure_truth: '人物真相',
+          perspective: '史观解读',
+          fun_fact: '冷知识'
+        }
+        const DYNASTY_NAMES = {
+          xianqin: '先秦', chunqiu: '春秋', zhanguo: '战国',
+          han: '秦汉', sanguo: '三国', tang: '唐', song: '宋',
+          ming: '明', qing: '清'
+        }
+        const articles = data.list.map(a => ({
+          ...a,
+          categoryName: CATEGORY_NAMES[a.category] || a.category || '',
+          dynastyName: DYNASTY_NAMES[a.dynasty] || a.dynasty || '',
+          viewText: this.formatCount(a.viewCount),
+          likeText: this.formatCount(a.likeCount),
+          bookmarkText: this.formatCount(a.bookmarkCount || 0)
+        }))
+        this.setData({ relatedArticles: articles })
+      }
+    } catch (e) {}
+  },
+
+  formatCount(num) {
+    const n = Number(num) || 0
+    if (n >= 10000) return (n / 10000).toFixed(1) + 'w'
+    if (n >= 1000) return (n / 1000).toFixed(1) + 'k'
+    return String(n)
+  },
+
+  goArticleDetail(e) {
+    const id = e.detail && e.detail.id || e.currentTarget.dataset.id
+    if (id) {
+      wx.navigateTo({ url: `/pages/discover/look/detail?id=${id}` })
+    }
   },
 
   switchTab(e) {

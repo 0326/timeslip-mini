@@ -1,0 +1,8 @@
+<view class="quote-origin">
+  <view class="qo-original">{{original}}</view>
+  <view wx:if="{{expanded}}" class="qo-translation">{{translation}}</view>
+  <view class="qo-source">— {{source}}</view>
+  <view class="qo-toggle" bindtap="toggleTranslation">
+    {{expanded ? '收起译文' : '展开译文'}}
+  </view>
+</view>

@@ -49,7 +49,7 @@
               </view>
             </view>
             <view class="avatar-right">
-              <view class="avatar-user">我</view>
+              <image class="avatar-user-img" src="{{userAvatar || '/images/avatar.png'}}" mode="aspectFill"></image>
             </view>
           </block>
         </view>
@@ -76,7 +76,7 @@
     mode="aspectFit"
   />
 
-  <view class="footer">
+  <view class="chat-footer">
     <view wx:if="{{showTools}}" class="tool_box">
       <view class="function" bindtap="onClearChat">
         <text class="tool-icon">🧹</text>
@@ -84,61 +84,56 @@
       </view>
     </view>
 
-    <view class="foot_function">
-      <view class="input_box">
-        <view class="left_btns">
-          <image
-            wx:if="{{!showTools}}"
-            class="set"
-            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'/%3E%3C/svg%3E"
-            mode="widthFix"
-            bindtap="toggleTools"
-          />
-          <image
-            wx:else
-            class="set"
-            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='4' width='20' height='16' rx='2' ry='2'/%3E%3Cline x1='22' y1='7' x2='2' y2='7'/%3E%3Cline x1='16' y1='2' x2='16' y2='6'/%3E%3Cline x1='8' y1='2' x2='8' y2='6'/%3E%3C/svg%3E"
-            mode="widthFix"
-            bindtap="toggleTools"
-          />
-        </view>
-        <view class="input_inner_box">
-          <textarea
-            class="input"
-            value="{{inputValue}}"
-            maxlength="1024"
-            bindfocus="bindInputFocus"
-            bindinput="bindKeyInput"
-            placeholder="说点什么吧"
-            placeholder-style="color:#999"
-            bindconfirm="onSend"
-            confirm-type="send"
-            adjust-position="{{false}}"
-            cursor-spacing="40"
-            auto-height="{{true}}"
-            show-confirm-bar="{{false}}"
-          />
-        </view>
-        <view class="right_btns">
-          <view
-            wx:if="{{!!inputValue && chatStatus === 0}}"
-            class="send-btn-wrap"
-            bindtap="onSend"
-          >
-            <image
-              class="send-set"
-              src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='19' height='19' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='22' y1='2' x2='11' y2='13'/%3E%3Cpolygon points='22 2 15 22 11 13 2 9 22 2'/%3E%3C/svg%3E"
-              mode="widthFix"
-            />
-          </view>
-          <image
-            wx:if="{{chatStatus !== 0}}"
-            class="set"
-            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='6' y='6' width='12' height='12'/%3E%3C/svg%3E"
-            mode="widthFix"
-            bindtap="onStopGen"
-          />
-        </view>
+    <view class="input_box">
+      <view class="icon-btn" bindtap="toggleTools">
+        <image
+          wx:if="{{showTools}}"
+          class="set"
+          src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2728%27 height=%2728%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23666%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M18 15l-6-6-6 6%27/%3E%3C/svg%3E"
+          mode="aspectFit"
+        />
+        <image
+          wx:else
+          class="set"
+          src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2728%27 height=%2728%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23666%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M12 5v14M5 12h14%27/%3E%3C/svg%3E"
+          mode="aspectFit"
+        />
+      </view>
+      <view class="input_inner_box">
+        <textarea
+          class="input"
+          value="{{inputValue}}"
+          maxlength="1024"
+          bindfocus="bindInputFocus"
+          bindinput="bindKeyInput"
+          placeholder="说点什么吧"
+          placeholder-style="color:#999"
+          bindconfirm="onSend"
+          confirm-type="send"
+          adjust-position="{{false}}"
+          cursor-spacing="40"
+          auto-height="{{true}}"
+          show-confirm-bar="{{false}}"
+        />
+      </view>
+      <button
+        wx:if="{{!!inputValue && chatStatus === 0}}"
+        class="send-btn"
+        bindtap="onSend"
+      >发送</button>
+      <view wx:elif="{{chatStatus !== 0}}" class="icon-btn" bindtap="onStopGen">
+        <image
+          class="set"
+          src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2728%27 height=%2728%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23666%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Crect x=%276%27 y=%276%27 width=%2712%27 height=%2712%27 rx=%271%27/%3E%3C/svg%3E"
+          mode="aspectFit"
+        />
+      </view>
+      <view wx:else class="icon-btn">
+        <image
+          class="set"
+          src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2728%27 height=%2728%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23666%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Ccircle cx=%2712%27 cy=%2712%27 r=%2710%27/%3E%3Cpath d=%27M8 12h8M12 8v8%27/%3E%3C/svg%3E"
+          mode="aspectFit"
+        />
       </view>
     </view>
   </view>

@@ -1,0 +1,103 @@
+<custom-nav-bar title="评论" showBack="{{true}}" />
+
+<view class="comment-page">
+  <view class="comment-count-bar">
+    <text class="cc-text">全部评论 {{comments.length}} 条</text>
+  </view>
+
+  <loading-skeleton wx:if="{{loading}}" count="4" />
+
+  <view wx:elif="{{comments.length === 0}}" class="empty-state">
+    <text class="empty-icon">💬</text>
+    <text class="empty-text">暂无评论</text>
+    <text class="empty-desc">快来发表第一条评论吧</text>
+  </view>
+
+  <view wx:else class="comment-list">
+    <view
+      wx:for="{{comments}}"
+      wx:key="_id"
+      class="comment-item"
+    >
+      <view class="ci-avatar">
+        <image
+          wx:if="{{item.avatarUrl}}"
+          class="ci-avatar-img"
+          src="{{item.avatarUrl}}"
+          mode="aspectFill"
+        />
+        <view wx:else class="ci-avatar-fallback">{{item.nickName[0] || '穿'}}</view>
+      </view>
+
+      <view class="ci-body">
+        <view class="ci-header">
+          <text class="ci-name">{{item.nickName || '穿越者'}}</text>
+          <text class="ci-time">{{item.timeText}}</text>
+        </view>
+
+        <view wx:if="{{item.replyTo}}" class="ci-reply-hint">
+          回复 {{item.replyToName || '楼上'}}
+        </view>
+
+        <text class="ci-content">{{item.content}}</text>
+
+        <view class="ci-footer">
+          <view
+            class="ci-reply-btn"
+            data-id="{{item._id}}"
+            data-name="{{item.nickName}}"
+            bindtap="onReply"
+          >
+            <text class="ci-reply-icon">↩</text>
+            <text>回复</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{loadingMore}}" class="loading-more">
+      <view class="spinner-small"></view>
+      <text>加载中...</text>
+    </view>
+
+    <view wx:if="{{!hasMore && comments.length > 0}}" class="no-more">
+      — 没有更多评论了 —
+    </view>
+  </view>
+
+  <view class="bottom-pad"></view>
+</view>
+
+<view
+  class="input-bar"
+  style="padding-bottom: {{keyboardHeight}}px;"
+>
+  <view wx:if="{{replyTo}}" class="reply-hint">
+    <text class="rh-text">回复 {{replyToName}}</text>
+    <text class="rh-cancel" bindtap="cancelReply">✕</text>
+  </view>
+
+  <view class="ib-inner">
+    <textarea
+      class="ib-input"
+      placeholder="写下你的评论..."
+      placeholder-class="ib-placeholder"
+      value="{{inputContent}}"
+      bindinput="onInput"
+      bindfocus="onInputFocus"
+      bindblur="onInputBlur"
+      maxlength="500"
+      auto-height
+      show-confirm-bar="{{false}}"
+      adjust-position="{{false}}"
+      cursor-spacing="20"
+      fixed
+    />
+    <view
+      class="ib-send {{(inputContent.length > 0 && !submitting) ? 'active' : ''}}"
+      bindtap="onSubmit"
+    >
+      <text>{{submitting ? '...' : '发送'}}</text>
+    </view>
+  </view>
+</view>

@@ -1,12 +1,69 @@
-const { requestCloud } = require('../../utils/cloudRequest')
+const { db, _ } = require('../../utils/db')
 const { getDynastyInfo } = require('../../utils/date')
 const { storage } = require('../../utils/storage')
 const loginGuard = require('../../utils/loginGuard')
+const { getPinyinInitial } = require('../../utils/pinyin')
+
+const PAGE_SIZE = 20
+const FIGURES_CACHE_KEY = 'figures_star5_v4'
+const BOOKS_CACHE_KEY = 'books_v2'
+
+function normalizeAssetUrl(url) {
+  if (!url) return ''
+  if (/^https?:\/\//.test(url) || /^cloud:\/\//.test(url)) return url
+  if (url.startsWith('/api/asset/')) return `https://timeslip.work${url}`
+  return ''
+}
+
+function normalizeFigure(f) {
+  const id = f.id || f._id
+  const name = f.name || f.figureName || ''
+  return {
+    ...f,
+    _id: id,
+    id,
+    figureId: id,
+    figureName: name,
+    name,
+    title: f.identity || f.title || '',
+    bio: f.bio_summary || f.bio || '',
+    avatar: normalizeAssetUrl(f.mini_avatar_url || f.avatar_url || f.avatar),
+    initial: getPinyinInitial(name),
+    unlocked: true
+  }
+}
+
+function normalizeBook(b) {
+  return {
+    ...b,
+    _id: b._id || b.id,
+    id: b.id || b._id,
+    title: b.name || b.title || '',
+    author: b.author || '',
+    dynasty: b.dynasty || b.dynastyName || '',
+    chapters: b.volume_count || b.chapters || 0,
+    desc: b.type ? `${b.type} · ${b.status === 'active' ? '已收录' : '整理中'}` : (b.desc || '')
+  }
+}
+
+async function loadAll(queryFactory, pageSize = PAGE_SIZE, max = 300) {
+  const all = []
+  for (let skip = 0; skip < max; skip += pageSize) {
+    const res = await queryFactory()
+      .skip(skip)
+      .limit(pageSize)
+      .get()
+    const rows = res.data || []
+    all.push(...rows)
+    if (rows.length < pageSize) break
+  }
+  return all
+}
 
 function buildGroups(list) {
   const map = {}
   list.forEach(f => {
-    const letter = (f.initial || '#').toUpperCase()
+    const letter = getPinyinInitial(f.name || f.figureName || f.initial)
     if (!map[letter]) map[letter] = []
     map[letter].push({
       ...f,
@@ -55,13 +112,20 @@ Page({
     try {
       let figures
       if (!force) {
-        const cached = storage.get('figures')
+        const cached = storage.get(FIGURES_CACHE_KEY)
         if (cached) figures = cached
       }
       if (!figures) {
-        const data = await requestCloud('shiji', 'figures', {}, { throwError: false })
-        figures = Array.isArray(data) ? data : []
-        if (figures.length) storage.set('figures', figures, 86400)
+        const rows = await loadAll(
+          () => db.collection('figures')
+            .where({ star: _.eq(5) }),
+          PAGE_SIZE,
+          200
+        )
+        figures = rows
+          .map(normalizeFigure)
+          .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'zh-Hans-CN'))
+        if (figures.length) storage.set(FIGURES_CACHE_KEY, figures, 86400)
       }
       this.applyFilter(figures)
     } catch (e) {
@@ -93,15 +157,19 @@ Page({
   },
 
   async loadBooks(force = false) {
-    const cached = !force ? storage.get('books') : null
+    const cached = !force ? storage.get(BOOKS_CACHE_KEY) : null
     if (cached) {
       this.setData({ books: cached })
       return
     }
     try {
-      const data = await requestCloud('shiji', 'books', {}, { throwError: false })
-      const books = Array.isArray(data) ? data : []
-      if (books.length) storage.set('books', books, 86400)
+      const rows = await loadAll(
+        () => db.collection('books').orderBy('sort_order', 'asc'),
+        PAGE_SIZE,
+        100
+      )
+      const books = rows.map(normalizeBook)
+      if (books.length) storage.set(BOOKS_CACHE_KEY, books, 86400)
       this.setData({ books })
     } catch (e) {
       this.setData({ books: [] })

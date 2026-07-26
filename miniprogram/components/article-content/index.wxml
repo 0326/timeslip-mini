@@ -1,0 +1,58 @@
+<view class="article-content">
+  <block wx:for="{{content}}" wx:key="index" wx:for-item="block">
+    <!-- 普通段落 -->
+    <view wx:if="{{block.type === 'paragraph'}}" class="block-paragraph">{{block.text}}</view>
+
+    <!-- 标题 -->
+    <view wx:elif="{{block.type === 'heading'}}" class="block-heading">{{block.text}}</view>
+
+    <!-- 原典引用 -->
+    <quote-origin
+      wx:elif="{{block.type === 'quote_origin'}}"
+      original="{{block.original}}"
+      translation="{{block.translation}}"
+      source="{{block.source}}"
+    />
+
+    <!-- 人物卡片 -->
+    <view
+      wx:elif="{{block.type === 'figure_card'}}"
+      class="block-figure-card"
+      data-id="{{block.figureId}}"
+      bindtap="onFigureTap"
+    >
+      <figure-avatar figure="{{block.figure}}" />
+      <view class="fc-info">
+        <view class="fc-name">{{block.name}}</view>
+        <view class="fc-desc">{{block.dynasty}} · {{block.title}}</view>
+      </view>
+      <view class="fc-arrow">›</view>
+    </view>
+
+    <!-- 时间线 -->
+    <timeline-vertical
+      wx:elif="{{block.type === 'timeline'}}"
+      events="{{block.events}}"
+    />
+
+    <!-- 图片 -->
+    <image
+      wx:elif="{{block.type === 'image'}}"
+      class="block-image"
+      src="{{block.src}}"
+      mode="widthFix"
+      lazy-load
+    />
+
+    <!-- 列表 -->
+    <view wx:elif="{{block.type === 'list'}}" class="block-list">
+      <view wx:for="{{block.items}}" wx:key="index" wx:for-item="item" class="list-item">
+        <text class="list-bullet">·</text>
+        <text class="list-text">{{item}}</text>
+      </view>
+    </view>
+
+    <!-- 普通引用块 -->
+    <view wx:elif="{{block.type === 'quote'}}" class="block-quote">{{block.text}}</view>
+  </block>
+</view>

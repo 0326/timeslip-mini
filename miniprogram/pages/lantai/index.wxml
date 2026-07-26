@@ -107,17 +107,14 @@
           hover-class="book-hover"
         >
           <view class="book-cover">
-            <text class="cover-title">{{item.title}}</text>
-            <text class="cover-author">{{item.author}}</text>
-          </view>
-          <view class="book-info">
-            <view class="book-top">
-              <text class="book-title">{{item.title}}</text>
-              <text class="book-chap">{{item.chapters}}篇</text>
+            <view class="book-spine"></view>
+            <view class="book-no">{{item.chapters}}篇</view>
+            <view class="book-label">
+              <text class="cover-title">{{item.title}}</text>
             </view>
-            <text class="book-desc">{{item.desc}}</text>
             <view class="book-foot">
-              <text class="book-cta">进入阅读 <text class="iconfont icon-right" style="font-size:22rpx;"></text></text>
+              <text class="book-dynasty">{{item.dynasty || '佚代'}}</text>
+              <text class="book-author">{{item.author || '佚名'}}</text>
             </view>
           </view>
         </view>

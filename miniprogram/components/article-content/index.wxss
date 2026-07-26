@@ -1,0 +1,83 @@
+.article-content {
+  padding: 0 32rpx;
+}
+
+.block-paragraph {
+  font-size: 32rpx;
+  line-height: 1.8;
+  color: #333;
+  margin-bottom: 32rpx;
+  text-align: justify;
+}
+
+.block-heading {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #1A1A1A;
+  margin: 40rpx 0 24rpx;
+  padding-left: 16rpx;
+  border-left: 6rpx solid #C9A24D;
+}
+
+.block-figure-card {
+  display: flex;
+  align-items: center;
+  padding: 24rpx;
+  background: #FDF6E3;
+  border-radius: 12rpx;
+  margin: 32rpx 0;
+}
+
+.block-figure-card .fc-info {
+  flex: 1;
+  margin-left: 24rpx;
+}
+
+.fc-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.fc-desc {
+  font-size: 24rpx;
+  color: #888;
+  margin-top: 4rpx;
+}
+
+.fc-arrow {
+  font-size: 40rpx;
+  color: #ccc;
+}
+
+.block-image {
+  width: 100%;
+  border-radius: 12rpx;
+  margin: 32rpx 0;
+}
+
+.block-list {
+  margin: 32rpx 0;
+}
+
+.list-item {
+  display: flex;
+  padding: 8rpx 0;
+  font-size: 30rpx;
+  color: #333;
+}
+
+.list-bullet {
+  margin-right: 16rpx;
+  color: #C9A24D;
+}
+
+.block-quote {
+  padding: 24rpx;
+  background: #f7f7f7;
+  border-left: 6rpx solid #ddd;
+  margin: 32rpx 0;
+  font-size: 28rpx;
+  color: #666;
+  font-style: italic;
+}

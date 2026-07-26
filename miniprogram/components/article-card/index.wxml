@@ -1,0 +1,25 @@
+<view class="article-card" data-id="{{article._id}}" bindtap="onTap">
+  <!-- 封面图 -->
+  <view class="ac-cover">
+    <image wx:if="{{article.coverImage}}" src="{{article.coverImage}}" mode="widthFix" lazy-load />
+    <view wx:else class="ac-cover-placeholder">
+      <text class="ac-cover-text">{{article.categoryName}}</text>
+    </view>
+    <!-- 分类标签 -->
+    <view wx:if="{{article.categoryName}}" class="ac-cat-badge">{{article.categoryName}}</view>
+  </view>
+
+  <!-- 卡片文字 -->
+  <view class="ac-body">
+    <view class="ac-title">{{article.title}}</view>
+    <view wx:if="{{article.subtitle}}" class="ac-subtitle">{{article.subtitle}}</view>
+    <view class="ac-footer">
+      <view class="ac-author">
+        <text class="ac-author-text">{{article.author || '穿越圈'}}</text>
+      </view>
+      <view class="ac-stats">
+        <text class="ac-stat-item">❤ {{article.likeText || 0}}</text>
+      </view>
+    </view>
+  </view>
+</view>

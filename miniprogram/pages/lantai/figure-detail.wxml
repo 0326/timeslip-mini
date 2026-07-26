@@ -1,7 +1,10 @@
 <custom-nav-bar
-  title="{{figure.name}}"
+  title=""
   bgColor="transparent"
+  textColor="#191919"
   translucent
+  noPlaceholder
+  fixed
 ></custom-nav-bar>
 
 <view wx:if="{{loading}}" class="loading-wrap">
@@ -34,11 +37,11 @@
 
   <view class="action-bar">
     <view class="a-btn a-primary" bindtap="startChat">
-      <text class="a-btn-icon">💬</text>
+      <text class="iconfont a-btn-icon icon-chat"></text>
       <text class="a-btn-text">开始聊天</text>
     </view>
     <view class="a-btn a-ancient" bindtap="sendLetter">
-      <text class="a-btn-icon">🕊️</text>
+      <text class="iconfont a-btn-icon icon-mail"></text>
       <text class="a-btn-text">飞鸽传书</text>
     </view>
   </view>
@@ -116,7 +119,19 @@
         </view>
       </view>
 
-      <view wx:if="{{(!figure.masterpieces || !figure.masterpieces.length) && (!figure.famousQuotes || !figure.famousQuotes.length) && (!figure.relatedBooks || !figure.relatedBooks.length) && (!figure.relatedMoments || !figure.relatedMoments.length)}}" class="empty-hint">
+      <view wx:if="{{relatedArticles.length}}" class="section-card">
+        <view class="card-title">相关文章 · 看一看</view>
+        <view class="related-articles-list">
+          <article-card
+            wx:for="{{relatedArticles}}"
+            wx:key="_id"
+            article="{{item}}"
+            bindtap="goArticleDetail"
+          />
+        </view>
+      </view>
+
+      <view wx:if="{{(!figure.masterpieces || !figure.masterpieces.length) && (!figure.famousQuotes || !figure.famousQuotes.length) && (!figure.relatedBooks || !figure.relatedBooks.length) && (!figure.relatedMoments || !figure.relatedMoments.length) && (!relatedArticles || !relatedArticles.length)}}" class="empty-hint">
         暂无相关内容
       </view>
     </block>

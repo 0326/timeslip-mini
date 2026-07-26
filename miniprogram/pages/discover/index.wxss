@@ -1,7 +1,18 @@
+page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #ededed;
+}
+
 .discover-page {
-  min-height: 100vh;
+  flex: 1;
+  min-height: 0;
   background: #ededed;
   padding-top: 16rpx;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .group {
@@ -62,6 +73,6 @@
 }
 
 .bottom-pad {
-  height: calc(120rpx + env(safe-area-inset-bottom));
+  height: 0;
   flex-shrink: 0;
 }

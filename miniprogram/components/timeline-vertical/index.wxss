@@ -1,0 +1,44 @@
+.timeline-vertical {
+  padding: 24rpx 0;
+  margin: 32rpx 0;
+}
+
+.tl-item {
+  position: relative;
+  padding-left: 48rpx;
+  padding-bottom: 32rpx;
+}
+
+.tl-dot {
+  position: absolute;
+  left: 8rpx;
+  top: 8rpx;
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  background: #C9A24D;
+  border: 4rpx solid #FDF6E3;
+  box-shadow: 0 0 0 2rpx #C9A24D;
+}
+
+.tl-line {
+  position: absolute;
+  left: 15rpx;
+  top: 28rpx;
+  bottom: 0;
+  width: 2rpx;
+  background: #E0D5C0;
+}
+
+.tl-year {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #C9A24D;
+  margin-bottom: 8rpx;
+}
+
+.tl-event {
+  font-size: 30rpx;
+  color: #333;
+  line-height: 1.5;
+}

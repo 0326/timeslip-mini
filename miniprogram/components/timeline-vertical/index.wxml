@@ -1,0 +1,8 @@
+<view class="timeline-vertical">
+  <view wx:for="{{events}}" wx:key="index" wx:for-item="event" class="tl-item">
+    <view class="tl-dot"></view>
+    <view wx:if="{{index < events.length - 1}}" class="tl-line"></view>
+    <view class="tl-year">{{event.year}}</view>
+    <view class="tl-event">{{event.event}}</view>
+  </view>
+</view>

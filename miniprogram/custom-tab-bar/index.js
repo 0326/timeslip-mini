@@ -29,18 +29,29 @@ Component({
     onTabTap(e) {
       const idx = e.currentTarget.dataset.index
       const path = e.currentTarget.dataset.path
-      this.setData({ selected: idx })
+      const pages = getCurrentPages()
+      const currentRoute = pages.length ? '/' + pages[pages.length - 1].route : ''
+      if (currentRoute === path) {
+        this.setData({ selected: idx })
+        return
+      }
       wx.switchTab({
         url: path,
+        success: () => {
+          this.setData({ selected: idx })
+          try {
+            const app = getApp()
+            if (app && app.emitTabChange) app.emitTabChange(idx, path)
+          } catch (_) {}
+        },
         fail: (err) => {
           console.warn('switchTab fail', err)
-          wx.reLaunch({ url: path })
+          wx.reLaunch({
+            url: path,
+            success: () => this.setData({ selected: idx })
+          })
         }
       })
-      try {
-        const app = getApp()
-        if (app && app.emitTabChange) app.emitTabChange(idx, path)
-      } catch (_) {}
     }
   }
 })

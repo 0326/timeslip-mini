@@ -28,17 +28,14 @@
 
 .detail-hero {
   position: relative;
-  padding: 140rpx 32rpx 32rpx;
+  padding: 160rpx 32rpx 32rpx;
   overflow: hidden;
-}
-
-.hero-bg {
-  position: absolute;
-  inset: 0;
   background:
     radial-gradient(circle at 30% 10%, rgba(201, 162, 77, 0.25) 0%, transparent 60%),
     linear-gradient(180deg, rgba(240, 225, 190, 0.8) 0%, rgba(248, 246, 242, 0) 100%);
 }
+
+
 
 .hero-inner {
   position: relative;
@@ -49,7 +46,7 @@
 
 .hero-avatar {
   width: 180rpx;
-  height: 220rpx;
+  height: 180rpx;
   flex-shrink: 0;
   border-radius: 16rpx;
   overflow: hidden;
@@ -127,22 +124,23 @@
 }
 
 .a-primary {
-  background: var(--wechat-green);
-  color: #fff;
-  box-shadow: 0 4rpx 16rpx rgba(7, 193, 96, 0.25);
+  background: linear-gradient(135deg, #07C160, #06AD56);
+  color: #fff !important;
+  box-shadow: 0 4rpx 16rpx rgba(7, 193, 96, 0.35);
 }
 
 .a-ancient {
   background: linear-gradient(135deg, #C9A24D, #A67B2D);
-  color: #fff;
-  box-shadow: 0 4rpx 16rpx rgba(201, 162, 77, 0.3);
+  color: #fff !important;
+  box-shadow: 0 4rpx 16rpx rgba(201, 162, 77, 0.35);
 }
 
-.a-btn-icon { font-size: 32rpx; }
+.a-btn-icon { font-size: 32rpx; color: #fff !important; }
 .a-btn-text {
   font-size: 28rpx;
   font-weight: 600;
   letter-spacing: 2rpx;
+  color: #fff !important;
 }
 
 .sub-tabs {

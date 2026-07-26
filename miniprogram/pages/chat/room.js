@@ -11,6 +11,8 @@ Page({
     figureName: '',
     figureTitle: '',
     avatar: '',
+    userAvatar: '',
+    userName: '',
     isSystem: false,
     messages: [],
     inputValue: '',
@@ -36,11 +38,15 @@ Page({
       if (fig && fig.avatar) avatar = fig.avatar
     }
 
+    const userInfo = this.getUserInfo()
+
     this.setData({
       figureId,
       figureName: name,
       figureTitle: title || '',
       avatar,
+      userAvatar: userInfo.avatarUrl || '/images/avatar.png',
+      userName: userInfo.nickName || '',
       isSystem
     })
     wx.setNavigationBarTitle({ title: figureName })
@@ -55,8 +61,18 @@ Page({
     if (!this.data.isSystem && !loginGuard.checkLogin(this)) return
     const app = getApp()
     app.setCurrentTab(this, 0)
+    const userInfo = this.getUserInfo()
+    this.setData({
+      userAvatar: userInfo.avatarUrl || '/images/avatar.png',
+      userName: userInfo.nickName || ''
+    })
     // 进入房间清除未读
     chatSession.clearUnread(this.data.figureId)
+  },
+
+  getUserInfo() {
+    const app = getApp()
+    return (app.globalData && app.globalData.userInfo) || storage.get('userInfo') || storage.get('user_info') || {}
   },
 
   loadHistory() {

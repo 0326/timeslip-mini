@@ -3,6 +3,7 @@ const { requestCloud } = require('../../utils/cloudRequest')
 const loginGuard = require('../../utils/loginGuard')
 
 const MENU_LIST = [
+  { key: 'bookmarks', iconClass: 'mail', name: '我的收藏', desc: '看一看收藏的文章', url: '/pages/discover/look/bookmarks' },
   { key: 'letters', iconClass: 'mail', name: '信鸽驿站', desc: '历史信件往来', url: '/pages/profile/letters' },
   { key: 'settings', iconClass: 'more', name: '设置', desc: '隐私与偏好', url: '/pages/profile/settings' }
 ]

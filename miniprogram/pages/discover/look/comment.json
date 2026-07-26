@@ -1,0 +1,8 @@
+{
+  "usingComponents": {
+    "custom-nav-bar": "/components/custom-nav-bar/index",
+    "loading-skeleton": "/components/loading-skeleton/index"
+  },
+  "enablePullDownRefresh": true,
+  "backgroundColor": "#FFF9F0"
+}

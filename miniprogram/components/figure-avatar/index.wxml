@@ -1,5 +1,5 @@
 <view
-  class="avatar-wrap size-{{size}} {{locked ? 'locked' : ''}} {{showBorder ? 'bordered' : ''}} {{shape}}"
+  class="avatar-wrap size-{{size}} {{locked ? 'locked' : ''}} {{showBorder ? 'bordered' : ''}} {{shapeClass}}"
   style="{{bgStyle}}"
   bindtap="onTap"
 >

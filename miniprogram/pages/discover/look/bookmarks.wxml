@@ -1,0 +1,36 @@
+<custom-nav-bar title="我的收藏" showBack="{{true}}" />
+
+<view class="bookmarks-page">
+  <loading-skeleton wx:if="{{loading && articles.length === 0}}" count="4" />
+
+  <view wx:elif="{{articles.length === 0 && !loading}}" class="empty-state">
+    <text class="empty-icon">📑</text>
+    <text class="empty-text">还没有收藏文章</text>
+    <text class="empty-desc">去「看一看」发现更多好内容</text>
+    <view class="go-look" bindtap="goLook">去看看</view>
+  </view>
+
+  <!-- 双列瀑布流 -->
+  <view class="feeds-grid" wx:else>
+    <view class="feeds-column">
+      <article-card
+        wx:for="{{leftColumn}}"
+        wx:key="_id"
+        article="{{item}}"
+        bindtap="openArticle"
+      />
+    </view>
+    <view class="feeds-column">
+      <article-card
+        wx:for="{{rightColumn}}"
+        wx:key="_id"
+        article="{{item}}"
+        bindtap="openArticle"
+      />
+    </view>
+  </view>
+
+  <view wx:if="{{!hasMore && articles.length > 0}}" class="no-more">
+    — 没有更多了 —
+  </view>
+</view>

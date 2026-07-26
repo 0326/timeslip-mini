@@ -36,10 +36,11 @@ Component({
   data: {
     initials: '',
     dynastyShort: '',
-    bgStyle: ''
+    bgStyle: '',
+    shapeClass: 'circle'
   },
   observers: {
-    'figure, size': function () {
+    'figure, size, shape': function () {
       const f = this.properties.figure || {}
       const name = f.figureName || f.name || ''
       const initials = name ? name.slice(0, 1) : '古'
@@ -47,7 +48,8 @@ Component({
       const dynastyShort = (DYNASTY_MAP[dynasty] || '').slice(0, 2) || ''
       const bg = DYNASTY_BG[dynasty] || DYNASTY_BG.default
       const bgStyle = `background: linear-gradient(135deg, ${bg[0]} 0%, ${bg[1]} 100%);`
-      this.setData({ initials, dynastyShort, bgStyle })
+      const shapeClass = this.properties.shape === 'square' ? 'shape-square' : this.properties.shape
+      this.setData({ initials, dynastyShort, bgStyle, shapeClass })
     }
   },
   methods: {

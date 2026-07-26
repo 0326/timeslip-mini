@@ -3,6 +3,7 @@
   "backgroundColor": "#f8f6f2",
   "usingComponents": {
     "custom-nav-bar": "/components/custom-nav-bar/index",
-    "figure-avatar": "/components/figure-avatar/index"
+    "figure-avatar": "/components/figure-avatar/index",
+    "article-card": "/components/article-card/index"
   }
 }

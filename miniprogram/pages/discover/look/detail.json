@@ -1,0 +1,10 @@
+{
+  "usingComponents": {
+    "custom-nav-bar": "/components/custom-nav-bar/index",
+    "article-content": "/components/article-content/index",
+    "article-card": "/components/article-card/index",
+    "poll-widget": "/components/poll-widget/index",
+    "loading-skeleton": "/components/loading-skeleton/index"
+  },
+  "backgroundColor": "#FFF9F0"
+}
