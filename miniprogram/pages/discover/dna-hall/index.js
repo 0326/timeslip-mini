@@ -1,16 +1,7 @@
 const { requestCloud } = require('../../../utils/cloudRequest')
 const loginGuard = require('../../../utils/loginGuard')
 
-const CATEGORIES = [
-  { key: 'all', name: '全部', icon: '◈' },
-  { key: 'emperor', name: '帝王', icon: '👑' },
-  { key: 'poet', name: '诗人', icon: '✍️' },
-  { key: 'general', name: '武将', icon: '⚔️' },
-  { key: 'minister', name: '文臣', icon: '📜' },
-  { key: 'other', name: '其他', icon: '✦' }
-]
-
-const CATEGORY_THEME = {
+const QUIZ_THEME = {
   emperor: { start: '#B71C1C', end: '#5D1A1A' },
   poet: { start: '#1E90FF', end: '#1A4A7F' },
   general: { start: '#2F4F4F', end: '#1A2828' },
@@ -20,8 +11,6 @@ const CATEGORY_THEME = {
 
 Page({
   data: {
-    categories: CATEGORIES,
-    activeCategory: 'all',
     quizzes: [],
     loading: true,
     error: '',
@@ -48,13 +37,11 @@ Page({
   async loadQuizzes(silent) {
     if (!silent) this.setData({ loading: true, error: '' })
     try {
-      const data = await requestCloud('dna', 'quiz-list', {
-        category: this.data.activeCategory
-      }, { throwError: false })
+      const data = await requestCloud('dna', 'quiz-list', {}, { throwError: false })
       const quizzes = (data && data.quizzes) || []
       // 注入主题色
       quizzes.forEach(q => {
-        const theme = CATEGORY_THEME[q.category] || CATEGORY_THEME.other
+        var theme = QUIZ_THEME[q.category] || QUIZ_THEME.other
         q._bgStart = theme.start
         q._bgEnd = theme.end
         q._participantText = q.participantCount > 0
@@ -62,11 +49,11 @@ Page({
           : '抢先体验'
       })
       // 取第一个作为 hero
-      const hero = quizzes[0] ? { ...quizzes[0] } : null
-      const list = quizzes.slice(1)
+      var hero = quizzes[0] ? Object.assign({}, quizzes[0]) : null
+      var list = quizzes.slice(1)
       this.setData({
         quizzes: list,
-        hero,
+        hero: hero,
         loading: false,
         error: quizzes.length ? '' : '暂无测试，敬请期待'
       })
@@ -78,14 +65,8 @@ Page({
     }
   },
 
-  onSelectCategory(e) {
-    const { key } = e.currentTarget.dataset
-    if (key === this.data.activeCategory) return
-    this.setData({ activeCategory: key }, () => this.loadQuizzes())
-  },
-
   onTapQuiz(e) {
-    const { id } = e.currentTarget.dataset
+    var id = e.currentTarget.dataset.id
     if (!id) return
     this._needRefresh = true
     wx.navigateTo({

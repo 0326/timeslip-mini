@@ -1,24 +1,19 @@
 const { getUserInfo, updateUserInfo } = require('../../utils/auth')
-const { requestCloud } = require('../../utils/cloudRequest')
 const loginGuard = require('../../utils/loginGuard')
 
-const MENU_LIST = [
-  { key: 'bookmarks', iconClass: 'mail', name: '我的收藏', desc: '看一看收藏的文章', url: '/pages/discover/look/bookmarks' },
-  { key: 'letters', iconClass: 'mail', name: '信鸽驿站', desc: '历史信件往来', url: '/pages/profile/letters' },
-  { key: 'settings', iconClass: 'more', name: '设置', desc: '隐私与偏好', url: '/pages/profile/settings' }
-]
-
-const STAT_MENUS = [
-  { key: 'chats', num: 0, label: '对话次数', iconClass: 'chat' },
-  { key: 'letters', num: 0, label: '飞鸽书信', iconClass: 'mail' },
-  { key: 'memorials', num: 0, label: '奏折批阅', iconClass: 'daipiyue' }
+var MENU_LIST = [
+  { key: 'bookmarks', iconClass: 'mail', name: '我的收藏', desc: '看一看收藏的文章', url: '/pages/discover/look/bookmarks', color: '#1890FF' },
+  { key: 'achievements', iconClass: 'cyc', name: '穿越成就', desc: '解锁历史成就', url: '/pages/profile/achievements', color: '#722ED1' },
+  { key: 'about', iconClass: 'details', name: '关于我们', desc: '版本信息与反馈', url: '/pages/profile/about', color: '#C9A24D' },
+  { key: 'privacy', iconClass: 'warn', name: '隐私与协议', desc: '隐私政策与用户协议', url: '/pages/profile/privacy', color: '#52C41A' },
+  { key: 'settings', iconClass: 'more', name: '设置', desc: '偏好与数据管理', url: '/pages/profile/settings', color: '#999999' }
 ]
 
 Page({
   data: {
     userInfo: null,
+    avatarSrc: '/images/icons/avatar.png',
     menus: MENU_LIST,
-    stats: STAT_MENUS,
     statusBarHeight: 40,
     isAdmin: false
   },
@@ -37,10 +32,10 @@ Page({
     app.setCurrentTab(this, 3)
     if (!loginGuard.checkLogin(this)) return
     this.refreshUser()
-    this.loadStats()
   },
 
   async refreshUser() {
+    var self = this
     const app = getApp()
     const cached = app.globalData && app.globalData.userInfo
     if (cached) this.setData({ userInfo: cached })
@@ -48,8 +43,23 @@ Page({
     try {
       const userInfo = await getUserInfo()
       if (userInfo && userInfo._openid) {
+        var avatarSrc = '/images/icons/avatar.png'
+        if (userInfo.avatarUrl) {
+          avatarSrc = userInfo.avatarUrl
+          if (avatarSrc.indexOf('cloud://') === 0) {
+            wx.cloud.getTempFileURL({
+              fileList: [avatarSrc],
+              success: function (res) {
+                if (res.fileList && res.fileList[0] && res.fileList[0].tempFileURL) {
+                  self.setData({ avatarSrc: res.fileList[0].tempFileURL })
+                }
+              }
+            })
+          }
+        }
         this.setData({
           userInfo,
+          avatarSrc: avatarSrc,
           isAdmin: userInfo.role === 'admin' || userInfo.role === 'superadmin'
         })
         if (!app.globalData) app.globalData = {}
@@ -64,19 +74,6 @@ Page({
     } catch (e) {
       console.warn('refreshUser failed:', e)
     }
-  },
-
-  async loadStats() {
-    try {
-      const data = await requestCloud('getUser', 'stats', {}, { throwError: false })
-      if (data) {
-        const stats = this.data.stats.map(s => ({
-          ...s,
-          num: data[s.key] || 0
-        }))
-        this.setData({ stats })
-      }
-    } catch (e) {}
   },
 
   onMenuTap(e) {
@@ -99,6 +96,7 @@ Page({
   },
 
   doChooseAvatar() {
+    var self = this
     wx.chooseMedia({
       count: 1,
       mediaType: ['image'],
@@ -111,12 +109,23 @@ Page({
         wx.cloud.uploadFile({
           cloudPath,
           filePath: tempFile,
-          success: (up) => {
-            updateUserInfo({ avatarUrl: up.fileID })
-              .then((ok) => {
+          success: function (up) {
+            var fileID = up.fileID
+            wx.cloud.getTempFileURL({
+              fileList: [fileID],
+              success: function (urlRes) {
+                var src = fileID
+                if (urlRes.fileList && urlRes.fileList[0] && urlRes.fileList[0].tempFileURL) {
+                  src = urlRes.fileList[0].tempFileURL
+                }
+                self.setData({ avatarSrc: src })
+              }
+            })
+            updateUserInfo({ avatarUrl: fileID })
+              .then(function (ok) {
                 wx.hideLoading()
                 if (ok) {
-                  this.refreshUser()
+                  self.refreshUser()
                   wx.showToast({ title: '修改成功' })
                 }
               })

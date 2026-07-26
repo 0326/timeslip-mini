@@ -1,0 +1,43 @@
+.page {
+  min-height: 100vh;
+  background: var(--wechat-bg, #EDEDED);
+  padding-bottom: 80rpx;
+}
+.container { padding: 32rpx; }
+
+.section { margin-bottom: 32rpx; }
+
+.cell-group {
+  background: #fff;
+  border-radius: 16rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.03);
+}
+.cell {
+  display: flex;
+  align-items: center;
+  padding: 28rpx 24rpx;
+  position: relative;
+}
+.cell::after {
+  content: '';
+  position: absolute;
+  left: 96rpx;
+  right: 24rpx;
+  bottom: 0;
+  height: 1rpx;
+  background: #f5f5f5;
+}
+.cell:last-child::after { display: none; }
+.cell-left {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  flex: 1;
+}
+.cell-icon { font-size: 36rpx; }
+.cell-label { font-size: 30rpx; color: #191919; }
+.arrow {
+  font-size: 36rpx;
+  color: #ccc;
+}

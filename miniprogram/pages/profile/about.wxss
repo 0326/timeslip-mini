@@ -1,0 +1,89 @@
+.page {
+  min-height: 100vh;
+  background: var(--wechat-bg, #EDEDED);
+  padding-bottom: 80rpx;
+}
+.container { padding: 32rpx; }
+
+.logo-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60rpx 0 40rpx;
+}
+.logo-text {
+  font-size: 48rpx;
+  font-weight: 700;
+  color: #191919;
+  margin-bottom: 12rpx;
+}
+.logo-slogan {
+  font-size: 26rpx;
+  color: #999;
+}
+
+.version-card {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.03);
+}
+.version-label {
+  font-size: 28rpx;
+  color: #666;
+}
+.version-value {
+  font-size: 28rpx;
+  color: #191919;
+  font-weight: 500;
+}
+
+.section { margin-bottom: 32rpx; }
+
+.cell-group {
+  background: #fff;
+  border-radius: 16rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.03);
+}
+.cell {
+  display: flex;
+  align-items: center;
+  padding: 28rpx 24rpx;
+  position: relative;
+}
+.cell::after {
+  content: '';
+  position: absolute;
+  left: 96rpx;
+  right: 24rpx;
+  bottom: 0;
+  height: 1rpx;
+  background: #f5f5f5;
+}
+.cell:last-child::after { display: none; }
+.cell-left {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  flex: 1;
+}
+.cell-icon { font-size: 36rpx; }
+.cell-label { font-size: 30rpx; color: #191919; }
+.arrow {
+  font-size: 36rpx;
+  color: #ccc;
+}
+
+.footer {
+  text-align: center;
+  padding: 48rpx 0 0;
+}
+.footer-text {
+  font-size: 22rpx;
+  color: #bbb;
+}

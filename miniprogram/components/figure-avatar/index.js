@@ -36,7 +36,8 @@ Component({
     bgStyle: '',
     shapeClass: 'circle',
     imageError: false,
-    showImage: false
+    showImage: false,
+    avatarSrc: ''
   },
   observers: {
     'figure, size, shape, round': function () {
@@ -47,21 +48,31 @@ Component({
       const dynastyShort = (DYNASTY_MAP[dynasty] || '').slice(0, 2) || ''
       const bg = DYNASTY_BG[dynasty] || DYNASTY_BG.default
       const bgStyle = `background: linear-gradient(135deg, ${bg[0]} 0%, ${bg[1]} 100%);`
-      const isSquare = this.properties.shape === 'square' || this.properties.round === false
+      const isSquare = this.properties.shape === 'square'
       const shapeClass = isSquare ? 'shape-square' : 'shape-circle'
-      const avatarSrc = f.avatar || f.avatarUrl || f.miniAvatarUrl || ''
-      const showImage = !!avatarSrc && !this.data.imageError
-      this.setData({ initials, dynastyShort, bgStyle, shapeClass, showImage })
+      const avatarSrc = this.normalizeAvatarSrc(f.avatar || f.avatarUrl || f.miniAvatarUrl || '')
+      const imageError = avatarSrc === this.data.avatarSrc ? this.data.imageError : false
+      const showImage = !!avatarSrc && !imageError
+      this.setData({ initials, dynastyShort, bgStyle, shapeClass, avatarSrc, imageError, showImage })
     }
   },
   lifetimes: {
     attached() {
       const f = this.properties.figure || {}
-      const avatarSrc = f.avatar || f.avatarUrl || f.miniAvatarUrl || ''
-      this.setData({ showImage: !!avatarSrc && !this.data.imageError })
+      const avatarSrc = this.normalizeAvatarSrc(f.avatar || f.avatarUrl || f.miniAvatarUrl || '')
+      this.setData({ avatarSrc, showImage: !!avatarSrc && !this.data.imageError })
     }
   },
   methods: {
+    normalizeAvatarSrc(src) {
+      if (!src || typeof src !== 'string') return ''
+      const value = src.trim()
+      if (/^(wxfile|http:\/\/tmp|https?:\/\/tmp|https?:\/\/127\.0\.0\.1|https?:\/\/localhost|\/tmp\/|tmp\/)/i.test(value)) {
+        return ''
+      }
+      if (/^(https?:\/\/|cloud:\/\/)/i.test(value)) return value
+      return ''
+    },
     onImageError() {
       this.setData({ imageError: true, showImage: false })
       this.triggerEvent('error', { figure: this.properties.figure })

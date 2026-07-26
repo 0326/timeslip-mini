@@ -1,91 +1,23 @@
 .page {
   min-height: 100vh;
-  background: var(--wechat-bg);
+  background: var(--wechat-bg, #EDEDED);
   padding-bottom: 80rpx;
 }
 .container { padding: 32rpx; }
 
-.profile-card {
-  background: var(--wechat-white);
-  border-radius: var(--radius-lg);
-  padding: 40rpx 32rpx;
-  display: flex;
-  align-items: center;
-  margin-bottom: 32rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.03);
-}
-.avatar-wrap {
-  position: relative;
-  margin-right: 32rpx;
-}
-.avatar {
-  width: 140rpx;
-  height: 140rpx;
-  border-radius: 50%;
-  border: 4rpx solid var(--ancient-paper);
-  background: #eee;
-}
-.avatar-edit {
-  position: absolute;
-  right: -4rpx;
-  bottom: -4rpx;
-  width: 44rpx;
-  height: 44rpx;
-  line-height: 44rpx;
-  text-align: center;
-  background: var(--wechat-white);
-  border-radius: 50%;
-  font-size: 20rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.1);
-}
-.profile-info { flex: 1; }
-.profile-info .row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16rpx 0;
-  border-bottom: 1rpx solid var(--wechat-divider);
-}
-.profile-info .row:last-child { border-bottom: none; }
-.profile-info .label {
-  font-size: 26rpx;
-  color: var(--wechat-text2);
-  width: 160rpx;
-}
-.profile-info .value {
-  flex: 1;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.nickname {
-  font-size: 28rpx;
-  color: var(--wechat-text);
-  font-weight: 500;
-}
-.ancient-name {
-  font-size: 28rpx;
-  color: var(--ancient-seal);
-}
-.arrow { color: #ccc; font-size: 36rpx; margin-left: 12rpx; }
-
-.section { margin-bottom: 32rpx; }
-.section-title {
-  font-size: 24rpx;
-  color: var(--wechat-text2);
-  padding: 0 16rpx 16rpx;
-}
 .cell-group {
-  background: var(--wechat-white);
-  border-radius: var(--radius-lg);
+  background: #fff;
+  border-radius: 16rpx;
   overflow: hidden;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.03);
+  margin-bottom: 32rpx;
 }
 .cell {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 28rpx 32rpx;
-  border-bottom: 1rpx solid var(--wechat-divider);
+  border-bottom: 1rpx solid #f5f5f5;
 }
 .cell:last-child { border-bottom: none; }
 .cell-left {
@@ -102,7 +34,7 @@
 }
 .cell-label {
   font-size: 28rpx;
-  color: var(--wechat-text);
+  color: #191919;
 }
 .cell-right {
   display: flex;
@@ -110,9 +42,12 @@
 }
 .cell-right .value {
   font-size: 26rpx;
-  color: var(--wechat-text2);
+  color: #999;
+  margin-right: 8rpx;
 }
-.cell.danger .cell-label { color: var(--wechat-red); }
+.cell.danger .cell-label { color: #FA5151; }
+.cell-switch { transform: scale(0.8); }
+.arrow { color: #ccc; font-size: 36rpx; }
 
 .bottom-actions {
   margin-top: 48rpx;
@@ -121,63 +56,9 @@
   width: 100%;
   height: 88rpx;
   line-height: 88rpx;
-  background: var(--wechat-white);
-  color: var(--wechat-red);
-  border-radius: var(--radius-lg);
+  background: #fff;
+  color: #FA5151;
+  border-radius: 16rpx;
   font-size: 30rpx;
   border: none;
-}
-
-.sheet-mask {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 999;
-  display: flex;
-  align-items: flex-end;
-}
-.action-sheet {
-  width: 100%;
-  background: var(--wechat-white);
-  border-radius: 24rpx 24rpx 0 0;
-  padding: 32rpx;
-  padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
-}
-.sheet-title {
-  font-size: 28rpx;
-  font-weight: 600;
-  text-align: center;
-  margin-bottom: 24rpx;
-  color: var(--wechat-text);
-}
-.sheet-input {
-  width: 100%;
-  height: 88rpx;
-  padding: 0 24rpx;
-  background: var(--wechat-bg);
-  border-radius: var(--radius-md);
-  font-size: 28rpx;
-  color: var(--wechat-text);
-  box-sizing: border-box;
-  margin-bottom: 24rpx;
-}
-.sheet-actions {
-  display: flex;
-  gap: 20rpx;
-}
-.sheet-cancel, .sheet-confirm {
-  flex: 1;
-  height: 80rpx;
-  line-height: 80rpx;
-  border-radius: var(--radius-md);
-  font-size: 28rpx;
-  border: none;
-}
-.sheet-cancel {
-  background: var(--wechat-bg);
-  color: var(--wechat-text2);
-}
-.sheet-confirm {
-  background: var(--wechat-green);
-  color: #fff;
 }

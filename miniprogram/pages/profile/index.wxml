@@ -5,12 +5,10 @@
         <view class="avatar-big-wrap">
           <view class="avatar-big">
             <image
-              wx:if="{{userInfo.avatarUrl}}"
               class="avatar-img"
-              src="{{userInfo.avatarUrl}}"
+              src="{{avatarSrc}}"
               mode="aspectFill"
             />
-            <view wx:else class="avatar-fallback">👤</view>
           </view>
           <view class="avatar-edit iconfont icon-edit"></view>
         </view>
@@ -29,20 +27,7 @@
         </view>
       </view>
 
-      <view class="stats-grid">
-        <view wx:for="{{stats}}" wx:key="key" class="stat-card">
-          <text class="iconfont s-icon icon-{{item.iconClass}}"></text>
-          <text class="s-num">{{item.num}}</text>
-          <text class="s-label">{{item.label}}</text>
-        </view>
-      </view>
     </view>
-  </view>
-
-  <view class="section-title" wx:if="{{isAdmin}}">
-    <text class="st-line"></text>
-    <text class="st-text">管理员</text>
-    <text class="st-line"></text>
   </view>
 
   <view class="menu-group card" wx:if="{{isAdmin}}">
@@ -61,12 +46,6 @@
     </view>
   </view>
 
-  <view class="section-title">
-    <text class="st-line"></text>
-    <text class="st-text">功能菜单</text>
-    <text class="st-line"></text>
-  </view>
-
   <view class="menu-group card">
     <view
       wx:for="{{menus}}"
@@ -76,7 +55,7 @@
       bindtap="onMenuTap"
       hover-class="menu-hover"
     >
-      <text class="iconfont m-icon icon-{{item.iconClass}}"></text>
+      <text class="iconfont m-icon icon-{{item.iconClass}}" style="color:{{item.color}};"></text>
       <view class="m-text">
         <text class="m-name">{{item.name}}</text>
         <text class="m-desc">{{item.desc}}</text>

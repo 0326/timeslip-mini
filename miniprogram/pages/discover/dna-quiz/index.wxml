@@ -13,7 +13,6 @@
 
   <!-- 题目区 -->
   <view class="quiz">
-    <view class="quiz-icon">{{quiz.icon}}</view>
     <view class="quiz-title">{{quiz.title}}</view>
 
     <view class="question">

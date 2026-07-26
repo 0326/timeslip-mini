@@ -48,6 +48,32 @@ function computeHistoricalText(historical) {
   return '📍 ' + parts.join(' · ')
 }
 
+function normalizeRemoteAssetUrl(url) {
+  if (!url || typeof url !== 'string') return ''
+  const value = url.trim()
+  if (!value) return ''
+  if (/^(wxfile|http:\/\/tmp|https?:\/\/tmp|https?:\/\/127\.0\.0\.1|https?:\/\/localhost|\/tmp\/|tmp\/)/i.test(value)) {
+    return ''
+  }
+  if (/^(https?:\/\/|cloud:\/\/)/i.test(value)) return value
+  return ''
+}
+
+function normalizeImageList(images) {
+  if (!Array.isArray(images)) return []
+  return images.map(normalizeRemoteAssetUrl).filter(Boolean)
+}
+
+function normalizeFigureAsset(figure) {
+  const f = figure || {}
+  return {
+    ...f,
+    avatar: normalizeRemoteAssetUrl(f.avatar || f.avatarUrl || f.miniAvatarUrl),
+    avatarUrl: normalizeRemoteAssetUrl(f.avatarUrl || f.avatar || f.miniAvatarUrl),
+    miniAvatarUrl: normalizeRemoteAssetUrl(f.miniAvatarUrl || f.avatar || f.avatarUrl)
+  }
+}
+
 const MOCK_MOMENTS = [
   {
     _id: 'm1',
@@ -151,7 +177,7 @@ function buildCommentPreview(comments, limit = 2) {
     id: c._id || c.id || '',
     figureId: c.figureId || c.openid || c.id || '',
     name: c.name || '匿名',
-    avatar: c.avatar || '',
+    avatar: normalizeRemoteAssetUrl(c.avatar),
     dynasty: c.dynasty || '',
     content: c.content || '',
     replyTo: c.replyTo || '',
@@ -164,7 +190,7 @@ function buildFigureView(row) {
     id: row.figureId || row._openid || '',
     name: row.figureName || row.name || '匿名古人',
     title: row.figureTitle || '',
-    avatar: row.avatar || '',
+    avatar: normalizeRemoteAssetUrl(row.avatar),
     dynasty: row.dynasty || ''
   }
 }
@@ -193,7 +219,7 @@ function adaptMockMoment(row, openid = 'local_user') {
     _id: row._id,
     figure: buildFigureView(row),
     content: row.content || '',
-    images: row.images || [],
+    images: normalizeImageList(row.images),
     historical: buildHistoricalView(row),
     location: row.location || '',
     createdAt: createdAtMs,
@@ -216,7 +242,7 @@ function adaptMockComments(comments) {
       id: c.figureId || c.openid || 'anon',
       name: c.name || '匿名',
       title: c.figureTitle || '',
-      avatar: c.avatar || '',
+      avatar: normalizeRemoteAssetUrl(c.avatar),
       dynasty: c.dynasty || ''
     },
     content: c.content || '',
@@ -232,8 +258,17 @@ function enrichMomentView(m) {
   if (!m) return m
   const createdAtMs = _normalizeMs(m.createdAt)
   const content = String(m.content || '')
-  const imageLen = Array.isArray(m.images) ? m.images.length : 0
-  const dynastyInfo = getDynastyInfo(m.figure && m.figure.dynasty)
+  const images = normalizeImageList(m.images)
+  const figure = normalizeFigureAsset(m.figure)
+  const interaction = m.interaction || {}
+  const commentPreview = Array.isArray(interaction.commentPreview)
+    ? interaction.commentPreview.map(c => ({
+        ...c,
+        avatar: normalizeRemoteAssetUrl(c.avatar)
+      }))
+    : []
+  const imageLen = images.length
+  const dynastyInfo = getDynastyInfo(figure && figure.dynasty)
   const likeCount = typeof (m.interaction && m.interaction.likeCount) === 'number'
     ? m.interaction.likeCount
     : 0
@@ -242,6 +277,7 @@ function enrichMomentView(m) {
   const historicalText = computeHistoricalText(m.historical)
   return {
     ...m,
+    figure,
     createdAt: createdAtMs,
     createdAtText: _formatFull(createdAtMs),
     createdAtRelative: _formatRelative(createdAtMs),
@@ -251,11 +287,16 @@ function enrichMomentView(m) {
     content,
     hasCollapse,
     contentCollapsed: hasCollapse ? content.slice(0, 120) + '...' : content,
-    images: Array.isArray(m.images) ? m.images : [],
+    images,
     imageGridType: computeImageGridType(imageLen),
     historicalText,
     sourceText: historicalText,
-    source: m.historical ? { ...m.historical } : null
+    source: m.historical ? { ...m.historical } : null,
+    interaction: {
+      ...interaction,
+      likePreview: Array.isArray(interaction.likePreview) ? interaction.likePreview : [],
+      commentPreview
+    }
   }
 }
 
@@ -264,6 +305,7 @@ function enrichCommentView(c) {
   const createdAtMs = _normalizeMs(c.createdAt)
   return {
     ...c,
+    figure: normalizeFigureAsset(c.figure),
     createdAt: createdAtMs,
     createdAtText: _formatFull(createdAtMs),
     createdAtRelative: _formatRelative(createdAtMs),
@@ -346,5 +388,6 @@ module.exports = {
   mockListMoments,
   mockGetDetail,
   mockToggleLike,
-  mockCreateComment
+  mockCreateComment,
+  normalizeRemoteAssetUrl
 }

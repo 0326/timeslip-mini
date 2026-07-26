@@ -1,6 +1,6 @@
 .page {
   min-height: 100vh;
-  background: linear-gradient(180deg, #1A1410 0%, #0F0B08 100%);
+  background: #f5f5f5;
   padding: 0 32rpx 60rpx;
   display: flex;
   flex-direction: column;
@@ -11,7 +11,6 @@
   display: flex;
   align-items: center;
   padding: 24rpx 0;
-  /* padding-top 由内联 style 注入（含状态栏高度） */
 }
 .topbar-exit {
   width: 60rpx;
@@ -19,13 +18,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255,255,255,0.6);
+  color: #999;
   font-size: 36rpx;
 }
 .topbar-progress {
   flex: 1;
   height: 6rpx;
-  background: rgba(255,255,255,0.1);
+  background: #e0e0e0;
   border-radius: 100rpx;
   margin: 0 24rpx;
   overflow: hidden;
@@ -37,10 +36,10 @@
   transition: width 0.4s ease;
 }
 .topbar-count {
-  color: rgba(255,255,255,0.7);
+  color: #999;
   font-size: 26rpx;
 }
-.topbar-count-cur { color: #C9A24D; font-weight: bold; }
+.topbar-count-cur { color: #B71C1C; font-weight: bold; }
 .topbar-count-total { opacity: 0.6; }
 
 /* 题目区 */
@@ -50,31 +49,30 @@
   flex-direction: column;
   padding-top: 40rpx;
 }
-.quiz-icon {
-  font-size: 64rpx;
-  margin-bottom: 16rpx;
-}
 .quiz-title {
-  color: rgba(255,255,255,0.7);
-  font-size: 26rpx;
-  letter-spacing: 2rpx;
+  color: #B71C1C;
+  font-size: 32rpx;
+  font-weight: bold;
+  letter-spacing: 4rpx;
   margin-bottom: 48rpx;
+  text-align: center;
 }
 
 .question {
   margin-bottom: 56rpx;
 }
 .question-no {
-  color: #C9A24D;
+  color: #B71C1C;
   font-size: 26rpx;
   letter-spacing: 4rpx;
   margin-bottom: 20rpx;
 }
 .question-text {
-  color: #fff;
+  color: #1a1a1a;
   font-size: 40rpx;
   line-height: 1.5;
   letter-spacing: 2rpx;
+  font-weight: 500;
 }
 
 .options {
@@ -86,18 +84,19 @@
   align-items: center;
   padding: 32rpx 28rpx;
   margin-bottom: 20rpx;
-  background: rgba(255,255,255,0.04);
-  border: 2rpx solid rgba(255,255,255,0.08);
+  background: #fff;
+  border: 2rpx solid #eee;
   border-radius: 16rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.03);
   transition: all 0.25s;
 }
 .option:active {
-  background: rgba(255,255,255,0.08);
+  background: #f9f9f9;
 }
 .option-selected {
-  background: rgba(201,162,77,0.12);
+  background: rgba(201,162,77,0.06);
   border-color: #C9A24D;
-  box-shadow: 0 0 0 1rpx #C9A24D, 0 8rpx 24rpx rgba(201,162,77,0.3);
+  box-shadow: 0 0 0 1rpx #C9A24D, 0 8rpx 24rpx rgba(201,162,77,0.15);
 }
 .option-badge {
   width: 56rpx;
@@ -105,8 +104,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(201,162,77,0.15);
-  color: #C9A24D;
+  background: #f0f0f0;
+  color: #999;
   font-size: 28rpx;
   font-weight: bold;
   border-radius: 50%;
@@ -116,11 +115,11 @@
 }
 .option-selected .option-badge {
   background: #C9A24D;
-  color: #1A1410;
+  color: #fff;
 }
 .option-text {
   flex: 1;
-  color: rgba(255,255,255,0.9);
+  color: #333;
   font-size: 30rpx;
   line-height: 1.5;
 }
@@ -129,7 +128,7 @@
 .modal-mask {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0,0,0,0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -137,21 +136,20 @@
 }
 .modal {
   width: 580rpx;
-  background: #2A2018;
-  border: 1rpx solid rgba(201,162,77,0.3);
+  background: #fff;
   border-radius: 20rpx;
   padding: 48rpx 40rpx 32rpx;
   text-align: center;
 }
 .modal-title {
-  color: #fff;
+  color: #1a1a1a;
   font-size: 34rpx;
   font-weight: bold;
   margin-bottom: 16rpx;
   letter-spacing: 2rpx;
 }
 .modal-desc {
-  color: rgba(255,255,255,0.6);
+  color: #999;
   font-size: 26rpx;
   margin-bottom: 40rpx;
 }
@@ -167,11 +165,11 @@
   letter-spacing: 2rpx;
 }
 .modal-btn-cancel {
-  background: rgba(255,255,255,0.08);
-  color: rgba(255,255,255,0.8);
+  background: #f5f5f5;
+  color: #666;
 }
 .modal-btn-confirm {
-  background: linear-gradient(135deg, #B71C1C 0%, #5D1A1A 100%);
+  background: #B71C1C;
   color: #fff;
 }
 
@@ -179,7 +177,7 @@
 .submitting {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(15,11,8,0.95);
+  background: rgba(255,255,255,0.95);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -209,7 +207,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #0F0B08;
+  background: #f5f5f5;
 }
 .loading-spinner {
   width: 60rpx;
@@ -221,6 +219,6 @@
   margin-bottom: 24rpx;
 }
 .loading-text {
-  color: rgba(255,255,255,0.6);
+  color: #999;
   font-size: 28rpx;
 }

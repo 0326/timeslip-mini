@@ -72,7 +72,11 @@ Page({
     if (this.data.selectedLabel) return
 
     const newAnswers = answers.slice()
-    newAnswers[currentIndex] = { q: current._id, a: label }
+    newAnswers[currentIndex] = {
+      q: current.questionKey || current._id || current.order,
+      order: current.order,
+      a: label
+    }
     this.setData({
       selectedLabel: label,
       answers: newAnswers

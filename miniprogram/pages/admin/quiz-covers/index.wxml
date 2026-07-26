@@ -1,0 +1,30 @@
+<custom-nav-bar title="封面管理" showBack="{{true}}" bindback="onBack" />
+
+<view class="page">
+  <view class="content">
+    <view class="tip">点击封面图可选择新图片上传到云存储</view>
+    <view class="item-list">
+      <view class="item-card" wx:for="{{quizzes}}" wx:key="id">
+        <view class="item-cover" data-id="{{item.id}}" bindtap="onChooseQuizCover">
+          <image wx:if="{{item.cover}}" class="cover-img" src="{{item.cover}}" mode="aspectFill"></image>
+          <view wx:else class="cover-placeholder">
+            <text class="cover-text">点击上传</text>
+          </view>
+          <view wx:if="{{uploadingId === item.id}}" class="cover-loading">
+            <view class="loading-spinner-small"></view>
+          </view>
+        </view>
+        <view class="item-info">
+          <view class="item-title">{{item.title}}</view>
+          <view class="item-meta">{{item.questionsCount}} 题</view>
+          <view class="item-status {{item.cover ? 'has-cover' : 'no-cover'}}">
+            {{item.cover ? '已上传' : '未上传'}}
+          </view>
+        </view>
+      </view>
+      <view wx:if="{{quizzes.length === 0 && !loading}}" class="empty">暂无测试数据</view>
+    </view>
+  </view>
+
+  <view class="bottom-tip">封面图上传后自动保存到云存储，并更新数据库记录</view>
+</view>

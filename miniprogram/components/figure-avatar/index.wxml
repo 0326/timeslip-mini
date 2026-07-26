@@ -6,7 +6,7 @@
   <image
     wx:if="{{showImage}}"
     class="avatar-img"
-    src="{{figure.avatar || figure.avatarUrl || figure.miniAvatarUrl}}"
+    src="{{avatarSrc}}"
     mode="aspectFill"
     lazy-load="{{lazyLoad}}"
     binderror="onImageError"

@@ -1,3 +1,5 @@
+<custom-nav-bar title="朋友圈详情" show-back="{{true}}" bg-color="#ffffff" text-color="#191919" />
+
 <view class="page">
   <view wx:if="{{initialLoading}}" class="initial-skeleton">
     <view class="sk-head">
@@ -93,7 +95,7 @@
         <view class="bubble-section comment-section" wx:if="{{comments.length}}">
           <block wx:for="{{comments}}" wx:for-item="c" wx:key="_id">
             <view
-              class="bubble-row comment-item {{deletingCommentIds[c._id] ? 'deleting' : ''}}"
+              class="comment-item {{deletingCommentIds[c._id] ? 'deleting' : ''}}"
               data-id="{{c._id}}"
               data-replyto="{{c.figure && c.figure.id}}"
               data-replyname="{{c.figure && c.figure.name}}"

@@ -8,7 +8,8 @@ const {
   enrichCommentView,
   mockGetDetail,
   mockToggleLike,
-  mockCreateComment
+  mockCreateComment,
+  normalizeRemoteAssetUrl
 } = require('../../utils/momentAdapter')
 
 Page({
@@ -235,7 +236,7 @@ Page({
         id: openid,
         name: userInfo.nickName || '我',
         title: '',
-        avatar: userInfo.avatarUrl || '',
+        avatar: normalizeRemoteAssetUrl(userInfo.avatarUrl || ''),
         dynasty: ''
       },
       content: text,

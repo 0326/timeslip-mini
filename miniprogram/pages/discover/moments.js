@@ -6,7 +6,8 @@ const {
   enrichCommentView,
   mockListMoments,
   mockToggleLike,
-  mockCreateComment
+  mockCreateComment,
+  normalizeRemoteAssetUrl
 } = require('../../utils/momentAdapter')
 const loginGuard = require('../../utils/loginGuard')
 const { throttle } = require('../../utils/helpers')
@@ -54,7 +55,7 @@ Page({
       openid,
       coverFigure: {
         name: userInfo.nickName || '穿越者',
-        avatar: userInfo.avatarUrl || '',
+        avatar: normalizeRemoteAssetUrl(userInfo.avatarUrl || ''),
         dynasty: '汉'
       }
     })
@@ -359,7 +360,7 @@ Page({
         id: openid,
         name: userInfo.nickName || '我',
         title: '',
-        avatar: userInfo.avatarUrl || '',
+        avatar: normalizeRemoteAssetUrl(userInfo.avatarUrl || ''),
         dynasty: ''
       },
       content: text,

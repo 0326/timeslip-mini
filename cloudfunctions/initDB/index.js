@@ -32,39 +32,47 @@ const COLLECTIONS = [
 
 // ============================================================
 // 人物种子：12 位（与 lantai 前端 mock 对齐）
-// figureId 统一 fig-xxx 格式，新增 initial 字段（拼音首字母）用于通讯录索引
+// figureId 统一为拼音格式（无 fig- 前缀），与主数据库 ID 对齐；新增 initial 字段（拼音首字母）用于通讯录索引
 // ============================================================
 const FIGURE_SEED = [
-  { figureId: 'fig-huangdi', figureName: '黄帝', dynasty: 'xianqin', dynastyName: '上古', initial: 'H', title: '人文初祖', bio: '中华民族始祖，统一华夏部落，播百谷草木，创医药历法。', tags: ['始祖', '上古'], color: '#4B0082', avatar: '' },
-  { figureId: 'fig-simqian', figureName: '司马迁', dynasty: 'han', dynastyName: '西汉', initial: 'S', title: '太史公', bio: '字子长，夏阳人。西汉史学家、散文家。因替李陵败降之事辩解而受宫刑，发奋完成《史记》百三十篇，史家之绝唱，无韵之离骚。', tags: ['史学', '文学'], color: '#654321', avatar: '' },
-  { figureId: 'fig-liubang', figureName: '刘邦', dynasty: 'han', dynastyName: '西汉', initial: 'L', title: '汉高祖', bio: '沛丰邑人，初为泗水亭长。秦末起兵，先入关中，约法三章。楚汉相争中虽屡战屡败，最终垓下一战定乾坤，建立汉朝。', tags: ['政治', '军事'], color: '#B22222', avatar: '' },
-  { figureId: 'fig-hanwu', figureName: '刘彻', dynasty: 'han', dynastyName: '西汉', initial: 'L', title: '汉武帝', bio: '罢黜百家，独尊儒术；北击匈奴，凿空西域。雄才大略，开创西汉鼎盛之世。', tags: ['政治', '军事'], color: '#8B0000', avatar: '' },
-  { figureId: 'fig-zhugeliang', figureName: '诸葛亮', dynasty: 'sanguo', dynastyName: '三国·蜀', initial: 'Z', title: '武乡侯', bio: '字孔明，琅琊阳都人。三顾茅庐始出山，鞠躬尽瘁，死而后已。著《出师表》《诫子书》，卧龙一出天下惊。', tags: ['政治', '军事'], color: '#2F4F4F', avatar: '' },
-  { figureId: 'fig-libai', figureName: '李白', dynasty: 'tang', dynastyName: '盛唐', initial: 'L', title: '诗仙', bio: '字太白，号青莲居士。斗酒诗百篇，剑气纵横三万里。浪漫主义诗歌巅峰，与杜甫并称李杜。', tags: ['诗歌', '浪漫', '酒'], color: '#B22222', avatar: '' },
-  { figureId: 'fig-wuzetian', figureName: '武则天', dynasty: 'tang', dynastyName: '唐·武周', initial: 'W', title: '则天大圣皇帝', bio: '中国历史上唯一的女皇帝。从太宗才人，到高宗皇后，再到君临天下。创殿试、开武举、重人才。', tags: ['政治', '女皇'], color: '#9932CC', avatar: '' },
-  { figureId: 'fig-sushi', figureName: '苏轼', dynasty: 'song', dynastyName: '北宋', initial: 'S', title: '东坡居士', bio: '字子瞻，号东坡。诗词文书画皆冠绝一时。屡遭贬谪，旷达乐观，一蓑烟雨任平生。', tags: ['文学', '艺术', '美食'], color: '#2E8B57', avatar: '' },
-  { figureId: 'fig-yuefei', figureName: '岳飞', dynasty: 'song', dynastyName: '南宋', initial: 'Y', title: '岳武穆', bio: '字鹏举，相州汤阴人。南宋抗金名将，精忠报国。治军严明，岳家军"冻死不拆屋，饿死不掳掠"。遭十二道金牌召回，含冤风波亭。', tags: ['军事', '忠义'], color: '#8B0000', avatar: '' },
-  { figureId: 'fig-zhuyuanzhang', figureName: '朱元璋', dynasty: 'ming', dynastyName: '明', initial: 'Z', title: '明太祖', bio: '字国瑞，濠州钟离人。出身贫寒，曾为僧为丐。元末投郭子兴，后自立一军，灭陈友谅、张士诚，北伐驱逐元廷，建立大明。', tags: ['政治', '军事'], color: '#8B0000', avatar: '' },
-  { figureId: 'fig-zhenghe', figureName: '郑和', dynasty: 'ming', dynastyName: '明', initial: 'Z', title: '三保太监', bio: '原姓马，云南人。七下西洋，遍历三十余国，宝船六十余丈，示中国富强，通朝贡贸易。', tags: ['航海', '外交'], color: '#1E90FF', avatar: '' },
-  { figureId: 'fig-kangxi', figureName: '爱新觉罗·玄烨', dynasty: 'qing', dynastyName: '清', initial: 'A', title: '康熙大帝', bio: '清圣祖，年号康熙。八岁登基，十四岁亲政。平三藩、收台湾、征噶尔丹、尼布楚条约。在位六十一年，千古一帝。', tags: ['政治', '军事'], color: '#FFD700', avatar: '' },
+  { figureId: 'huangdi', figureName: '黄帝', dynasty: 'xianqin', dynastyName: '上古', initial: 'H', title: '人文初祖', bio: '中华民族始祖，统一华夏部落，播百谷草木，创医药历法。', tags: ['始祖', '上古'], color: '#4B0082', avatar: '' },
+  { figureId: 'simaqian', figureName: '司马迁', dynasty: 'han', dynastyName: '西汉', initial: 'S', title: '太史公', bio: '字子长，夏阳人。西汉史学家、散文家。因替李陵败降之事辩解而受宫刑，发奋完成《史记》百三十篇，史家之绝唱，无韵之离骚。', tags: ['史学', '文学'], color: '#654321', avatar: '' },
+  { figureId: 'liubang', figureName: '刘邦', dynasty: 'han', dynastyName: '西汉', initial: 'L', title: '汉高祖', bio: '沛丰邑人，初为泗水亭长。秦末起兵，先入关中，约法三章。楚汉相争中虽屡战屡败，最终垓下一战定乾坤，建立汉朝。', tags: ['政治', '军事'], color: '#B22222', avatar: '' },
+  { figureId: 'liuche', figureName: '刘彻', dynasty: 'han', dynastyName: '西汉', initial: 'L', title: '汉武帝', bio: '罢黜百家，独尊儒术；北击匈奴，凿空西域。雄才大略，开创西汉鼎盛之世。', tags: ['政治', '军事'], color: '#8B0000', avatar: '' },
+  { figureId: 'zhugeliang', figureName: '诸葛亮', dynasty: 'sanguo', dynastyName: '三国·蜀', initial: 'Z', title: '武乡侯', bio: '字孔明，琅琊阳都人。三顾茅庐始出山，鞠躬尽瘁，死而后已。著《出师表》《诫子书》，卧龙一出天下惊。', tags: ['政治', '军事'], color: '#2F4F4F', avatar: '' },
+  { figureId: 'libai', figureName: '李白', dynasty: 'tang', dynastyName: '盛唐', initial: 'L', title: '诗仙', bio: '字太白，号青莲居士。斗酒诗百篇，剑气纵横三万里。浪漫主义诗歌巅峰，与杜甫并称李杜。', tags: ['诗歌', '浪漫', '酒'], color: '#B22222', avatar: '' },
+  { figureId: 'wuzetian', figureName: '武则天', dynasty: 'tang', dynastyName: '唐·武周', initial: 'W', title: '则天大圣皇帝', bio: '中国历史上唯一的女皇帝。从太宗才人，到高宗皇后，再到君临天下。创殿试、开武举、重人才。', tags: ['政治', '女皇'], color: '#9932CC', avatar: '' },
+  { figureId: 'sushi', figureName: '苏轼', dynasty: 'song', dynastyName: '北宋', initial: 'S', title: '东坡居士', bio: '字子瞻，号东坡。诗词文书画皆冠绝一时。屡遭贬谪，旷达乐观，一蓑烟雨任平生。', tags: ['文学', '艺术', '美食'], color: '#2E8B57', avatar: '' },
+  { figureId: 'yuefei', figureName: '岳飞', dynasty: 'song', dynastyName: '南宋', initial: 'Y', title: '岳武穆', bio: '字鹏举，相州汤阴人。南宋抗金名将，精忠报国。治军严明，岳家军"冻死不拆屋，饿死不掳掠"。遭十二道金牌召回，含冤风波亭。', tags: ['军事', '忠义'], color: '#8B0000', avatar: '' },
+  { figureId: 'zhuyuanzhang', figureName: '朱元璋', dynasty: 'ming', dynastyName: '明', initial: 'Z', title: '明太祖', bio: '字国瑞，濠州钟离人。出身贫寒，曾为僧为丐。元末投郭子兴，后自立一军，灭陈友谅、张士诚，北伐驱逐元廷，建立大明。', tags: ['政治', '军事'], color: '#8B0000', avatar: '' },
+  { figureId: 'zhenghe', figureName: '郑和', dynasty: 'ming', dynastyName: '明', initial: 'Z', title: '三保太监', bio: '原姓马，云南人。七下西洋，遍历三十余国，宝船六十余丈，示中国富强，通朝贡贸易。', tags: ['航海', '外交'], color: '#1E90FF', avatar: '' },
   // 以下为 shiji 原始数据保留
-  { figureId: 'fig-kongzi', figureName: '孔子', dynasty: 'xianqin', dynastyName: '春秋·鲁', initial: 'K', title: '儒家创始人', bio: '孔丘，字仲尼。万世师表，有教无类，弟子三千，贤人七十二。修诗书礼乐，序周易，著春秋。', tags: ['教育', '思想', '礼乐'], color: '#8B7355', avatar: '' },
-  { figureId: 'fig-baijuyi', figureName: '白居易', dynasty: 'tang', dynastyName: '中唐', initial: 'B', title: '诗魔', bio: '字乐天，号香山居士。新乐府运动领袖，文章合为时而著，歌诗合为事而作。老妪能解。', tags: ['诗歌', '现实'], color: '#4682B4', avatar: '' },
-  { figureId: 'fig-wujiang', figureName: '项羽', dynasty: 'sanguo', dynastyName: '秦末·楚', initial: 'X', title: '西楚霸王', bio: '名籍，字羽。力能扛鼎，才气过人。破釜沉舟，百二秦关终属楚；垓下被围，乌江自刎。', tags: ['军事', '悲情英雄'], color: '#8B0000', avatar: '' },
-  { figureId: 'fig-caocao', figureName: '曹操', dynasty: 'sanguo', dynastyName: '东汉末', initial: 'C', title: '魏武帝', bio: '字孟德，小字阿瞒。挟天子以令诸侯，灭吕布，破袁绍，统一北方。政治家、军事家、诗人。', tags: ['政治', '军事', '文学'], color: '#2F4F4F', avatar: '' },
-  { figureId: 'fig-mulan', figureName: '花木兰', dynasty: 'sanguo', dynastyName: '南北朝', initial: 'H', title: '巾帼英雄', bio: '代父从军，女扮男装，征战十二载，屡立奇功。归来不愿尚书郎，愿驰千里足，送儿还故乡。', tags: ['孝义', '军事'], color: '#CD5C5C', avatar: '' }
+  { figureId: 'kongzi', figureName: '孔子', dynasty: 'xianqin', dynastyName: '春秋·鲁', initial: 'K', title: '儒家创始人', bio: '孔丘，字仲尼。万世师表，有教无类，弟子三千，贤人七十二。修诗书礼乐，序周易，著春秋。', tags: ['教育', '思想', '礼乐'], color: '#8B7355', avatar: '' },
+  { figureId: 'baijuyi', figureName: '白居易', dynasty: 'tang', dynastyName: '中唐', initial: 'B', title: '诗魔', bio: '字乐天，号香山居士。新乐府运动领袖，文章合为时而著，歌诗合为事而作。老妪能解。', tags: ['诗歌', '现实'], color: '#4682B4', avatar: '' },
+  { figureId: 'xiangyu', figureName: '项羽', dynasty: 'sanguo', dynastyName: '秦末·楚', initial: 'X', title: '西楚霸王', bio: '名籍，字羽。力能扛鼎，才气过人。破釜沉舟，百二秦关终属楚；垓下被围，乌江自刎。', tags: ['军事', '悲情英雄'], color: '#8B0000', avatar: '' },
+  { figureId: 'caocao', figureName: '曹操', dynasty: 'sanguo', dynastyName: '东汉末', initial: 'C', title: '魏武帝', bio: '字孟德，小字阿瞒。挟天子以令诸侯，灭吕布，破袁绍，统一北方。政治家、军事家、诗人。', tags: ['政治', '军事', '文学'], color: '#2F4F4F', avatar: '' },
+  { figureId: 'mulan', figureName: '花木兰', dynasty: 'sanguo', dynastyName: '南北朝', initial: 'H', title: '巾帼英雄', bio: '代父从军，女扮男装，征战十二载，屡立奇功。归来不愿尚书郎，愿驰千里足，送儿还故乡。', tags: ['孝义', '军事'], color: '#CD5C5C', avatar: '' },
+  // DNA 测试结果关联人物（新增 8 位）
+  { figureId: 'lishimin', figureName: '李世民', dynasty: 'tang', dynastyName: '唐', initial: 'L', title: '唐太宗', bio: '唐高祖李渊次子。少年从军，雁门关救驾。玄武门之变后登基，年号贞观。在位期间，任用魏徵、房玄龄、杜如晦，开创贞观之治，被尊为"天可汗"。', tags: ['政治', '军事', '盛世'], color: '#C9A24D', avatar: '' },
+  { figureId: 'zhaokuangyin', figureName: '赵匡胤', dynasty: 'song', dynastyName: '北宋', initial: 'Z', title: '宋太祖', bio: '字元朗，涿郡人。后周殿前都点检，陈桥兵变被黄袍加身，建立宋朝。在位期间杯酒释兵权，加强中央集权，重文抑武，奠定宋代文治基础。', tags: ['政治', '军事'], color: '#228B22', avatar: '' },
+  { figureId: 'dufu', figureName: '杜甫', dynasty: 'tang', dynastyName: '唐', initial: 'D', title: '诗圣', bio: '字子美，自号少陵野老，唐代伟大的现实主义诗人。与李白并称"李杜"。其诗被称为"诗史"，反映唐朝由盛转衰的历史。', tags: ['诗歌', '现实', '忧国'], color: '#654321', avatar: '' },
+  { figureId: 'liqingzhao', figureName: '李清照', dynasty: 'song', dynastyName: '南宋', initial: 'L', title: '易安居士', bio: '号易安居士，齐州章丘人。宋代女词人，婉约词派代表，有"千古第一才女"之称。与丈夫赵明诚共撰《金石录》。', tags: ['词', '婉约', '才女'], color: '#C71585', avatar: '' },
+  { figureId: 'guanyu', figureName: '关羽', dynasty: 'sanguo', dynastyName: '三国·蜀', initial: 'G', title: '关圣帝君', bio: '字云长，河东解良人。蜀汉名将，与刘备、张飞桃园结义。温酒斩华雄，斩颜良诛文丑，过五关斩六将，水淹七军威震华夏。后世尊为"武圣"。', tags: ['军事', '忠义', '武圣'], color: '#B22222', avatar: '' },
+  { figureId: 'hanxin', figureName: '韩信', dynasty: 'han', dynastyName: '西汉', initial: 'H', title: '淮阴侯', bio: '淮阴人。西汉开国功臣，与张良、萧何并称"汉初三杰"。初投项羽，后归刘邦。平定齐、赵、魏，垓下灭项羽。后遭刘邦猜忌，被吕后诛杀。', tags: ['军事', '兵仙'], color: '#2F4F4F', avatar: '' },
+  { figureId: 'weiqing', figureName: '卫青', dynasty: 'han', dynastyName: '西汉', initial: 'W', title: '长平侯', bio: '字仲卿，河东平阳人。本平阳公主家奴，后因姊卫子夫得宠而入宫。汉武帝时七征匈奴，七战七胜，封长平侯。', tags: ['军事', '常胜'], color: '#1E90FF', avatar: '' },
+  { figureId: 'huoqubing', figureName: '霍去病', dynasty: 'han', dynastyName: '西汉', initial: 'H', title: '冠军侯', bio: '河东平阳人，卫青外甥。善骑射，用兵神速。十七岁领兵作战，封冠军侯。六击匈奴，封狼居胥。元狩六年病逝，年仅二十四。', tags: ['军事', '少年英雄'], color: '#FF8C00', avatar: '' }
 ]
 
 // ============================================================
 // 典籍种子
 // ============================================================
 const BOOK_SEED = [
-  { _id: 'shiji', bookId: 'shiji', title: '史记', author: '司马迁', dynasty: 'han', dynastyName: '西汉', chapters: 130, category: '史书', desc: '史家之绝唱，无韵之离骚', figures: ['fig-simqian', 'fig-wujiang', 'fig-caocao'] },
-  { _id: 'hanshu', bookId: 'hanshu', title: '汉书', author: '班固', dynasty: 'han', dynastyName: '东汉', chapters: 100, category: '史书', desc: '第一部纪传体断代史', figures: ['fig-liubang', 'fig-hanwu'] },
-  { _id: 'sanguozhi', bookId: 'sanguozhi', title: '三国志', author: '陈寿', dynasty: 'sanguo', dynastyName: '西晋', chapters: 65, category: '史书', desc: '三国时代的权威记载', figures: ['fig-zhugeliang', 'fig-caocao'] },
-  { _id: 'zizhitongjian', bookId: 'zizhitongjian', title: '资治通鉴', author: '司马光', dynasty: 'song', dynastyName: '北宋', chapters: 294, category: '史书', desc: '鉴前世之兴衰，考当今之得失', figures: ['fig-wuzetian', 'fig-sushi'] },
-  { _id: 'xintangshu', bookId: 'xintangshu', title: '新唐书', author: '欧阳修', dynasty: 'song', dynastyName: '北宋', chapters: 225, category: '史书', desc: '唐代历史的系统梳理', figures: ['fig-wuzetian', 'fig-libai', 'fig-baijuyi'] },
-  { _id: 'mingshi', bookId: 'mingshi', title: '明史', author: '张廷玉等', dynasty: 'qing', dynastyName: '清', chapters: 332, category: '史书', desc: '明朝近三百年全史', figures: ['fig-zhuyuanzhang', 'fig-zhenghe'] }
+  { _id: 'shiji', bookId: 'shiji', title: '史记', author: '司马迁', dynasty: 'han', dynastyName: '西汉', chapters: 130, category: '史书', desc: '史家之绝唱，无韵之离骚', figures: ['simaqian', 'xiangyu', 'caocao'] },
+  { _id: 'hanshu', bookId: 'hanshu', title: '汉书', author: '班固', dynasty: 'han', dynastyName: '东汉', chapters: 100, category: '史书', desc: '第一部纪传体断代史', figures: ['liubang', 'liuche'] },
+  { _id: 'sanguozhi', bookId: 'sanguozhi', title: '三国志', author: '陈寿', dynasty: 'sanguo', dynastyName: '西晋', chapters: 65, category: '史书', desc: '三国时代的权威记载', figures: ['zhugeliang', 'caocao'] },
+  { _id: 'zizhitongjian', bookId: 'zizhitongjian', title: '资治通鉴', author: '司马光', dynasty: 'song', dynastyName: '北宋', chapters: 294, category: '史书', desc: '鉴前世之兴衰，考当今之得失', figures: ['wuzetian', 'sushi'] },
+  { _id: 'xintangshu', bookId: 'xintangshu', title: '新唐书', author: '欧阳修', dynasty: 'song', dynastyName: '北宋', chapters: 225, category: '史书', desc: '唐代历史的系统梳理', figures: ['wuzetian', 'libai', 'baijuyi'] },
+  { _id: 'mingshi', bookId: 'mingshi', title: '明史', author: '张廷玉等', dynasty: 'qing', dynastyName: '清', chapters: 332, category: '史书', desc: '明朝近三百年全史', figures: ['zhuyuanzhang', 'zhenghe'] }
 ]
 
 // ============================================================

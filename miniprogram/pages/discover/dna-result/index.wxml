@@ -1,18 +1,19 @@
 <view class="page" wx:if="{{result}}">
-  <!-- Hero 区：全屏冲击力 -->
-  <view class="hero"
-        style="background: linear-gradient(160deg, {{result.bgStart}} 0%, {{result.bgEnd}} 100%); padding-top: {{statusBarHeight + 40}}px;">
-    <view class="hero-overlay"></view>
+  <!-- 返回按钮：固定在顶部，不随页面滚动 -->
+  <view class="back-btn" bindtap="onBack" style="top: {{statusBarHeight + 12}}px;">
+    <text class="back-btn-icon">‹</text>
+  </view>
 
-    <!-- 返回按钮 -->
-    <view class="hero-back" bindtap="onBack" style="top: {{statusBarHeight + 8}}px;">
-      <text class="hero-back-icon">‹</text>
-    </view>
+  <!-- Hero 区：测试封面图作背景 + 轻渐变蒙层 -->
+  <view class="hero" style="padding-top: {{statusBarHeight + 40}}px;">
+    <!-- 测试封面背景图 -->
+    <image wx:if="{{quiz.cover}}" class="hero-bg-img" src="{{quiz.cover}}" mode="aspectFill"></image>
+    <!-- 渐变蒙层：轻量，能看到背景图 -->
+    <view class="hero-mask"></view>
 
     <view class="hero-content">
-      <view class="hero-brand">— 穿越圈 · 历史人格DNA —</view>
-
-      <view class="hero-sim-label">你的历史DNA · 匹配度</view>
+      <!-- 匹配度 -->
+      <view class="hero-sim-label">历史人格测试 · 匹配度</view>
       <view class="hero-sim">
         <text class="hero-sim-num">{{record.similarity}}</text>
         <text class="hero-sim-pct">%</text>
@@ -20,19 +21,27 @@
 
       <view class="hero-divider"></view>
 
-      <view class="hero-figure-name">{{result.figureName}}</view>
-      <view class="hero-figure-title">
-        <text>{{result.figureTitle}}</text>
-        <text wx:if="{{result.dynastyName}}" class="hero-figure-dyn"> · {{result.dynastyName}}</text>
+      <!-- 大头像左侧 + 三行文字右侧，上下对齐 -->
+      <view class="hero-figure-row">
+        <view class="hero-avatar-box">
+          <image wx:if="{{figureAvatar}}" class="hero-avatar" src="{{figureAvatar}}" mode="aspectFill"></image>
+          <view wx:else class="hero-avatar hero-avatar-placeholder">
+            <text class="hero-avatar-text">{{result.figureName}}</text>
+          </view>
+        </view>
+        <view class="hero-figure-info">
+          <view class="hero-figure-name">{{result.figureName}}</view>
+          <view class="hero-figure-title">
+            <text>{{result.figureTitle}}</text>
+            <text wx:if="{{result.dynastyName}}" class="hero-figure-dyn"> · {{result.dynastyName}}</text>
+          </view>
+          <view class="hero-result-title">{{result.title}}</view>
+        </view>
       </view>
-      <view class="hero-result-title">{{result.title}}</view>
     </view>
-
-    <!-- 印章装饰 -->
-    <view class="seal">DNA</view>
   </view>
 
-  <!-- 雷达图 -->
+  <!-- 雷达图：与 Hero 区之间留出清晰间距 -->
   <view class="section radar-section">
     <view class="section-title">— 维度雷达 —</view>
     <view class="radar-wrap">
@@ -106,52 +115,29 @@
     </view>
   </view>
 
-  <!-- 底部操作栏 -->
-  <view class="action-bar">
-    <button class="action-btn action-btn-secondary" bindtap="onRetryQuiz">再测一次</button>
-    <button class="action-btn action-btn-secondary" bindtap="onBackToHall">测其他</button>
-    <button class="action-btn action-btn-primary" open-type="share">分享给好友</button>
-    <button class="action-btn action-btn-poster" bindtap="onShowPoster">生成海报</button>
+  <!-- 去找XXX聊天：流式布局，增加足够下边距 -->
+  <view class="section chat-section" wx:if="{{figureExists}}">
+    <view class="chat-link" bindtap="onChatWithFigure">
+      去找{{result.figureName}}聊天 ›
+    </view>
   </view>
 
-  <view class="action-bar-extra">
-    <view class="chat-link" bindtap="onChatWithFigure">
-      去找Ta聊天 ›
-    </view>
+  <!-- 底部占位，确保聊天按钮完全可见不被遮挡 -->
+  <view class="bottom-placeholder"></view>
+
+  <!-- 底部操作栏：层级最高 -->
+  <view class="action-bar">
+    <button class="action-btn action-btn-secondary" bindtap="onRetryQuiz">再测一次</button>
+    <button class="action-btn action-btn-primary" open-type="share">分享结果</button>
   </view>
 </view>
 
 <!-- 加载态 -->
 <view class="loading" wx:elif="{{loading}}">
   <view class="loading-spinner"></view>
-  <view class="loading-text">正在揭晓你的历史DNA...</view>
+  <view class="loading-text">正在揭晓你的历史人格...</view>
 </view>
 
 <view class="loading" wx:else>
   <view class="loading-text">{{error}}</view>
 </view>
-
-<!-- 海报弹层 -->
-<view class="poster-mask" wx:if="{{posterShow}}" bindtap="onHidePoster">
-  <view class="poster-wrap" catchtap>
-    <view class="poster-loading" wx:if="{{posterGenerating}}">
-      <view class="poster-spinner"></view>
-      <view class="poster-loading-text">海报生成中...</view>
-    </view>
-    <block wx:else>
-      <image src="{{posterPath}}" mode="widthFix" class="poster-img" show-menu-by-longpress></image>
-      <view class="poster-actions">
-        <button class="poster-btn poster-btn-save" bindtap="onSavePoster">保存到相册</button>
-        <button class="poster-btn poster-btn-close" bindtap="onHidePoster">关闭</button>
-      </view>
-      <view class="poster-tip">保存后可发朋友圈 / 微信群</view>
-    </block>
-  </view>
-</view>
-
-<!-- 隐藏的海报 canvas -->
-<canvas
-  type="2d"
-  id="posterCanvas"
-  class="poster-canvas-hidden"
-  disable-scroll="true"></canvas>

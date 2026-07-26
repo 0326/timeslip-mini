@@ -1,0 +1,45 @@
+<view class="page">
+  <custom-nav-bar title="关于我们" show-back="{{true}}" />
+
+  <view class="container">
+    <view class="logo-area">
+      <text class="logo-text">穿越圈</text>
+      <text class="logo-slogan">和历史上物做朋友</text>
+    </view>
+
+    <view class="version-card">
+      <text class="version-label">当前版本</text>
+      <text class="version-value">v1.0.0 (build 1)</text>
+    </view>
+
+    <view class="section">
+      <view class="cell-group">
+        <view class="cell" bindtap="rateApp">
+          <view class="cell-left">
+            <view class="cell-icon">⭐</view>
+            <view class="cell-label">给我们评分</view>
+          </view>
+          <text class="arrow">›</text>
+        </view>
+        <view class="cell" bindtap="shareApp">
+          <view class="cell-left">
+            <view class="cell-icon">💬</view>
+            <view class="cell-label">分享给好友</view>
+          </view>
+          <text class="arrow">›</text>
+        </view>
+        <view class="cell" bindtap="contactUs">
+          <view class="cell-left">
+            <view class="cell-icon">📧</view>
+            <view class="cell-label">联系我们</view>
+          </view>
+          <text class="arrow">›</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="footer">
+      <text class="footer-text">穿越圈 · 穿越兰台团队</text>
+    </view>
+  </view>
+</view>

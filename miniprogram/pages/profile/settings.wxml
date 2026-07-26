@@ -2,152 +2,59 @@
   <custom-nav-bar title="设置" show-back="{{true}}" />
 
   <view class="container">
-    <view class="profile-card">
-      <view class="avatar-wrap" bindtap="chooseAvatar">
-        <image class="avatar" src="{{userInfo.avatarUrl || '/images/icons/avatar.png'}}" mode="aspectFill" />
-        <view class="avatar-edit">📷</view>
+    <view class="cell-group">
+      <view class="cell" bindtap="toggleNotify">
+        <view class="cell-left">
+          <view class="cell-icon">🔔</view>
+          <view class="cell-label">消息通知</view>
+        </view>
+        <switch class="cell-switch" checked="{{notifyEnabled}}" bindchange="onToggleNotify" color="#07C160" />
       </view>
-      <view class="profile-info">
-        <view class="row" bindtap="editNickname">
-          <view class="label">昵称</view>
-          <view class="value">
-            <text class="nickname">{{userInfo.nickName || '点击设置昵称'}}</text>
-            <text class="arrow">›</text>
-          </view>
+      <view class="cell" bindtap="toggleVibration">
+        <view class="cell-left">
+          <view class="cell-icon">📳</view>
+          <view class="cell-label">震动反馈</view>
         </view>
+        <switch class="cell-switch" checked="{{vibrationEnabled}}" bindchange="onToggleVibration" color="#07C160" />
       </view>
-    </view>
-
-    <view class="section">
-      <view class="section-title">通用</view>
-      <view class="cell-group">
-        <view class="cell" bindtap="toggleNotify">
-          <view class="cell-left">
-            <view class="cell-icon">🔔</view>
-            <view class="cell-label">消息通知</view>
-          </view>
-          <switch class="cell-switch" checked="{{notifyEnabled}}" bindchange="onToggleNotify" color="#07C160" />
+      <view class="cell" bindtap="toggleBigFont">
+        <view class="cell-left">
+          <view class="cell-icon">🔠</view>
+          <view class="cell-label">大字体模式</view>
         </view>
-        <view class="cell" bindtap="toggleVibration">
-          <view class="cell-left">
-            <view class="cell-icon">📳</view>
-            <view class="cell-label">震动反馈</view>
-          </view>
-          <switch class="cell-switch" checked="{{vibrationEnabled}}" bindchange="onToggleVibration" color="#07C160" />
+        <switch class="cell-switch" checked="{{bigFont}}" bindchange="onToggleBigFont" color="#07C160" />
+      </view>
+      <view class="cell" bindtap="chooseTheme">
+        <view class="cell-left">
+          <view class="cell-icon">🎨</view>
+          <view class="cell-label">主题</view>
         </view>
-        <view class="cell" bindtap="toggleBigFont">
-          <view class="cell-left">
-            <view class="cell-icon">🔠</view>
-            <view class="cell-label">大字体模式</view>
-          </view>
-          <switch class="cell-switch" checked="{{bigFont}}" bindchange="onToggleBigFont" color="#07C160" />
-        </view>
-        <view class="cell" bindtap="chooseTheme">
-          <view class="cell-left">
-            <view class="cell-icon">🎨</view>
-            <view class="cell-label">主题</view>
-          </view>
-          <view class="cell-right">
-            <text class="value">{{themeName}}</text>
-            <text class="arrow">›</text>
-          </view>
+        <view class="cell-right">
+          <text class="value">{{themeName}}</text>
+          <text class="arrow">›</text>
         </view>
       </view>
-    </view>
-
-    <view class="section">
-      <view class="section-title">隐私与数据</view>
-      <view class="cell-group">
-        <view class="cell" bindtap="viewPrivacy">
-          <view class="cell-left">
-            <view class="cell-icon">🔒</view>
-            <view class="cell-label">隐私政策</view>
-          </view>
-          <text class="arrow">›</text>
+      <view class="cell" bindtap="exportData">
+        <view class="cell-left">
+          <view class="cell-icon">📤</view>
+          <view class="cell-label">导出我的数据</view>
         </view>
-        <view class="cell" bindtap="viewUserAgreement">
-          <view class="cell-left">
-            <view class="cell-icon">📄</view>
-            <view class="cell-label">用户协议</view>
-          </view>
-          <text class="arrow">›</text>
-        </view>
-        <view class="cell" bindtap="exportData">
-          <view class="cell-left">
-            <view class="cell-icon">📤</view>
-            <view class="cell-label">导出我的数据</view>
-          </view>
-          <text class="arrow">›</text>
-        </view>
-        <view class="cell danger" bindtap="clearCache">
-          <view class="cell-left">
-            <view class="cell-icon">🗑️</view>
-            <view class="cell-label">清除本地缓存</view>
-          </view>
-          <view class="cell-right">
-            <text class="value">{{cacheSize}}</text>
-            <text class="arrow">›</text>
-          </view>
-        </view>
+        <text class="arrow">›</text>
       </view>
-    </view>
-
-    <view class="section">
-      <view class="section-title">关于</view>
-      <view class="cell-group">
-        <view class="cell" bindtap="rateApp">
-          <view class="cell-left">
-            <view class="cell-icon">⭐</view>
-            <view class="cell-label">给我们评分</view>
-          </view>
-          <text class="arrow">›</text>
+      <view class="cell danger" bindtap="clearCache">
+        <view class="cell-left">
+          <view class="cell-icon">🗑️</view>
+          <view class="cell-label">清除本地缓存</view>
         </view>
-        <view class="cell" bindtap="shareApp">
-          <view class="cell-left">
-            <view class="cell-icon">💬</view>
-            <view class="cell-label">分享给好友</view>
-          </view>
+        <view class="cell-right">
+          <text class="value">{{cacheSize}}</text>
           <text class="arrow">›</text>
-        </view>
-        <view class="cell" bindtap="contactUs">
-          <view class="cell-left">
-            <view class="cell-icon">📧</view>
-            <view class="cell-label">联系我们</view>
-          </view>
-          <text class="arrow">›</text>
-        </view>
-        <view class="cell">
-          <view class="cell-left">
-            <view class="cell-icon">ℹ️</view>
-            <view class="cell-label">版本号</view>
-          </view>
-          <view class="cell-right">
-            <text class="value">{{version}}</text>
-          </view>
         </view>
       </view>
     </view>
 
     <view class="bottom-actions">
       <button class="btn-logout" bindtap="onResetProfile" open-type="">重置所有数据</button>
-    </view>
-  </view>
-
-  <view class="sheet-mask" wx:if="{{showSheet}}" bindtap="closeSheet">
-    <view class="action-sheet" catchtap="stopProp">
-      <view class="sheet-title">{{sheetTitle}}</view>
-      <input
-        class="sheet-input"
-        placeholder="{{sheetPlaceholder}}"
-        value="{{sheetValue}}"
-        bindinput="onSheetInput"
-        maxlength="16"
-        focus="{{showSheet}}"
-      />
-      <view class="sheet-actions">
-        <button class="sheet-cancel" bindtap="closeSheet">取消</button>
-        <button class="sheet-confirm" bindtap="confirmSheet">确定</button>
-      </view>
     </view>
   </view>
 </view>
