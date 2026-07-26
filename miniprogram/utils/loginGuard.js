@@ -2,7 +2,14 @@ const { storage } = require('./storage')
 
 const LOGIN_PAGE = '/pages/login/index'
 
-// 当前页面栈中是否已有 login 页，避免重复跳转
+// tabBar 页面列表（switchTab 不能带参数）
+const TAB_PAGES = [
+  'pages/chat/index',
+  'pages/lantai/index',
+  'pages/discover/index',
+  'pages/profile/index'
+]
+
 function isOnLoginPage() {
   try {
     const pages = getCurrentPages()
@@ -13,7 +20,6 @@ function isOnLoginPage() {
   }
 }
 
-// 是否已登录：globalData.userInfo 优先，回退 storage
 function isLoggedIn() {
   try {
     const app = getApp()
@@ -25,12 +31,45 @@ function isLoggedIn() {
   return !!(cached && cached._openid)
 }
 
+function getCurrentPageUrl() {
+  try {
+    const pages = getCurrentPages()
+    const page = pages[pages.length - 1]
+    if (!page) return ''
+    let url = '/' + page.route
+    if (page.options) {
+      const query = Object.keys(page.options)
+        .map(k => `${k}=${encodeURIComponent(page.options[k])}`)
+        .join('&')
+      if (query) url += '?' + query
+    }
+    return url
+  } catch (e) {
+    return ''
+  }
+}
+
+function isTabPage(url) {
+  return TAB_PAGES.some(p => url.indexOf(p) !== -1)
+}
+
 // 拦截：未登录则跳转到 login 页
-// 传入 pageInst 仅用于规避 login 页自身调用时的循环
-function checkLogin(pageInst) {
+// needLogin: 是否强制需要登录（默认 true）
+function checkLogin(pageInst, needLogin = true) {
   if (isOnLoginPage()) return true
   if (isLoggedIn()) return true
-  wx.reLaunch({ url: LOGIN_PAGE })
+  const currentUrl = getCurrentPageUrl()
+  let redirect = ''
+  if (currentUrl) {
+    if (isTabPage(currentUrl)) {
+      redirect = 'tab:' + '/' + currentUrl.replace('/', '')
+    } else {
+      redirect = currentUrl
+    }
+    redirect = encodeURIComponent(redirect)
+  }
+  const loginUrl = LOGIN_PAGE + '?needLogin=' + (needLogin ? 'true' : 'false') + (redirect ? '&redirect=' + redirect : '')
+  wx.reLaunch({ url: loginUrl })
   return false
 }
 

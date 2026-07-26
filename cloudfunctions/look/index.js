@@ -3,6 +3,32 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
+const LOOK_COVER_FILE_PREFIX = 'cloud://cloud1-d0gunpzup215cfd87.636c-cloud1-d0gunpzup215cfd87-1457646459/look/'
+
+function normalizeArticleAsset(article) {
+  if (!article || typeof article !== 'object') return article
+
+  const normalized = { ...article }
+  if (typeof normalized.coverImage === 'string') {
+    const match = normalized.coverImage.match(/^\/images\/look\/([^/]+)$/)
+    if (match) normalized.coverImage = LOOK_COVER_FILE_PREFIX + match[1]
+  }
+  return normalized
+}
+
+function normalizeArticleList(list) {
+  return (list || []).map(normalizeArticleAsset)
+}
+
+async function safeCount(collectionName, where) {
+  try {
+    return await db.collection(collectionName).where(where).count()
+  } catch (err) {
+    console.warn(`optional collection ${collectionName} unavailable:`, err.message)
+    return { total: 0 }
+  }
+}
+
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext()
   const { action = '' } = event
@@ -77,6 +103,7 @@ async function articleList(data) {
     .skip(skip)
     .limit(limit)
     .field({
+      _id: true,
       title: true,
       subtitle: true,
       coverImage: true,
@@ -98,7 +125,7 @@ async function articleList(data) {
     code: 0,
     message: 'ok',
     data: {
-      list: res.data,
+      list: normalizeArticleList(res.data),
       total,
       hasMore: skip + res.data.length < total
     }
@@ -114,7 +141,7 @@ async function articleDetail(OPENID, data) {
     return { code: -1, message: '文章不存在', data: null }
   }
 
-  const article = res.data
+  const article = normalizeArticleAsset(res.data)
 
   let liked = false
   let bookmarked = false
@@ -123,17 +150,22 @@ async function articleDetail(OPENID, data) {
 
   if (OPENID) {
     const [likeRes, bookmarkRes] = await Promise.all([
-      db.collection('article_likes').where({ articleId, _openid: OPENID }).count(),
-      db.collection('article_bookmarks').where({ articleId, _openid: OPENID }).count()
+      safeCount('article_likes', { articleId, _openid: OPENID }),
+      safeCount('article_bookmarks', { articleId, _openid: OPENID })
     ])
     liked = likeRes.total > 0
     bookmarked = bookmarkRes.total > 0
 
     if (article.poll) {
-      const pollRes = await db.collection('article_polls')
-        .where({ articleId, _openid: OPENID })
-        .limit(1)
-        .get()
+      let pollRes = { data: [] }
+      try {
+        pollRes = await db.collection('article_polls')
+          .where({ articleId, _openid: OPENID })
+          .limit(1)
+          .get()
+      } catch (err) {
+        console.warn('optional collection article_polls unavailable:', err.message)
+      }
       pollVoted = pollRes.data && pollRes.data.length > 0
       pollResults = await getPollResults(articleId, article.poll.options.length)
     }
@@ -176,7 +208,7 @@ async function relatedArticles(data) {
       .orderBy('createdAt', 'desc')
       .limit(limit)
       .field({
-        title: true, subtitle: true, coverImage: true,
+        _id: true, title: true, subtitle: true, coverImage: true,
         category: true, dynasty: true, summary: true,
         viewCount: true, likeCount: true
       })
@@ -196,7 +228,7 @@ async function relatedArticles(data) {
       .orderBy('createdAt', 'desc')
       .limit(limit - related.length)
       .field({
-        title: true, subtitle: true, coverImage: true,
+        _id: true, title: true, subtitle: true, coverImage: true,
         category: true, dynasty: true, summary: true,
         viewCount: true, likeCount: true
       })
@@ -216,7 +248,7 @@ async function relatedArticles(data) {
       .orderBy('createdAt', 'desc')
       .limit(limit - related.length)
       .field({
-        title: true, subtitle: true, coverImage: true,
+        _id: true, title: true, subtitle: true, coverImage: true,
         category: true, dynasty: true, summary: true,
         viewCount: true, likeCount: true
       })
@@ -224,7 +256,7 @@ async function relatedArticles(data) {
     related = related.concat(res.data)
   }
 
-  return { code: 0, message: 'ok', data: { list: related } }
+  return { code: 0, message: 'ok', data: { list: normalizeArticleList(related) } }
 }
 
 async function commentList(data) {
@@ -261,13 +293,13 @@ async function articlesByFigure(data) {
     .orderBy('createdAt', 'desc')
     .limit(Math.min(limit, 20))
     .field({
-      title: true, subtitle: true, coverImage: true,
+      _id: true, title: true, subtitle: true, coverImage: true,
       category: true, dynasty: true, summary: true,
       viewCount: true, likeCount: true, createdAt: true
     })
     .get()
 
-  return { code: 0, message: 'ok', data: { list: res.data } }
+  return { code: 0, message: 'ok', data: { list: normalizeArticleList(res.data) } }
 }
 
 async function voteResults(OPENID, data) {
@@ -295,9 +327,14 @@ async function voteResults(OPENID, data) {
 
 async function getPollResults(articleId, optionCount) {
   const results = new Array(optionCount).fill(0)
-  const res = await db.collection('article_polls')
-    .where({ articleId })
-    .get()
+  let res = { data: [] }
+  try {
+    res = await db.collection('article_polls')
+      .where({ articleId })
+      .get()
+  } catch (err) {
+    console.warn('optional collection article_polls unavailable:', err.message)
+  }
   if (res.data) {
     res.data.forEach(r => {
       if (r.optionIndex >= 0 && r.optionIndex < optionCount) {
@@ -487,7 +524,7 @@ async function myBookmarks(OPENID, data) {
       status: 'published'
     })
     .field({
-      title: true, subtitle: true, coverImage: true,
+      _id: true, title: true, subtitle: true, coverImage: true,
       category: true, dynasty: true, summary: true,
       viewCount: true, likeCount: true, createdAt: true
     })
@@ -504,7 +541,7 @@ async function myBookmarks(OPENID, data) {
     code: 0,
     message: 'ok',
     data: {
-      list,
+      list: normalizeArticleList(list),
       hasMore: skip + bookmarkRes.data.length < bookmarkRes.data.length + limit
     }
   }
@@ -609,7 +646,7 @@ async function adminArticleList(OPENID, data) {
     .skip(skip)
     .limit(limit)
     .field({
-      title: true, subtitle: true, coverImage: true,
+      _id: true, title: true, subtitle: true, coverImage: true,
       category: true, status: true, author: true,
       viewCount: true, likeCount: true, sortOrder: true,
       createdAt: true
@@ -620,7 +657,7 @@ async function adminArticleList(OPENID, data) {
     code: 0,
     message: 'ok',
     data: {
-      list: res.data,
+      list: normalizeArticleList(res.data),
       total: countRes.total,
       hasMore: skip + res.data.length < countRes.total
     }

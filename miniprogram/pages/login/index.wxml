@@ -1,20 +1,13 @@
 <view class="login-page ancient-paper">
-  <view class="login-hero">
+  <view class="login-hero {{showRegister ? 'is-top' : 'is-center'}}">
     <image class="hero-logo" src="/images/logo-256.png" mode="aspectFit"></image>
     <view class="hero-title">穿越圈</view>
     <view class="hero-subtitle">与古人对话 · 共续千秋</view>
   </view>
 
-  <view class="login-card">
-    <view wx:if="{{checking}}" class="checking-wrap">
-      <view class="checking-spinner"></view>
-      <text class="checking-text">正在确认账号...</text>
-    </view>
+  <view class="login-card {{showRegister ? 'show' : ''}}">
+    <view class="card-label">请选择头像与昵称</view>
 
-    <block wx:else>
-      <view class="card-label">请选择头像与昵称</view>
-
-    <!-- 头像：外层 view 固定正方形尺寸，button 绝对定位铺满 -->
     <view class="avatar-wrap">
       <view class="avatar-box">
         <image wx:if="{{form.avatarUrl}}" class="avatar-img" src="{{form.avatarUrl}}" mode="aspectFill"></image>
@@ -30,7 +23,6 @@
       </view>
     </view>
 
-    <!-- 昵称输入 -->
     <view class="nickname-row">
       <input
         class="nickname-input"
@@ -51,7 +43,6 @@
       disabled="{{submitting}}"
     >进入穿越圈</button>
 
-    <!-- 协议勾选 -->
     <view class="agreement-row" bindtap="onToggleAgree">
       <view class="checkbox {{form.agreed ? 'is-checked' : ''}}">
         <view class="check-mark"></view>
@@ -59,10 +50,9 @@
       <text class="agreement-desc">我已阅读并同意</text>
       <text class="protocol-link" catchtap="onOpenAgreement">《用户协议与隐私政策》</text>
     </view>
-    </block>
   </view>
 
-  <view class="login-footer">
+  <view class="login-footer {{showRegister ? 'show' : ''}}">
     <text>穿越兰台 | 趣读历史</text>
   </view>
 </view>

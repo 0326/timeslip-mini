@@ -1,0 +1,12 @@
+{
+  "envId": "cloud1-d0gunpzup215cfd87",
+  "functions": [
+    {
+      "name": "look",
+      "timeout": 10,
+      "memorySize": 256,
+      "installDependency": true,
+      "runtime": "Nodejs16.13"
+    }
+  ]
+}

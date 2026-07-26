@@ -1,21 +1,24 @@
 const { requestCloud } = require('../../../utils/cloudRequest')
-const { getDynastyInfo } = require('../../../utils/date')
+const { storage } = require('../../../utils/storage')
 const loginGuard = require('../../../utils/loginGuard')
 const { throttle } = require('../../../utils/helpers')
+const { formatCount, processArticle } = require('../../../utils/articleData')
 
-const CATEGORY_NAMES = {
-  figure_truth: '人物真相',
-  perspective: '史观解读',
-  fun_fact: '冷知识'
+const DETAIL_CACHE_TTL = 10 * 60
+const RELATED_CACHE_TTL = 10 * 60
+const FIGURE_CACHE_TTL = 60 * 60
+const CACHE_VERSION = 'v4'
+
+function detailCacheKey(id) {
+  return `look_detail_${CACHE_VERSION}_${id}`
 }
 
-const DYNASTY_NAMES = {
-  xianqin: '先秦', xia: '夏', shang: '商', zhou: '周', chunqiu: '春秋', zhanguo: '战国',
-  han: '秦汉', xihan: '西汉', donghan: '东汉', sanguo: '三国',
-  jin: '晋', nanbeichao: '南北朝',
-  tang: '唐', wuzhou: '武周',
-  song: '宋', beisong: '北宋', nansong: '南宋',
-  yuan: '元', ming: '明', qing: '清'
+function relatedCacheKey(id) {
+  return `look_related_${CACHE_VERSION}_${id}`
+}
+
+function figureCacheKey(id) {
+  return `look_figure_${id}`
 }
 
 Page({
@@ -35,71 +38,85 @@ Page({
   onLoad(options) {
     const sys = wx.getSystemInfoSync()
     this.setData({ windowHeight: sys.windowHeight })
-    if (options.id) {
+    if (options.id && options.id.indexOf('article_') !== 0) {
       this.setData({ articleId: options.id })
       this.loadDetail(options.id)
     } else {
       this.setData({ loading: false })
+      wx.showToast({ title: '内容已更新，请从列表进入', icon: 'none' })
     }
   },
 
   async loadDetail(id) {
+    const key = detailCacheKey(id)
+
     try {
       const data = await requestCloud('look', 'articleDetail', { articleId: id }, { throwError: false })
 
-      let article, liked, bookmarked, pollVoted, pollResults
-
-      if (data && data.article) {
-        article = data.article
-        liked = data.liked
-        bookmarked = data.bookmarked
-        pollVoted = data.pollVoted
-        pollResults = data.pollResults
-      } else {
-        wx.showToast({ title: '加载失败', icon: 'none' })
-        this.setData({ loading: false })
-        return
+      if (!data || !data.article) {
+        throw new Error('empty online article detail')
       }
 
-      article.categoryName = CATEGORY_NAMES[article.category] || article.category || ''
-      article.dynastyName = DYNASTY_NAMES[article.dynasty] || article.dynasty || ''
-      article.viewText = this.formatCount(article.viewCount)
-      article.likeText = this.formatCount(article.likeCount)
-
-      const content = await this.enrichContent(article.content || [])
-
-      this.setData({
-        article,
-        content,
-        liked,
-        bookmarked,
-        pollVoted,
-        pollResults,
-        loading: false
-      })
-
-      requestCloud('look', 'increaseView', { articleId: id }, { throwError: false })
-      this.loadRelated(id)
+      storage.set(key, data, DETAIL_CACHE_TTL)
+      await this.renderDetail(data)
+      requestCloud('look', 'increaseView', { articleId: this.data.articleId }, { throwError: false })
+      this.loadRelated(this.data.articleId)
     } catch (e) {
-      this.setData({ loading: false })
-      wx.showToast({ title: '加载失败', icon: 'none' })
+      const cached = storage.get(key)
+
+      if (cached && cached.article) {
+        await this.renderDetail(cached)
+        this.loadRelated(this.data.articleId)
+      } else {
+        console.error('load look article detail failed:', e)
+        this.setData({ loading: false })
+        wx.showToast({ title: '文章加载失败', icon: 'none' })
+      }
     }
+  },
+
+  async renderDetail(data) {
+    const article = processArticle(data.article)
+    const content = await this.enrichContent(article.content || [])
+
+    this.setData({
+      articleId: article._id || this.data.articleId,
+      article,
+      content,
+      liked: data.liked || false,
+      bookmarked: data.bookmarked || false,
+      pollVoted: data.pollVoted || false,
+      pollResults: data.pollResults || null,
+      loading: false
+    })
   },
 
   async enrichContent(content) {
     const figureIds = content
-      .filter(b => b.type === 'figure_card')
+      .filter(b => b.type === 'figure_card' && b.figureId)
       .map(b => b.figureId)
       .filter((id, idx, arr) => arr.indexOf(id) === idx)
 
     const figureMap = {}
-    if (figureIds.length) {
+    const missingIds = []
+
+    figureIds.forEach(id => {
+      const cached = storage.get(figureCacheKey(id))
+      if (cached) {
+        figureMap[id] = cached
+      } else {
+        missingIds.push(id)
+      }
+    })
+
+    if (missingIds.length) {
       try {
-        const data = await requestCloud('shiji', 'figuresBatch', { ids: figureIds }, { throwError: false })
-        if (data && data.figures) {
+        const data = await requestCloud('shiji', 'figuresBatch', { ids: missingIds }, { throwError: false })
+        if (data && Array.isArray(data.figures)) {
           data.figures.forEach(f => {
-            f.dynastyName = DYNASTY_NAMES[f.dynasty] || f.dynasty || ''
+            if (!f || !f._id) return
             figureMap[f._id] = f
+            storage.set(figureCacheKey(f._id), f, FIGURE_CACHE_TTL)
           })
         }
       } catch (e) {}
@@ -107,27 +124,46 @@ Page({
 
     return content.map(block => {
       if (block.type === 'figure_card' && figureMap[block.figureId]) {
-        block.figureInfo = figureMap[block.figureId]
+        const figure = figureMap[block.figureId]
+        return {
+          ...block,
+          figure,
+          name: figure.name || block.name,
+          dynasty: figure.dynastyName || figure.dynasty || block.dynasty,
+          title: figure.title || figure.identity || block.title
+        }
       }
       return block
     })
   },
 
   async loadRelated(id) {
+    const key = relatedCacheKey(id)
+
     try {
       const data = await requestCloud('look', 'relatedArticles', { articleId: id, limit: 3 }, { throwError: false })
-      if (data && data.list) {
-        const related = data.list.map(a => ({
-          ...a,
-          categoryName: CATEGORY_NAMES[a.category] || a.category || '',
-          dynastyName: DYNASTY_NAMES[a.dynasty] || a.dynasty || '',
-          viewText: this.formatCount(a.viewCount),
-          likeText: this.formatCount(a.likeCount),
-          bookmarkText: this.formatCount(a.bookmarkCount || 0)
-        }))
-        this.setData({ relatedArticles: related })
+
+      if (!data || !Array.isArray(data.list)) {
+        throw new Error('empty online related articles')
       }
-    } catch (e) {}
+
+      storage.set(key, data, RELATED_CACHE_TTL)
+      this.renderRelated(data.list)
+    } catch (e) {
+      const cached = storage.get(key)
+
+      if (cached && Array.isArray(cached.list)) {
+        this.renderRelated(cached.list)
+      } else {
+        console.warn('load look related articles failed:', e)
+      }
+    }
+  },
+
+  renderRelated(list) {
+    this.setData({
+      relatedArticles: (list || []).map(processArticle).filter(Boolean)
+    })
   },
 
   _onLike: null,
@@ -141,7 +177,7 @@ Page({
     const nowLiked = !this.data.liked
     const article = this.data.article
     article.likeCount = (article.likeCount || 0) + (nowLiked ? 1 : -1)
-    article.likeText = this.formatCount(article.likeCount)
+    article.likeText = formatCount(article.likeCount)
 
     this.setData({ liked: nowLiked, article })
 
@@ -166,6 +202,22 @@ Page({
     const { optionIndex } = e.detail || {}
     if (this.data.pollVoted || optionIndex === undefined) return
 
+    // 先做乐观更新，云端结果返回后再覆盖为真实统计。
+    const article = this.data.article
+    if (article.poll) {
+      const optionCount = article.poll.options.length
+      const results = {
+        counts: new Array(optionCount).fill(0),
+        total: 0,
+        percentages: new Array(optionCount).fill(0)
+      }
+      results.counts[optionIndex] = 1
+      results.total = 1
+      results.percentages = results.counts.map(c => results.total > 0 ? Math.round(c / results.total * 100) : 0)
+      this.setData({ pollVoted: true, pollResults: results })
+      wx.showToast({ title: '投票成功', icon: 'success' })
+    }
+
     try {
       const data = await requestCloud('look', 'vote', {
         articleId: this.data.articleId,
@@ -173,8 +225,7 @@ Page({
       }, { throwError: false })
 
       if (data && data.results) {
-        this.setData({ pollVoted: true, pollResults: data.results })
-        wx.showToast({ title: '投票成功', icon: 'success' })
+        this.setData({ pollResults: data.results })
       }
     } catch (e) {}
   },
@@ -209,12 +260,5 @@ Page({
       path: `/pages/discover/look/detail?id=${this.data.articleId}`,
       imageUrl: a.coverImage || ''
     }
-  },
-
-  formatCount(num) {
-    const n = Number(num) || 0
-    if (n >= 10000) return (n / 10000).toFixed(1) + 'w'
-    if (n >= 1000) return (n / 1000).toFixed(1) + 'k'
-    return String(n)
   }
 })

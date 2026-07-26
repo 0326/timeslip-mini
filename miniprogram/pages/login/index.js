@@ -12,28 +12,33 @@ Page({
     },
     canSubmit: false,
     submitting: false,
-    checking: true
+    showRegister: false,
+    redirect: '',
+    needLogin: true
   },
 
-  onLoad() {
-    this.tryAutoLogin()
+  onLoad(options) {
+    this.setData({
+      redirect: options.redirect || '',
+      needLogin: options.needLogin !== 'false'
+    })
+    this.checkUserStatus()
   },
 
   onShow() {
     if (isLoggedIn()) {
-      wx.switchTab({ url: '/pages/chat/index' })
+      this.goTarget()
       return
     }
-    if (!this.data.checking) {
+    if (this.data.showRegister) {
       this.updateCanSubmit()
     }
   },
 
-  async tryAutoLogin() {
+  async checkUserStatus() {
     try {
       const data = await requestCloud('getUser', 'get', {}, { throwError: false })
       if (data && data._openid && data.nickName && data.avatarUrl) {
-        // 已注册，恢复登录态
         const app = getApp()
         if (!app.globalData) app.globalData = {}
         app.globalData.openid = data._openid
@@ -41,20 +46,51 @@ Page({
         app.globalData.points = data.points || 0
         app.globalData.memberLevel = data.memberLevel || '普通会员'
         app.globalData.crossNo = data.crossNo || ''
-        storage.set('userInfo', data, 3600)
+        storage.set('userInfo', data, 86400)
         if (app.emitUserUpdate) app.emitUserUpdate(data)
 
-        wx.showToast({ title: '欢迎回来', icon: 'success' })
-        setTimeout(() => {
-          wx.switchTab({ url: '/pages/chat/index' })
-        }, 400)
+        setTimeout(() => { this.goTarget() }, 600)
         return
       }
-    } catch (e) {
-      // 用户不存在或网络错误，正常显示登录页
+    } catch (e) {}
+
+    if (!this.data.needLogin) {
+      setTimeout(() => { this.goBack() }, 600)
+      return
     }
-    this.setData({ checking: false })
-    this.updateCanSubmit()
+
+    setTimeout(() => {
+      this.setData({ showRegister: true })
+      this.updateCanSubmit()
+    }, 400)
+  },
+
+  goTarget() {
+    const redirect = this.data.redirect
+    if (redirect) {
+      try {
+        const decoded = decodeURIComponent(redirect)
+        if (decoded.indexOf('tab:') === 0) {
+          wx.switchTab({ url: decoded.replace('tab:', '') })
+        } else {
+          wx.redirectTo({
+            url: decoded,
+            fail: () => { wx.switchTab({ url: '/pages/chat/index' }) }
+          })
+        }
+        return
+      } catch (e) {}
+    }
+    wx.switchTab({ url: '/pages/chat/index' })
+  },
+
+  goBack() {
+    const pages = getCurrentPages()
+    if (pages.length > 1) {
+      wx.navigateBack({ fail: () => { wx.switchTab({ url: '/pages/chat/index' }) } })
+    } else {
+      wx.switchTab({ url: '/pages/chat/index' })
+    }
   },
 
   updateCanSubmit() {
@@ -114,9 +150,7 @@ Page({
       wx.hideLoading()
       if (result.ok) {
         wx.showToast({ title: '登录成功', icon: 'success' })
-        setTimeout(() => {
-          wx.switchTab({ url: '/pages/chat/index' })
-        }, 400)
+        setTimeout(() => { this.goTarget() }, 500)
       } else {
         wx.showToast({ title: result.message || '登录失败', icon: 'none' })
       }

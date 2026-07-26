@@ -9,7 +9,7 @@ Page({
       {
         items: [
           { key: 'channels', iconClass: 'shipinhao', name: '视频号', color: '#FA5151', url: '/pages/discover/channels/index' },
-          { key: 'letters', iconClass: 'mail', name: '雁书', color: '#C9A24D', url: '' }
+          { key: 'letters', iconClass: 'mail', name: '雁书', color: '#C9A24D', url: '/pages/yan/index' }
         ]
       },
       {
