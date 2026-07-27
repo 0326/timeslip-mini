@@ -79,7 +79,7 @@
       <view class="bubble" wx:if="{{(moment.interaction && (moment.interaction.likePreview && moment.interaction.likePreview.length)) || comments.length}}">
         <view class="bubble-section like-section" wx:if="{{moment.interaction && moment.interaction.likePreview && moment.interaction.likePreview.length}}">
           <view class="bubble-row">
-            <image class="bubble-icon" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23576B95' stroke-width='2'%3E%3Cpath d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z'/%3E%3C/svg%3E" mode="aspectFit" />
+            <text class="iconfont bubble-icon icon-goodfill"></text>
             <view class="bubble-names">
               <block wx:for="{{moment.interaction.likePreview}}" wx:for-item="u" wx:key="id">
                 <text class="name-link">{{u.name}}</text>
@@ -132,36 +132,16 @@
 
       <view class="action-bar">
         <view class="action-btn {{moment.interaction.liked ? 'active' : ''}}" bindtap="onLike">
-          <image
-            wx:if="{{moment.interaction.liked}}"
-            class="action-icon"
-            src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23FA5151'%3E%3Cpath d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z'/%3E%3C/svg%3E"
-            mode="aspectFit"
-          />
-          <image
-            wx:else
-            class="action-icon"
-            src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23576B95' stroke-width='2'%3E%3Cpath d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z'/%3E%3C/svg%3E"
-            mode="aspectFit"
-          />
+          <text class="iconfont action-icon {{moment.interaction.liked ? 'icon-goodfill' : 'icon-good'}}"></text>
           <text class="action-label">{{moment.likeText}}</text>
         </view>
 
         <view class="action-btn" bindtap="openCommentInput">
-          <image
-            class="action-icon"
-            src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23576B95' stroke-width='2'%3E%3Cpath d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/%3E%3C/svg%3E"
-            mode="aspectFit"
-          />
+          <text class="iconfont action-icon icon-chat"></text>
           <text class="action-label">{{moment.interaction.commentCount || ''}}</text>
         </view>
 
         <button class="action-btn share-btn" open-type="share">
-          <image
-            class="action-icon"
-            src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23576B95' stroke-width='2'%3E%3Ccircle cx='18' cy='5' r='3'/%3E%3Ccircle cx='6' cy='12' r='3'/%3E%3Ccircle cx='18' cy='19' r='3'/%3E%3Cpath d='M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98'/%3E%3C/svg%3E"
-            mode="aspectFit"
-          />
           <text class="action-label">分享</text>
         </button>
       </view>

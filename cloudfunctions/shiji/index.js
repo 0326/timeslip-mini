@@ -205,7 +205,6 @@ async function figureDetail(OPENID, data) {
       relatedBooks,
       relatedMoments: relatedPassages,
       relations,
-      masterpieces: relatedBooks.map(b => b.title),
       famousQuotes: relatedPassages.slice(0, 3).map(p => p.desc).filter(Boolean)
     }
   })
@@ -234,9 +233,12 @@ async function figureRelatedBooks(figure) {
     books.push(...(res.data || []))
   }
   return books.map(b => ({
-    id: b.id,
-    title: b.name || b.id,
-    chapter: `${b.volume_count || 0}卷`
+    id: b.id || b._id,
+    title: b.name || b.title || b.id,
+    chapters: b.chapters || b.volume_count || 0,
+    chapter: `${b.chapters || b.volume_count || 0}卷`,
+    dynasty: b.dynastyName || b.dynasty || '',
+    author: b.author || ''
   }))
 }
 
@@ -265,13 +267,30 @@ async function figureRelations(figureId) {
       .where(_.or([{ figure_a: figureId }, { figure_b: figureId }]))
       .limit(20)
       .get()
-    return (res.data || []).map(item => ({
-      id: item.id || item._id,
-      targetId: item.figure_a === figureId ? item.figure_b : item.figure_a,
-      type: item.relation_type,
-      label: item.relation_label,
-      description: item.description || ''
-    }))
+    const raw = res.data || []
+    const targetIds = raw.map(item =>
+      item.figure_a === figureId ? item.figure_b : item.figure_a
+    ).filter(Boolean)
+    const nameMap = {}
+    if (targetIds.length) {
+      for (const part of batch(targetIds, 20)) {
+        const fr = await db.collection('figures').where({ id: _.in(part) }).limit(part.length).get()
+        ;(fr.data || []).forEach(f => { nameMap[f.id || f._id] = f.name || '' })
+      }
+    }
+    return raw.map(item => {
+      const targetId = item.figure_a === figureId ? item.figure_b : item.figure_a
+      return {
+        id: item.id || item._id,
+        targetId,
+        name: nameMap[targetId] || '',
+        targetName: nameMap[targetId] || '',
+        type: item.relation_type,
+        relation: item.relation_label || item.relation_type || '',
+        label: item.relation_label,
+        description: item.description || ''
+      }
+    })
   } catch (_) {
     return []
   }

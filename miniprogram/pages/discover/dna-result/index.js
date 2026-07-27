@@ -224,10 +224,14 @@ Page({
   },
 
   onChatWithFigure() {
-    var figureId = this.data.result && this.data.result.figureId
+    var result = this.data.result || {}
+    var figureId = result.figureId
     if (!figureId) return
+    var figureName = result.figureName || ''
+    var figureTitle = result.figureTitle || ''
+    var nameParam = figureTitle ? (figureName + ' · ' + figureTitle) : figureName
     wx.navigateTo({
-      url: '/pages/chat/room?figureId=' + figureId,
+      url: '/pages/chat/room?figureId=' + figureId + '&figureName=' + encodeURIComponent(nameParam),
       fail: function () {
         wx.showToast({ title: '对话页未就绪', icon: 'none' })
       }

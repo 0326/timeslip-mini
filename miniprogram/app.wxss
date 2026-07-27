@@ -54,6 +54,7 @@
 .icon-eye:before { content: "\e6ac"; }
 .icon-no_eye:before { content: "\e6ad"; }
 .icon-good:before { content: "\e6bb"; }
+.icon-goodfill:before { content: "\e6bb"; }
 .icon-mail:before { content: "\e6c8"; }
 .icon-openmail:before { content: "\e6c9"; }
 .icon-moreapp:before { content: "\e6cb"; }

@@ -60,7 +60,21 @@ const FIGURE_SEED = [
   { figureId: 'guanyu', figureName: '关羽', dynasty: 'sanguo', dynastyName: '三国·蜀', initial: 'G', title: '关圣帝君', bio: '字云长，河东解良人。蜀汉名将，与刘备、张飞桃园结义。温酒斩华雄，斩颜良诛文丑，过五关斩六将，水淹七军威震华夏。后世尊为"武圣"。', tags: ['军事', '忠义', '武圣'], color: '#B22222', avatar: '' },
   { figureId: 'hanxin', figureName: '韩信', dynasty: 'han', dynastyName: '西汉', initial: 'H', title: '淮阴侯', bio: '淮阴人。西汉开国功臣，与张良、萧何并称"汉初三杰"。初投项羽，后归刘邦。平定齐、赵、魏，垓下灭项羽。后遭刘邦猜忌，被吕后诛杀。', tags: ['军事', '兵仙'], color: '#2F4F4F', avatar: '' },
   { figureId: 'weiqing', figureName: '卫青', dynasty: 'han', dynastyName: '西汉', initial: 'W', title: '长平侯', bio: '字仲卿，河东平阳人。本平阳公主家奴，后因姊卫子夫得宠而入宫。汉武帝时七征匈奴，七战七胜，封长平侯。', tags: ['军事', '常胜'], color: '#1E90FF', avatar: '' },
-  { figureId: 'huoqubing', figureName: '霍去病', dynasty: 'han', dynastyName: '西汉', initial: 'H', title: '冠军侯', bio: '河东平阳人，卫青外甥。善骑射，用兵神速。十七岁领兵作战，封冠军侯。六击匈奴，封狼居胥。元狩六年病逝，年仅二十四。', tags: ['军事', '少年英雄'], color: '#FF8C00', avatar: '' }
+  { figureId: 'huoqubing', figureName: '霍去病', dynasty: 'han', dynastyName: '西汉', initial: 'H', title: '冠军侯', bio: '河东平阳人，卫青外甥。善骑射，用兵神速。十七岁领兵作战，封冠军侯。六击匈奴，封狼居胥。元狩六年病逝，年仅二十四。', tags: ['军事', '少年英雄'], color: '#FF8C00', avatar: '' },
+  // DNA 新测试关联人物（谋士、史家、乱世英雄）
+  { figureId: 'zhangliang', figureName: '张良', dynasty: 'han', dynastyName: '西汉', initial: 'Z', title: '留侯', bio: '字子房，韩国贵族后裔。汉初三杰之一，以谋略著称。助刘邦灭秦破楚，功成后明哲保身，从赤松子游。', tags: ['谋略', '政治'], color: '#6A5B8A', avatar: '' },
+  { figureId: 'xiaohe', figureName: '萧何', dynasty: 'han', dynastyName: '西汉', initial: 'X', title: '酂文终侯', bio: '沛县人。汉初三杰之一，镇守关中，定律令，荐韩信，为汉朝建立提供制度与后勤支撑。', tags: ['政治', '制度'], color: '#586B4F', avatar: '' },
+  { figureId: 'simayi', figureName: '司马懿', dynasty: 'sanguo', dynastyName: '三国·魏', initial: 'S', title: '晋宣帝', bio: '字仲达，河内温人。三国魏国重臣、军事家、政治家。长期隐忍经营，晚年发动高平陵之变，为司马氏代魏奠定基础。', tags: ['政治', '军事', '隐忍'], color: '#3F4654', avatar: '' },
+  { figureId: 'guojia', figureName: '郭嘉', dynasty: 'sanguo', dynastyName: '东汉末', initial: 'G', title: '奉孝', bio: '字奉孝，颍川人。曹操重要谋士，以洞察局势、判断人物著称，对曹操统一北方贡献很大，英年早逝。', tags: ['谋略', '洞察'], color: '#6B4F7A', avatar: '' },
+  { figureId: 'banggu', figureName: '班固', dynasty: 'han', dynastyName: '东汉', initial: 'B', title: '兰台令史', bio: '字孟坚，扶风安陵人。东汉史学家、文学家，撰《汉书》，开创纪传体断代史体例。', tags: ['史学', '文学'], color: '#735C42', avatar: '' },
+  { figureId: 'simaguang', figureName: '司马光', dynasty: 'song', dynastyName: '北宋', initial: 'S', title: '温国文正公', bio: '字君实，陕州夏县人。北宋政治家、史学家，主持编纂《资治通鉴》。', tags: ['史学', '政治'], color: '#4F5E6D', avatar: '' },
+  { figureId: 'chenshou', figureName: '陈寿', dynasty: 'jin', dynastyName: '西晋', initial: 'C', title: '史官', bio: '字承祚，安汉人。西晋史学家，著《三国志》，为研究三国历史的重要史籍。', tags: ['史学'], color: '#5C5A4A', avatar: '' },
+  { figureId: 'liuzhiji', figureName: '刘知几', dynasty: 'tang', dynastyName: '唐', initial: 'L', title: '史通作者', bio: '字子玄，彭城人。唐代史学家，著《史通》，是中国古代重要的史学理论著作。', tags: ['史学', '理论'], color: '#665A73', avatar: '' },
+  { figureId: 'duyou', figureName: '杜佑', dynasty: 'tang', dynastyName: '唐', initial: 'D', title: '通典作者', bio: '字君卿，京兆万年人。唐代政治家、史学家，著《通典》，开创典章制度通史的重要传统。', tags: ['史学', '制度'], color: '#596B5C', avatar: '' },
+  { figureId: 'liubei', figureName: '刘备', dynasty: 'sanguo', dynastyName: '三国·蜀', initial: 'L', title: '昭烈帝', bio: '字玄德，涿郡涿县人。蜀汉开国皇帝。以仁义和用人著称，与关羽、张飞桃园结义，三顾茅庐请诸葛亮。', tags: ['政治', '仁义'], color: '#356B45', avatar: '' },
+  { figureId: 'sunquan', figureName: '孙权', dynasty: 'sanguo', dynastyName: '三国·吴', initial: 'S', title: '吴大帝', bio: '字仲谋，吴郡富春人。三国吴国建立者。承父兄基业，联合刘备赢得赤壁之战，长期经营江东。', tags: ['政治', '制衡'], color: '#3D6F7A', avatar: '' },
+  { figureId: 'yuanshao', figureName: '袁绍', dynasty: 'donghan', dynastyName: '东汉末', initial: 'Y', title: '大将军', bio: '字本初，汝南汝阳人。东汉末群雄之一，出身汝南袁氏，曾据河北，与曹操官渡决战失利。', tags: ['政治', '门阀'], color: '#7A6142', avatar: '' },
+  { figureId: 'chensheng', figureName: '陈胜', dynasty: 'qin', dynastyName: '秦末', initial: 'C', title: '张楚王', bio: '字涉，阳城人。秦末农民起义领袖，与吴广发动大泽乡起义，建立张楚政权。', tags: ['起义', '英雄'], color: '#7A4A2F', avatar: '' }
 ]
 
 // ============================================================

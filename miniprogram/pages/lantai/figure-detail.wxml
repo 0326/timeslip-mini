@@ -36,11 +36,11 @@
   </view>
 
   <view class="action-bar">
-    <view class="a-btn a-primary" bindtap="startChat">
+    <view class="a-btn a-primary {{figure.unlocked ? '' : 'is-disabled'}}" bindtap="startChat">
       <text class="iconfont a-btn-icon icon-chat"></text>
       <text class="a-btn-text">开始聊天</text>
     </view>
-    <view class="a-btn a-ancient" bindtap="sendLetter">
+    <view class="a-btn a-ancient {{figure.unlocked ? '' : 'is-disabled'}}" bindtap="sendLetter">
       <text class="iconfont a-btn-icon icon-mail"></text>
       <text class="a-btn-text">飞鸽传书</text>
     </view>
@@ -95,19 +95,27 @@
 
       <view wx:if="{{figure.relatedBooks && figure.relatedBooks.length}}" class="section-card">
         <view class="card-title">相关典籍</view>
-        <view
-          wx:for="{{figure.relatedBooks}}"
-          wx:key="id"
-          class="rel-item"
-          data-id="{{item.id}}"
-          bindtap="goBookReader"
-        >
-          <view class="rel-cover">{{item.title}}</view>
-          <view class="rel-meta">
-            <text class="rel-title">{{item.title}}</text>
-            <text class="rel-ch">{{item.chapter}}</text>
+        <view class="related-books-wrap">
+          <view
+            wx:for="{{figure.relatedBooks}}"
+            wx:key="id"
+            class="book-item"
+            data-id="{{item.id}}"
+            bindtap="goBookReader"
+            hover-class="book-hover"
+          >
+            <view class="book-cover">
+              <view class="book-spine"></view>
+              <view class="book-no">{{item.chapters || item.chapter}}篇</view>
+              <view class="book-label">
+                <text class="cover-title">{{item.title}}</text>
+              </view>
+              <view class="book-foot" wx:if="{{item.dynasty || item.author}}">
+                <text class="book-dynasty" wx:if="{{item.dynasty}}">{{item.dynasty}}</text>
+                <text class="book-author" wx:if="{{item.author}}">{{item.author}}</text>
+              </view>
+            </view>
           </view>
-          <text class="rel-arrow">›</text>
         </view>
       </view>
 

@@ -3,6 +3,53 @@ const { getDynastyInfo } = require('../../utils/date')
 const { storage } = require('../../utils/storage')
 const loginGuard = require('../../utils/loginGuard')
 
+const RELATION_TYPE_MAP = {
+  peer: '同朝',
+  family: '亲属',
+  friend: '好友',
+  enemy: '对手',
+  teacher: '师长',
+  student: '门生',
+  lord: '君主',
+  subordinate: '臣属',
+  rival: '对手',
+  spouse: '配偶',
+  parent: '父母',
+  child: '子女',
+  sibling: '兄弟'
+}
+
+const FIGURE_CACHE_VERSION = 2
+
+function normalizeRelation(rel) {
+  if (!rel) return rel
+  return {
+    ...rel,
+    name: rel.name || rel.targetName || '',
+    relation: rel.relation || rel.label || RELATION_TYPE_MAP[rel.type] || rel.type || ''
+  }
+}
+
+function normalizeFigureData(figure) {
+  if (!figure) return figure
+  const relations = (figure.relations || [])
+    .map(normalizeRelation)
+    .filter(r => r && r.name)
+  const relatedBooks = (figure.relatedBooks || []).map(b => ({
+    ...b,
+    chapters: b.chapters || (b.chapter ? b.chapter.replace(/[^\d]/g, '') : ''),
+    chapter: b.chapter || (b.chapters ? `${b.chapters}卷` : ''),
+    dynasty: b.dynasty || '',
+    author: b.author || ''
+  }))
+  return {
+    ...figure,
+    relations,
+    relatedBooks,
+    masterpieces: figure.masterpieces || []
+  }
+}
+
 const MOCK_FIGURE = {
   _id: 'simaqian',
   name: '司马迁',
@@ -54,12 +101,15 @@ Page({
   async loadDetail(id) {
     try {
       let figure
-      const cached = storage.get('figure_' + id)
+      const cacheKey = 'figure_v' + FIGURE_CACHE_VERSION + '_' + id
+      const cached = storage.get(cacheKey)
       if (cached) figure = cached
       if (!figure) {
         const data = await requestCloud('shiji', 'figureDetail', { id }, { throwError: false })
-        figure = (data && data.figure) || MOCK_FIGURE
-        storage.set('figure_' + id, figure, 86400)
+        figure = normalizeFigureData((data && data.figure) || MOCK_FIGURE)
+        storage.set(cacheKey, figure, 86400)
+      } else {
+        figure = normalizeFigureData(figure)
       }
       this.setData({
         figure,

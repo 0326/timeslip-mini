@@ -23,11 +23,14 @@ async function tryUnlock(OPENID, key) {
 const COVER_FILE_IDS = {
   emperor: 'cloud://cloud1-d0gunpzup215cfd87.636c-cloud1-d0gunpzup215cfd87-1457646459/dna-covers/emperor.jpg',
   poet: 'cloud://cloud1-d0gunpzup215cfd87.636c-cloud1-d0gunpzup215cfd87-1457646459/dna-covers/poet.jpg',
-  general: 'cloud://cloud1-d0gunpzup215cfd87.636c-cloud1-d0gunpzup215cfd87-1457646459/dna-covers/general.jpg'
+  general: 'cloud://cloud1-d0gunpzup215cfd87.636c-cloud1-d0gunpzup215cfd87-1457646459/dna-covers/general.jpg',
+  strategist: 'cloud://cloud1-d0gunpzup215cfd87.636c-cloud1-d0gunpzup215cfd87-1457646459/dna-covers/strategist.jpg',
+  historian: 'cloud://cloud1-d0gunpzup215cfd87.636c-cloud1-d0gunpzup215cfd87-1457646459/dna-covers/historian.jpg',
+  hero: 'cloud://cloud1-d0gunpzup215cfd87.636c-cloud1-d0gunpzup215cfd87-1457646459/dna-covers/hero.jpg'
 }
 
 // ============================================================
-// 种子数据：3 个测试（emperor / poet / general）
+// 种子数据：6 个测试（emperor / poet / general / strategist / historian / hero）
 // 首次调用 quiz-list 时幂等 upsert 到数据库
 // ============================================================
 
@@ -90,6 +93,63 @@ const SEED_QUIZZES = [
     ],
     category: 'general',
     order: 3
+  },
+  {
+    id: 'strategist',
+    title: '测测你更像哪位谋士？',
+    subtitle: '帷幄之间，谁与你同谋',
+    desc: '6 道题测出你的谋士气质，是奇谋迭出还是稳国安邦？',
+    cover: COVER_FILE_IDS.strategist,
+    icon: '',
+    themeColor: '#5B6D92',
+    questionsCount: 6,
+    dimOrder: [
+      { value: 'Q', name: '奇谋', model: '出奇制胜' },
+      { value: 'S', name: '审势', model: '识时知变' },
+      { value: 'R', name: '忍耐', model: '韬晦深藏' },
+      { value: 'L', name: '忠诚', model: '辅主之心' },
+      { value: 'G', name: '格局', model: '经世之才' }
+    ],
+    category: 'strategist',
+    order: 4
+  },
+  {
+    id: 'historian',
+    title: '测测你更像哪位史家？',
+    subtitle: '青简之上，谁执你笔',
+    desc: '6 道题测出你的史家人格，是秉笔直书还是通鉴治世？',
+    cover: COVER_FILE_IDS.historian,
+    icon: '',
+    themeColor: '#6D4C41',
+    questionsCount: 6,
+    dimOrder: [
+      { value: 'Z', name: '直笔', model: '史德' },
+      { value: 'K', name: '考据', model: '史识' },
+      { value: 'W', name: '文采', model: '史才' },
+      { value: 'J', name: '经世', model: '史用' },
+      { value: 'R', name: '韧性', model: '史魂' }
+    ],
+    category: 'historian',
+    order: 5
+  },
+  {
+    id: 'hero',
+    title: '测测你更像哪位乱世英雄？',
+    subtitle: '风云际会，谁与你同局',
+    desc: '6 道题测出你的乱世选择，是雄主、仁主还是霸者？',
+    cover: COVER_FILE_IDS.hero,
+    icon: '',
+    themeColor: '#7A3E2F',
+    questionsCount: 6,
+    dimOrder: [
+      { value: 'X', name: '雄心', model: '逐鹿之志' },
+      { value: 'R', name: '仁义', model: '得人之道' },
+      { value: 'M', name: '谋断', model: '权变之术' },
+      { value: 'Y', name: '用人', model: '聚众之能' },
+      { value: 'B', name: '霸气', model: '威势之锋' }
+    ],
+    category: 'hero',
+    order: 6
   }
 ]
 
@@ -253,6 +313,138 @@ const SEED_QUESTIONS = {
         { label: 'C', text: '入朝为相，辅佐明君', dimValue: 2 },
         { label: 'D', text: '拥兵自重，以待天时', dimValue: 1 }
       ]}
+  ],
+  strategist: [
+    { order: 1, text: '主公初入乱局，四方势力未明，你先做什么：', dim: 'S',
+      options: [
+        { label: 'A', text: '先绘天下形势，判断谁可联合', dimValue: 3 },
+        { label: 'B', text: '献一条险计，迅速打开局面', dimValue: 2 },
+        { label: 'C', text: '稳住粮草人心，避免先乱阵脚', dimValue: 2 },
+        { label: 'D', text: '暂不表态，暗中观察胜负', dimValue: 1 }
+      ]},
+    { order: 2, text: '敌强我弱，最适合的破局方式是：', dim: 'Q',
+      options: [
+        { label: 'A', text: '声东击西，打敌人最意外之处', dimValue: 3 },
+        { label: 'B', text: '坚守要地，拖到敌方疲敝', dimValue: 2 },
+        { label: 'C', text: '请第三方入局，改变力量对比', dimValue: 2 },
+        { label: 'D', text: '避免冒险，先保存实力', dimValue: 1 }
+      ]},
+    { order: 3, text: '你的计策被主公否决，你会：', dim: 'R',
+      options: [
+        { label: 'A', text: '再三陈说利害，务求采纳', dimValue: 2 },
+        { label: 'B', text: '暂且退下，等待下一次时机', dimValue: 3 },
+        { label: 'C', text: '改换说法，从主公关切处切入', dimValue: 2 },
+        { label: 'D', text: '心灰意冷，另寻明主', dimValue: 1 }
+      ]},
+    { order: 4, text: '功成之后，你更在意：', dim: 'L',
+      options: [
+        { label: 'A', text: '主公与天下都能长治久安', dimValue: 3 },
+        { label: 'B', text: '自己的谋略被后世记住', dimValue: 2 },
+        { label: 'C', text: '家族门第能稳固延续', dimValue: 1 },
+        { label: 'D', text: '退居幕后，避开权力漩涡', dimValue: 2 }
+      ]},
+    { order: 5, text: '治理国家时，你最看重：', dim: 'G',
+      options: [
+        { label: 'A', text: '制度、人才、粮赋一并成体系', dimValue: 3 },
+        { label: 'B', text: '先抓关键矛盾，逐项修补', dimValue: 2 },
+        { label: 'C', text: '维持旧制，减少震荡', dimValue: 1 },
+        { label: 'D', text: '以法令威势迅速压住局面', dimValue: 2 }
+      ]},
+    { order: 6, text: '你留给后人的形象更像：', dim: 'Q',
+      options: [
+        { label: 'A', text: '算无遗策的奇谋家', dimValue: 3 },
+        { label: 'B', text: '稳定大局的辅政者', dimValue: 2 },
+        { label: 'C', text: '忍到最后的胜利者', dimValue: 2 },
+        { label: 'D', text: '功成身退的隐者', dimValue: 1 }
+      ]}
+  ],
+  historian: [
+    { order: 1, text: '面对权贵要求改史，你会：', dim: 'Z',
+      options: [
+        { label: 'A', text: '秉笔直书，宁可得罪权贵', dimValue: 3 },
+        { label: 'B', text: '保留事实，但措辞稍作回旋', dimValue: 2 },
+        { label: 'C', text: '另存底稿，等待后世辨明', dimValue: 2 },
+        { label: 'D', text: '顺势而写，先保全自己', dimValue: 1 }
+      ]},
+    { order: 2, text: '整理史料时，你最不能忍受：', dim: 'K',
+      options: [
+        { label: 'A', text: '传闻当事实，年月人物混乱', dimValue: 3 },
+        { label: 'B', text: '只写事件，不看制度背景', dimValue: 2 },
+        { label: 'C', text: '文笔枯燥，读者难以进入', dimValue: 1 },
+        { label: 'D', text: '材料太多，迟迟无法定稿', dimValue: 2 }
+      ]},
+    { order: 3, text: '你写历史，更想写出：', dim: 'W',
+      options: [
+        { label: 'A', text: '人物命运的跌宕与悲欢', dimValue: 3 },
+        { label: 'B', text: '制度兴衰背后的规律', dimValue: 2 },
+        { label: 'C', text: '简明清楚的年代脉络', dimValue: 2 },
+        { label: 'D', text: '冷静克制的事实记录', dimValue: 1 }
+      ]},
+    { order: 4, text: '读史的最大意义是：', dim: 'J',
+      options: [
+        { label: 'A', text: '给当下政治治理提供借鉴', dimValue: 3 },
+        { label: 'B', text: '让后人知道真相与代价', dimValue: 2 },
+        { label: 'C', text: '保存一代人的制度记忆', dimValue: 2 },
+        { label: 'D', text: '满足对古人的好奇', dimValue: 1 }
+      ]},
+    { order: 5, text: '遭遇人生重挫时，你会：', dim: 'R',
+      options: [
+        { label: 'A', text: '把痛苦化成一部必须完成的书', dimValue: 3 },
+        { label: 'B', text: '隐忍整理材料，等待时机', dimValue: 2 },
+        { label: 'C', text: '转向考据细节，避开风波', dimValue: 2 },
+        { label: 'D', text: '放下著述，远离是非', dimValue: 1 }
+      ]},
+    { order: 6, text: '你理想中的史书气质是：', dim: 'Z',
+      options: [
+        { label: 'A', text: '有胆识、有血性、有判断', dimValue: 3 },
+        { label: 'B', text: '严谨完备，结构清楚', dimValue: 2 },
+        { label: 'C', text: '能警醒君臣，服务治道', dimValue: 2 },
+        { label: 'D', text: '少作评判，只存材料', dimValue: 1 }
+      ]}
+  ],
+  hero: [
+    { order: 1, text: '乱世初起，你最先争取的是：', dim: 'Y',
+      options: [
+        { label: 'A', text: '人才和谋士，先把班底搭起来', dimValue: 3 },
+        { label: 'B', text: '精兵强将，先打出威名', dimValue: 2 },
+        { label: 'C', text: '百姓口碑，先站稳名义', dimValue: 2 },
+        { label: 'D', text: '城池粮草，先守住一方', dimValue: 1 }
+      ]},
+    { order: 2, text: '面对强敌压境，你的姿态是：', dim: 'B',
+      options: [
+        { label: 'A', text: '主动决战，用胜利震慑天下', dimValue: 3 },
+        { label: 'B', text: '避其锋芒，等敌人露出破绽', dimValue: 2 },
+        { label: 'C', text: '先结盟，再寻找反击窗口', dimValue: 2 },
+        { label: 'D', text: '退守自保，不轻易下注', dimValue: 1 }
+      ]},
+    { order: 3, text: '你对部下最看重：', dim: 'R',
+      options: [
+        { label: 'A', text: '愿与我共患难的情义', dimValue: 3 },
+        { label: 'B', text: '能打胜仗的实际能力', dimValue: 2 },
+        { label: 'C', text: '绝对服从的纪律', dimValue: 1 },
+        { label: 'D', text: '能各展其长的合作关系', dimValue: 2 }
+      ]},
+    { order: 4, text: '夺取天下的关键在于：', dim: 'M',
+      options: [
+        { label: 'A', text: '看清大势，抓住转折点', dimValue: 3 },
+        { label: 'B', text: '敢打硬仗，先破最大敌人', dimValue: 2 },
+        { label: 'C', text: '经营名望，让天下归心', dimValue: 2 },
+        { label: 'D', text: '慢慢积累，少犯错误', dimValue: 1 }
+      ]},
+    { order: 5, text: '胜利之后，你会如何安排功臣：', dim: 'X',
+      options: [
+        { label: 'A', text: '重赏重用，让英雄各得其位', dimValue: 2 },
+        { label: 'B', text: '削弱兵权，防止尾大不掉', dimValue: 3 },
+        { label: 'C', text: '以情义维系，不急于改动', dimValue: 2 },
+        { label: 'D', text: '保守处理，维持原状', dimValue: 1 }
+      ]},
+    { order: 6, text: '后世评价里，你最想得到：', dim: 'X',
+      options: [
+        { label: 'A', text: '乱世雄主，开创新局', dimValue: 3 },
+        { label: 'B', text: '仁义之主，众人归心', dimValue: 2 },
+        { label: 'C', text: '一代霸者，威震四方', dimValue: 2 },
+        { label: 'D', text: '守成有道，少有败笔', dimValue: 1 }
+      ]}
   ]
 }
 
@@ -281,15 +473,15 @@ const SEED_RESULTS = {
       themeColor: '#B71C1C', bgStart: '#DC143C', bgEnd: '#8B0000'
     },
     {
-      tag: 'CaoCao', figureId: 'caocao', figureName: '曹操', figureTitle: '魏武帝', dynasty: 'sanguo', dynastyName: '东汉末',
+      tag: 'ZhuDi', figureId: 'zhudi', figureName: '朱棣', figureTitle: '明成祖', dynasty: 'ming', dynastyName: '明',
       pattern: 'HHH-LMH-HMM',
-      title: '曹操式枭雄之姿', intro: '你雄才大略，多谋善断，是乱世的枭雄。',
-      desc: '你如魏武帝曹操，治世之能臣，乱世之奸雄。面对朝堂党争（第1题），你选择离间两派使其互相牵制，正是曹操惯用的制衡之术；面对国库空虚（第5题），你倾向加派商税充盈内帑，映射曹操设摸金校尉充实军饷的务实。你唯才是举，不拘品行，深谋远虑，用兵如神。',
-      bio: '曹操，字孟德，沛国谯人。举孝廉出身，讨董卓，迎献帝，挟天子以令诸侯。官渡之战败袁绍，统一北方。政治家、军事家、文学家，建安风骨的开创者。',
-      quote: '宁教我负天下人，休教天下人负我。',
-      reasons: ['你在第1题选择离间两派，正是曹操制衡群臣的权术', '你在第6题选择挥毫赋诗，映射曹操横槊赋诗的文采风流', '你在第3题选择罗织罪名斩草除根，与曹操杀杨修如出一辙'],
-      radar: { 谋略: 95, 魄力: 92, 文采: 90, 隐忍: 80, 果断: 88, 包容: 60 },
-      themeColor: '#2F4F4F', bgStart: '#2F4F4F', bgEnd: '#1A1A1A'
+      title: '朱棣式永乐雄主', intro: '你胆识过人，敢破旧局，是开疆拓土的雄主。',
+      desc: '你如明成祖朱棣，起于藩王而定鼎天下。面对朝堂党争（第1题），你倾向以制衡手腕重整局面；面对国库空虚（第5题），你更看重能支撑远略的制度安排。你有强烈的行动力，也有经营大局的耐心，适合在动荡中重塑秩序。',
+      bio: '朱棣，明太祖第四子。靖难之后即位，年号永乐。在位期间迁都北京、修《永乐大典》、遣郑和下西洋，并多次北征，塑造明代前期强盛格局。',
+      quote: '天下不可一日无主。',
+      reasons: ['你在关键题中表现出强势破局的倾向', '你重视制度与威望并用，接近永乐朝的治理风格', '你能在复杂局面中快速夺回主动权'],
+      radar: { 谋略: 92, 魄力: 96, 文采: 78, 隐忍: 82, 果断: 94, 包容: 68 },
+      themeColor: '#8B1A1A', bgStart: '#8B1A1A', bgEnd: '#4A1010'
     },
     {
       tag: 'WuZetian', figureId: 'wuzetian', figureName: '武则天', figureTitle: '则天大圣皇帝', dynasty: 'tang', dynastyName: '唐·武周',
@@ -393,15 +585,15 @@ const SEED_RESULTS = {
       themeColor: '#C71585', bgStart: '#C71585', bgEnd: '#DA70D6'
     },
     {
-      tag: 'SimaQian', figureId: 'simaqian', figureName: '司马迁', figureTitle: '太史公', dynasty: 'han', dynastyName: '西汉',
+      tag: 'WangWei', figureId: 'wangwei', figureName: '王维', figureTitle: '诗佛', dynasty: 'tang', dynastyName: '唐',
       pattern: 'MM-MM-MMM',
-      title: '司马迁式史家之笔', intro: '你的诗魂兼容并蓄，以史入诗，是难得的通才。',
-      desc: '你如太史公司马迁，以史家之笔写诗人之心。面对壮丽山河（第2题），你感叹"此情可待成追忆"，与司马迁"究天人之际通古今之变"的历史纵深感共鸣；人生失意时（第5题），你选择"天生我材必有用"，映射司马迁受宫刑后发愤著《史记》的坚韧。你的诗魂兼容并蓄，兼具豪放与婉约、旷达与浪漫，是诗坛中难得的通才。',
-      bio: '司马迁，字子长，夏阳人。西汉史学家、散文家。因替李陵败降之事辩解而受宫刑，发奋完成《史记》百三十篇，史家之绝唱，无韵之离骚。',
-      quote: '诗言志，歌永言。究天人之际，通古今之变，成一家之言。',
-      reasons: ['你在第2题感叹此情可待成追忆，与司马迁的历史纵深感共鸣', '你在第5题选择"天生我材必有用"，映射司马迁发愤著书的坚韧', '你兼容并蓄诗风多元，与司马迁以史入诗的通才气质一致'],
-      radar: { 才情: 88, 豪放: 78, 婉约: 82, 旷达: 85, 浪漫: 75 },
-      themeColor: '#654321', bgStart: '#8B6914', bgEnd: '#654321'
+      title: '王维式空山清远', intro: '你安静澄明，诗心含蓄，是山水之间的清音。',
+      desc: '你如诗佛王维，诗中有画，画中有诗。面对壮丽山河（第2题），你不急于高声赞叹，而更愿把山水化成心境；人生失意时（第5题），你能退一步看风月流转。你的诗魂不在激烈处，而在静水深流处。',
+      bio: '王维，字摩诘，唐代诗人、画家。精通诗、书、画、乐，山水田园诗成就极高，与孟浩然并称"王孟"，有"诗佛"之称。',
+      quote: '行到水穷处，坐看云起时。',
+      reasons: ['你在多题中表现出含蓄、平衡、留白的气质', '你不执着于激烈表达，更接近王维山水诗中的澄明', '你兼具才情与旷达，适合安放在诗佛一路'],
+      radar: { 才情: 92, 豪放: 65, 婉约: 82, 旷达: 88, 浪漫: 72 },
+      themeColor: '#4F7A5A', bgStart: '#4F7A5A', bgEnd: '#2F4F3A'
     }
   ],
   general: [
@@ -472,15 +664,219 @@ const SEED_RESULTS = {
       themeColor: '#FF8C00', bgStart: '#FF8C00', bgEnd: '#FF4500'
     },
     {
-      tag: 'ZhuGeLiang', figureId: 'zhugeliang', figureName: '诸葛亮', figureTitle: '武乡侯', dynasty: 'sanguo', dynastyName: '三国·蜀',
+      tag: 'LiJing', figureId: 'lijing', figureName: '李靖', figureTitle: '卫国公', dynasty: 'tang', dynastyName: '唐',
       pattern: 'MM-MM-MMM',
-      title: '诸葛亮式儒将风范', intro: '你兼具多种武将特质，运筹帷幄，是难得的帅才。',
-      desc: '你如武乡侯诸葛亮，鞠躬尽瘁，死而后已。两军对垒（第1题），你选择断其粮道不战而屈，正是诸葛亮"不战而屈人之兵"的谋略；朝廷疑你（第3题），你选择上表自陈留待后议，与诸葛亮《出师表》中"鞠躬尽瘁"的忠心一致。你的多元特质让你能驾驭不同的战场，是真正的帅才。',
-      bio: '诸葛亮，字孔明，琅琊阳都人。三顾茅庐始出山，鞠躬尽瘁，死而后已。著《出师表》《诫子书》，卧龙一出天下惊。',
-      quote: '将在谋而不在勇，兵在精而不在多。鞠躬尽瘁，死而后已。',
-      reasons: ['你在第1题选择断其粮道，正是诸葛亮"不战而屈人之兵"的谋略', '你在第3题选择上表自陈，与诸葛亮《出师表》的忠心一致', '你兼具多种武将特质，与诸葛亮运筹帷幄的帅才气质一致'],
-      radar: { 勇: 75, 谋: 95, 忠: 95, 义: 85, 烈: 70, 稳: 90 },
-      themeColor: '#2F4F4F', bgStart: '#3D5A5A', bgEnd: '#2F4F4F'
+      title: '李靖式沉稳名将', intro: '你谋勇兼备，出手稳准，是能定大局的统帅。',
+      desc: '你如唐代名将李靖，既懂兵法，也能临阵决断。两军对垒（第1题），你不一定只凭血勇，而会判断地形、军心与时机；功成身退（第8题），你也懂得收敛锋芒。你的武将人格更接近稳健统帅，而不是单纯猛将。',
+      bio: '李靖，唐初军事家，封卫国公。参与平定萧铣、辅公祏，后北破东突厥，南平吐谷浑，是唐代开国与扩张时期的重要名将。',
+      quote: '兵贵神速，亦贵审势。',
+      reasons: ['你在战场题中表现出谋略与稳健并重', '你能在进取和收束之间保持平衡', '你不是单纯冲锋型，更接近统帅型名将'],
+      radar: { 勇: 82, 谋: 95, 忠: 88, 义: 82, 烈: 75, 稳: 95 },
+      themeColor: '#345A6F', bgStart: '#345A6F', bgEnd: '#1D3442'
+    }
+  ],
+  strategist: [
+    {
+      tag: 'ZhuGeLiang', figureId: 'zhugeliang', figureName: '诸葛亮', figureTitle: '卧龙', dynasty: 'sanguo', dynastyName: '三国·蜀',
+      pattern: 'HHH-HHH',
+      title: '诸葛亮式经世辅政', intro: '你审势深远，忠诚持重，是能托付天下的谋士。',
+      desc: '你如诸葛亮，既能隆中对定天下三分，也能出师北伐守一国根基。你不是单纯出奇谋的人，而是能把战略、制度、人才和责任连在一起的人。',
+      bio: '诸葛亮，字孔明，三国蜀汉丞相。辅佐刘备、刘禅，提出隆中对，治理蜀汉，北伐中原，是中国谋臣与辅政者形象的代表。',
+      quote: '鞠躬尽瘁，死而后已。',
+      reasons: ['你重视大势判断与长期治理', '你对辅佐对象有强烈责任感', '你能把谋略落到制度与执行上'],
+      radar: { 奇谋: 92, 审势: 98, 忍耐: 90, 忠诚: 100, 格局: 96 },
+      themeColor: '#4A5F7A', bgStart: '#4A5F7A', bgEnd: '#26384D'
+    },
+    {
+      tag: 'ZhangLiang', figureId: 'zhangliang', figureName: '张良', figureTitle: '留侯', dynasty: 'han', dynastyName: '西汉',
+      pattern: 'HHM-HMM',
+      title: '张良式运筹帷幄', intro: '你善看大势，懂得借力，是决胜千里的谋士。',
+      desc: '你如留侯张良，不以力争，而以势取。你擅长判断关键节点，知道何时进、何时退、何时借他人之力完成布局。',
+      bio: '张良，字子房，汉初三杰之一。辅佐刘邦灭秦破楚，善谋略，功成后明哲保身。',
+      quote: '运筹帷幄之中，决胜千里之外。',
+      reasons: ['你偏好先看天下形势再落子', '你能用联盟与时机改变局面', '你有功成身退的清醒'],
+      radar: { 奇谋: 95, 审势: 96, 忍耐: 86, 忠诚: 82, 格局: 90 },
+      themeColor: '#6A5B8A', bgStart: '#6A5B8A', bgEnd: '#362C4D'
+    },
+    {
+      tag: 'XiaoHe', figureId: 'xiaohe', figureName: '萧何', figureTitle: '酂文终侯', dynasty: 'han', dynastyName: '西汉',
+      pattern: 'MML-HHH',
+      title: '萧何式安邦定国', intro: '你不炫奇谋，却能稳住根本，是后方定海针。',
+      desc: '你如萧何，懂得粮草、法度、人才和后方秩序的重要。你的力量不在惊险一击，而在让大局不崩。',
+      bio: '萧何，汉初三杰之一。辅佐刘邦，定律令、守关中、荐韩信，为汉朝建立提供制度与后勤支撑。',
+      quote: '镇国家，抚百姓，给馈饷，不绝粮道。',
+      reasons: ['你更重视制度和后方根基', '你擅长补足团队最需要的能力', '你能让复杂局面保持稳定运行'],
+      radar: { 奇谋: 70, 审势: 88, 忍耐: 84, 忠诚: 94, 格局: 98 },
+      themeColor: '#586B4F', bgStart: '#586B4F', bgEnd: '#2D3D29'
+    },
+    {
+      tag: 'SimaYi', figureId: 'simayi', figureName: '司马懿', figureTitle: '晋宣帝', dynasty: 'sanguo', dynastyName: '三国·魏',
+      pattern: 'MLH-LMM',
+      title: '司马懿式深藏不露', intro: '你耐心极强，善于等待，是笑到最后的谋者。',
+      desc: '你如司马懿，能忍一时之辱，也能抓住最终窗口。你不急于证明自己，更重视在关键时刻完成翻盘。',
+      bio: '司马懿，三国时期魏国重臣、军事家、政治家。长期隐忍经营，晚年发动高平陵之变，为司马氏代魏奠定基础。',
+      quote: '忍常人所不能忍，成常人所不能成。',
+      reasons: ['你擅长等待时机', '你不会轻易暴露真实意图', '你更看重最终胜势而非一时名声'],
+      radar: { 奇谋: 84, 审势: 92, 忍耐: 100, 忠诚: 55, 格局: 88 },
+      themeColor: '#3F4654', bgStart: '#3F4654', bgEnd: '#1F232B'
+    },
+    {
+      tag: 'GuoJia', figureId: 'guojia', figureName: '郭嘉', figureTitle: '奉孝', dynasty: 'sanguo', dynastyName: '东汉末',
+      pattern: 'HHM-LML',
+      title: '郭嘉式奇策洞察', intro: '你眼光犀利，善断人心，是出奇制胜的谋士。',
+      desc: '你如郭嘉，善于从人性与局势缝隙中找到破局点。你的计策未必最稳，却常常直击要害。',
+      bio: '郭嘉，字奉孝，曹操重要谋士。以洞察局势、判断人物著称，对曹操统一北方贡献很大。',
+      quote: '兵贵神速，谋贵识人。',
+      reasons: ['你偏好出其不意的破局方式', '你很会判断对手心理', '你更在意关键一击而非长期经营'],
+      radar: { 奇谋: 100, 审势: 92, 忍耐: 70, 忠诚: 78, 格局: 76 },
+      themeColor: '#6B4F7A', bgStart: '#6B4F7A', bgEnd: '#382447'
+    },
+    {
+      tag: 'LiuBowen', figureId: 'liubowen', figureName: '刘伯温', figureTitle: '诚意伯', dynasty: 'ming', dynastyName: '明',
+      pattern: 'MHH-MHM',
+      title: '刘伯温式洞明大势', intro: '你善识天时人事，能在乱局中看见秩序。',
+      desc: '你如刘伯温，既有谋略，也懂制度与人心。你适合在混乱中找到方向，并把方向转成可执行的方案。',
+      bio: '刘基，字伯温，明初谋臣、文学家。辅佐朱元璋建立明朝，封诚意伯，后世常称刘伯温。',
+      quote: '知机者善谋，善谋者成事。',
+      reasons: ['你能看出局势背后的运行规律', '你兼具谋略与经世视野', '你在进退之间保持谨慎'],
+      radar: { 奇谋: 88, 审势: 96, 忍耐: 82, 忠诚: 78, 格局: 92 },
+      themeColor: '#5E6B48', bgStart: '#5E6B48', bgEnd: '#303A24'
+    }
+  ],
+  historian: [
+    {
+      tag: 'SimaQian', figureId: 'simaqian', figureName: '司马迁', figureTitle: '太史公', dynasty: 'han', dynastyName: '西汉',
+      pattern: 'HHH-HHH',
+      title: '司马迁式究天通变', intro: '你有直笔之胆，也有承受命运重压的韧性。',
+      desc: '你如司马迁，能把个人痛苦转化成历史书写。你重视人物命运，也重视时代变化的深层逻辑。',
+      bio: '司马迁，字子长，西汉史学家、文学家。著《史记》，开创纪传体通史传统。',
+      quote: '究天人之际，通古今之变，成一家之言。',
+      reasons: ['你在真相与权势之间更倾向直笔', '你重视人物命运的复杂性', '你有把挫折转化为作品的韧性'],
+      radar: { 直笔: 96, 考据: 90, 文采: 100, 经世: 88, 韧性: 100 },
+      themeColor: '#6D4C41', bgStart: '#6D4C41', bgEnd: '#3A241D'
+    },
+    {
+      tag: 'BanGu', figureId: 'banggu', figureName: '班固', figureTitle: '兰台令史', dynasty: 'han', dynastyName: '东汉',
+      pattern: 'MHM-MHM',
+      title: '班固式典雅断代', intro: '你重结构、重体例，擅长把一代历史写得严整。',
+      desc: '你如班固，讲究体例完备与材料组织。你适合做系统性整理，把复杂事实纳入清楚框架。',
+      bio: '班固，东汉史学家、文学家，撰《汉书》，开创纪传体断代史体例。',
+      quote: '述而有体，断代成书。',
+      reasons: ['你重视史料结构和体例', '你能在庞杂材料中建立秩序', '你的表达更偏典雅严整'],
+      radar: { 直笔: 82, 考据: 96, 文采: 88, 经世: 82, 韧性: 86 },
+      themeColor: '#735C42', bgStart: '#735C42', bgEnd: '#3D2D1D'
+    },
+    {
+      tag: 'SimaGuang', figureId: 'simaguang', figureName: '司马光', figureTitle: '温国文正公', dynasty: 'song', dynastyName: '北宋',
+      pattern: 'MMH-HMM',
+      title: '司马光式通鉴治世', intro: '你读史为鉴，关注兴衰得失与现实治理。',
+      desc: '你如司马光，写史不是只为记事，更是为了给现实提供镜鉴。你重视制度、君臣、成败之间的因果。',
+      bio: '司马光，北宋政治家、史学家，主持编纂《资治通鉴》。',
+      quote: '鉴前世之兴衰，考当今之得失。',
+      reasons: ['你最看重历史对治理的借鉴', '你善于从事件中抽出因果', '你表达克制但判断明确'],
+      radar: { 直笔: 86, 考据: 92, 文采: 78, 经世: 100, 韧性: 82 },
+      themeColor: '#4F5E6D', bgStart: '#4F5E6D', bgEnd: '#28323D'
+    },
+    {
+      tag: 'ChenShou', figureId: 'chenshou', figureName: '陈寿', figureTitle: '史官', dynasty: 'jin', dynastyName: '西晋',
+      pattern: 'MML-MMH',
+      title: '陈寿式冷静取舍', intro: '你克制审慎，能在复杂立场中保持叙事平衡。',
+      desc: '你如陈寿，面对三国旧事，懂得取舍与分寸。你不追求情绪爆发，而追求相对稳妥的历史判断。',
+      bio: '陈寿，西晋史学家，著《三国志》，为研究三国历史的重要史籍。',
+      quote: '据事直书，慎于褒贬。',
+      reasons: ['你写史重视材料取舍', '你能在复杂人物间保持克制', '你偏向冷静记录而非激烈评断'],
+      radar: { 直笔: 84, 考据: 86, 文采: 72, 经世: 78, 韧性: 88 },
+      themeColor: '#5C5A4A', bgStart: '#5C5A4A', bgEnd: '#303027'
+    },
+    {
+      tag: 'LiuZhiji', figureId: 'liuzhiji', figureName: '刘知几', figureTitle: '史通作者', dynasty: 'tang', dynastyName: '唐',
+      pattern: 'HHM-MMM',
+      title: '刘知几式史识批判', intro: '你重史法，也敢批评旧说，是有方法意识的史家。',
+      desc: '你如刘知几，不满足于照抄材料，而会追问史书怎样写才可信。你重视史学方法、判断与批判。',
+      bio: '刘知几，唐代史学家，著《史通》，是中国古代重要的史学理论著作。',
+      quote: '史贵实录，亦贵识断。',
+      reasons: ['你对材料真伪很敏感', '你愿意批评不合理旧说', '你重视写史的方法和标准'],
+      radar: { 直笔: 92, 考据: 95, 文采: 78, 经世: 76, 韧性: 80 },
+      themeColor: '#665A73', bgStart: '#665A73', bgEnd: '#332B40'
+    },
+    {
+      tag: 'DuYou', figureId: 'duyou', figureName: '杜佑', figureTitle: '通典作者', dynasty: 'tang', dynastyName: '唐',
+      pattern: 'MHH-HML',
+      title: '杜佑式制度通观', intro: '你关注制度沿革，擅长从典章中看见国家运行。',
+      desc: '你如杜佑，写史更重制度和经世实用。你会追问一项制度为什么出现、如何变化、对现实有什么用。',
+      bio: '杜佑，唐代政治家、史学家，著《通典》，开创典章制度通史的重要传统。',
+      quote: '通古今之制，明治乱之由。',
+      reasons: ['你重视制度背景而非只看故事', '你读史带有现实治理意识', '你适合做系统性归纳'],
+      radar: { 直笔: 78, 考据: 94, 文采: 76, 经世: 96, 韧性: 72 },
+      themeColor: '#596B5C', bgStart: '#596B5C', bgEnd: '#2C3A2E'
+    }
+  ],
+  hero: [
+    {
+      tag: 'CaoCao', figureId: 'caocao', figureName: '曹操', figureTitle: '魏武帝', dynasty: 'sanguo', dynastyName: '东汉末',
+      pattern: 'HHM-HHH',
+      title: '曹操式乱世枭雄', intro: '你务实果断，善用人才，是能在乱世重塑秩序的人。',
+      desc: '你如曹操，挟乱世而起，以能力和制度聚合人才。你不是皇帝题里的帝王，而是乱世格局中的雄主型人物。',
+      bio: '曹操，字孟德，东汉末政治家、军事家、文学家。统一北方，奠定曹魏基础，后被追尊为魏武帝。',
+      quote: '周公吐哺，天下归心。',
+      reasons: ['你重视人才和主动权', '你敢在强敌面前寻找破局点', '你有统一乱局的雄心和手腕'],
+      radar: { 雄心: 96, 仁义: 68, 谋断: 95, 用人: 96, 霸气: 92 },
+      themeColor: '#2F4F4F', bgStart: '#2F4F4F', bgEnd: '#1A1A1A'
+    },
+    {
+      tag: 'LiuBei', figureId: 'liubei', figureName: '刘备', figureTitle: '昭烈帝', dynasty: 'sanguo', dynastyName: '三国·蜀',
+      pattern: 'MHH-MMM',
+      title: '刘备式仁义聚众', intro: '你重情义、重人心，擅长让人愿意同行。',
+      desc: '你如刘备，虽起点艰难，却能凭仁义与识人聚起一支队伍。你的优势不在威压，而在凝聚。',
+      bio: '刘备，字玄德，蜀汉开国皇帝。以仁义和用人著称，与关羽、张飞桃园结义，三顾茅庐请诸葛亮。',
+      quote: '勿以善小而不为，勿以恶小而为之。',
+      reasons: ['你重视部下情义', '你更愿以人心和名义聚众', '你能在低谷中坚持理想'],
+      radar: { 雄心: 85, 仁义: 100, 谋断: 78, 用人: 95, 霸气: 72 },
+      themeColor: '#356B45', bgStart: '#356B45', bgEnd: '#1C3A25'
+    },
+    {
+      tag: 'SunQuan', figureId: 'sunquan', figureName: '孙权', figureTitle: '吴大帝', dynasty: 'sanguo', dynastyName: '三国·吴',
+      pattern: 'MMM-HMM',
+      title: '孙权式守成制衡', intro: '你稳健审慎，懂得用人制衡，是守住一方的雄主。',
+      desc: '你如孙权，能在强敌环伺下守住江东，也能在不同派系中维持平衡。你不轻易冒进，但懂得抓住关键战机。',
+      bio: '孙权，字仲谋，三国吴国建立者。承父兄基业，联合刘备赢得赤壁之战，长期经营江东。',
+      quote: '能用众力，则无敌于天下。',
+      reasons: ['你重视稳固根据地', '你擅长平衡人才和派系', '你不会轻易做孤注一掷的选择'],
+      radar: { 雄心: 82, 仁义: 78, 谋断: 84, 用人: 92, 霸气: 76 },
+      themeColor: '#3D6F7A', bgStart: '#3D6F7A', bgEnd: '#1E3C44'
+    },
+    {
+      tag: 'XiangYuHero', figureId: 'xiangyu', figureName: '项羽', figureTitle: '西楚霸王', dynasty: 'chuhan', dynastyName: '秦末·楚',
+      pattern: 'MHL-HHL',
+      title: '项羽式霸者锋芒', intro: '你锋芒极盛，敢打硬仗，是震慑天下的霸者。',
+      desc: '你如项羽，重情重义，也极具压迫感。你能打出让天下震动的胜利，但也需要警惕过度依赖个人锋芒。',
+      bio: '项羽，秦末起义军领袖，巨鹿之战破釜沉舟，后自立西楚霸王，与刘邦争天下。',
+      quote: '力拔山兮气盖世。',
+      reasons: ['你面对强敌时更愿主动决战', '你重视情义和威势', '你有强烈的霸者气场'],
+      radar: { 雄心: 90, 仁义: 85, 谋断: 70, 用人: 72, 霸气: 100 },
+      themeColor: '#8B0000', bgStart: '#8B0000', bgEnd: '#3A0000'
+    },
+    {
+      tag: 'YuanShao', figureId: 'yuanshao', figureName: '袁绍', figureTitle: '大将军', dynasty: 'donghan', dynastyName: '东汉末',
+      pattern: 'MLM-MML',
+      title: '袁绍式门阀雄心', intro: '你资源雄厚，讲究名望，但关键时刻容易犹疑。',
+      desc: '你如袁绍，起点高、声望盛，能聚合一方豪杰。你的课题是把资源优势转化成真正果断的胜势。',
+      bio: '袁绍，东汉末群雄之一，出身汝南袁氏，曾据河北，与曹操官渡决战失利。',
+      quote: '势大者未必胜，善断者方能成。',
+      reasons: ['你重视名望和资源积累', '你倾向稳健而非冒险', '你需要提升关键时刻的决断力'],
+      radar: { 雄心: 86, 仁义: 70, 谋断: 68, 用人: 82, 霸气: 78 },
+      themeColor: '#7A6142', bgStart: '#7A6142', bgEnd: '#3D2D1B'
+    },
+    {
+      tag: 'ChenSheng', figureId: 'chensheng', figureName: '陈胜', figureTitle: '张楚王', dynasty: 'qin', dynastyName: '秦末',
+      pattern: 'LMH-LLH',
+      title: '陈胜式揭竿而起', intro: '你不甘命运压迫，敢第一个喊出改变。',
+      desc: '你如陈胜，未必拥有最完整的资源，却有点燃局势的勇气。你的力量在于打破沉默、率先行动。',
+      bio: '陈胜，秦末农民起义领袖，与吴广发动大泽乡起义，建立张楚政权。',
+      quote: '王侯将相宁有种乎。',
+      reasons: ['你有不甘现状的强烈雄心', '你能在压迫中率先行动', '你更像点火者而非守成者'],
+      radar: { 雄心: 92, 仁义: 66, 谋断: 62, 用人: 65, 霸气: 88 },
+      themeColor: '#7A4A2F', bgStart: '#7A4A2F', bgEnd: '#3A2115'
     }
   ]
 }
@@ -593,7 +989,7 @@ function calculateWeight(answers, resultTypes, dimOrder) {
 let _seeded = false
 
 // 种子数据版本：当种子内容发生结构性变更时递增，触发强制刷新
-const SEED_VERSION = 5
+const SEED_VERSION = 7
 
 async function ensureSeed() {
   if (_seeded) return

@@ -59,6 +59,9 @@ exports.main = async (event, context) => {
       case 'adminArticleList': return await adminArticleList(OPENID, data)
       case 'adminCommentRemove': return await adminCommentRemove(OPENID, data)
 
+      // ============ 批量导入接口（仅限开发环境） ============
+      case 'batchImport': return await batchImport(data)
+
       default: return { code: -1, message: '未知 action: ' + action, data: null }
     }
   } catch (err) {
@@ -628,6 +631,40 @@ async function adminArticleRemove(OPENID, data) {
     data: { status: 'deleted', updatedAt: db.serverDate() }
   })
   return { code: 0, message: 'ok', data: { removed: true } }
+}
+
+// ==================== 批量导入 ====================
+async function batchImport(data) {
+  const articles = data.articles || []
+  if (!articles.length) return { code: -1, message: '无文章数据', data: null }
+
+  let inserted = 0
+  let skipped = 0
+  const errors = []
+
+  for (const article of articles) {
+    try {
+      // 检查是否已存在（用 title 去重）
+      const existing = await db.collection('articles').where({ title: article.title }).limit(1).get()
+      if (existing.data && existing.data.length > 0) {
+        skipped++
+        continue
+      }
+      // 移除自定义 _id，让数据库自动生成
+      const doc = { ...article }
+      delete doc._id
+      await db.collection('articles').add({ data: doc })
+      inserted++
+    } catch (err) {
+      errors.push({ title: article.title, error: err.message })
+    }
+  }
+
+  return {
+    code: 0,
+    message: `导入完成: 成功${inserted}条, 跳过${skipped}条, 失败${errors.length}条`,
+    data: { inserted, skipped, errors }
+  }
 }
 
 async function adminArticleList(OPENID, data) {
