@@ -6,7 +6,7 @@
   </view>
 
   <view class="login-card {{showRegister ? 'show' : ''}}">
-    <view class="card-label">请选择头像与昵称</view>
+    <view class="card-label">{{profileRepair ? '请重新选择头像' : '请选择头像与昵称'}}</view>
 
     <view class="avatar-wrap">
       <view class="avatar-box">

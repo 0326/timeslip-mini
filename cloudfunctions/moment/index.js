@@ -85,8 +85,15 @@ async function secCheckText(text, openid) {
 async function batchFetchFigures(figureIds) {
   const figureMap = {}
   if (!figureIds || !figureIds.length) return figureMap
-  // 去重
-  const uniqueIds = [...new Set(figureIds.filter(Boolean))]
+  const aliasMap = {}
+  figureIds.filter(Boolean).forEach(id => {
+    const value = String(id)
+    const aliases = value.indexOf('fig-') === 0 ? [value, value.slice(4)] : [value, 'fig-' + value]
+    aliases.forEach(alias => {
+      if (!aliasMap[alias]) aliasMap[alias] = value
+    })
+  })
+  const uniqueIds = Object.keys(aliasMap)
   if (!uniqueIds.length) return figureMap
   
   try {
@@ -96,16 +103,37 @@ async function batchFetchFigures(figureIds) {
       batches.push(uniqueIds.slice(i, i + 100))
     }
     for (const batch of batches) {
-      const res = await db.collection('figures')
+      const fields = {
+        id: true,
+        figureId: true,
+        name: true,
+        figureName: true,
+        identity: true,
+        title: true,
+        figureTitle: true,
+        avatar_url: true,
+        mini_avatar_url: true,
+        avatar: true,
+        dynasty: true
+      }
+      const byId = await db.collection('figures')
         .where({ id: _.in(batch) })
-        .field({ id: true, name: true, identity: true, avatar_url: true, mini_avatar_url: true, dynasty: true, avatar: true })
+        .field(fields)
         .limit(batch.length)
         .get()
-      if (res.data && res.data.length) {
-        res.data.forEach(f => {
-          figureMap[f.id] = f
+      const byFigureId = await db.collection('figures')
+        .where({ figureId: _.in(batch) })
+        .field(fields)
+        .limit(batch.length)
+        .get()
+      ;[].concat(byId.data || [], byFigureId.data || []).forEach(f => {
+        const keys = [f.id, f.figureId].filter(Boolean)
+        keys.forEach(key => {
+          figureMap[key] = f
+          if (key.indexOf('fig-') === 0) figureMap[key.slice(4)] = f
+          else figureMap['fig-' + key] = f
         })
-      }
+      })
     }
   } catch (e) {
     console.warn('batchFetchFigures error:', e.message)
@@ -118,9 +146,9 @@ function buildFigureView(row, figureData = null) {
   const f = figureData || {}
   const avatarRaw = f.mini_avatar_url || f.avatar_url || f.avatar || row.avatar || row.authorAvatar || row.mini_avatar_url || row.avatar_url || ''
   return {
-    id: row.figureId || f.id || row._openid || '',
-    name: f.name || row.figureName || row.name || row.authorName || '匿名古人',
-    title: f.identity || row.figureTitle || row.authorTitle || '',
+    id: row.figureId || f.figureId || f.id || row._openid || '',
+    name: f.figureName || f.name || row.figureName || row.name || row.authorName || '匿名古人',
+    title: f.figureTitle || f.title || f.identity || row.figureTitle || row.authorTitle || '',
     avatar: normalizeRemoteAssetUrl(avatarRaw),
     mini_avatar_url: avatarRaw,
     avatar_url: f.avatar_url || row.avatar_url || '',
@@ -181,7 +209,7 @@ async function buildCommentPreview(momentId, limit = 2, figureMap = {}) {
       return {
         id: c._id,
         figureId: c.figureId || '',
-        name: f.name || c.name || c.authorSnapshot?.name || '匿名',
+        name: f.figureName || f.name || c.name || c.authorSnapshot?.name || '匿名',
         avatar: normalizeRemoteAssetUrl(avatarRaw),
         mini_avatar_url: avatarRaw,
         avatar_url: f.avatar_url || '',
@@ -424,9 +452,9 @@ async function listComments(OPENID, data) {
       _id: c._id,
       momentId: c.momentId,
       figure: {
-        id: c.figureId || f.id || c._openid || '',
-        name: f.name || c.name || c.authorSnapshot?.name || '匿名',
-        title: f.identity || c.figureTitle || '',
+        id: c.figureId || f.figureId || f.id || c._openid || '',
+        name: f.figureName || f.name || c.name || c.authorSnapshot?.name || '匿名',
+        title: f.figureTitle || f.title || f.identity || c.figureTitle || '',
         avatar: normalizeRemoteAssetUrl(avatarRaw),
         mini_avatar_url: avatarRaw,
         avatar_url: f.avatar_url || '',
@@ -465,8 +493,8 @@ async function createComment(OPENID, data) {
     const u = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
     if (u && u.data && u.data.length) {
       const user = u.data[0]
-      nickname = user.nickname || user.name || nickname
-      avatar = normalizeRemoteAssetUrl(user.avatar || avatar)
+      nickname = user.nickName || user.nickname || user.name || nickname
+      avatar = normalizeRemoteAssetUrl(user.avatarUrl || user.avatar || avatar)
       dynasty = user.dynasty || ''
       figureId = user.figureId || ''
       figureTitle = user.figureTitle || ''

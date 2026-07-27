@@ -1,5 +1,6 @@
 const { storage } = require('./storage')
 const { requestCloud } = require('./cloudRequest')
+const { isTemporaryFileUrl } = require('./helpers')
 
 // 登录：使用前端采集的 nickName + avatarUrl 创建/更新用户
 async function login(nickName, avatarUrl) {
@@ -48,7 +49,7 @@ function restoreFromCache() {
     if (app.globalData.userInfo && app.globalData.openid) return true
 
     const cached = storage.get('userInfo')
-    if (cached && (cached._openid || cached._id)) {
+    if (cached && (cached._openid || cached._id) && cached.avatarUrl && !isTemporaryFileUrl(cached.avatarUrl)) {
       if (cached._openid) app.globalData.openid = cached._openid
       app.globalData.userInfo = cached
       app.globalData.points = cached.points || 0

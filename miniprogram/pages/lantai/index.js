@@ -145,19 +145,8 @@ Page({
       if (newFigures.length) {
         storage.set(FIGURES_CACHE_KEY, newFigures, CACHE_TTL_SECONDS)
       }
-
-      const cached = storage.get(FIGURES_CACHE_KEY)
-      if (cached) {
-        const cacheIds = new Set(cached.map(f => f._id))
-        const newIds = new Set(newFigures.map(f => f._id))
-        const hasChanges = cacheIds.size !== newIds.size || 
-          [...cacheIds].some(id => !newIds.has(id))
-        if (hasChanges) {
-          this.applyFilter(newFigures)
-        }
-      } else {
-        this.applyFilter(newFigures)
-      }
+      // 直接用新数据更新界面
+      this.applyFilter(newFigures)
     } catch (e) {
       if (!this.data.figures.length) {
         this.setData({ figures: [], groups: [], letters: [], loadError: true })
@@ -215,21 +204,9 @@ Page({
       if (newBooks.length) {
         storage.set(BOOKS_CACHE_KEY, newBooks, CACHE_TTL_SECONDS)
       }
-
-      const cached = storage.get(BOOKS_CACHE_KEY)
-      if (cached) {
-        const cacheIds = new Set(cached.map(b => b.id))
-        const newIds = new Set(newBooks.map(b => b.id))
-        const hasChanges = cacheIds.size !== newIds.size ||
-          [...cacheIds].some(id => !newIds.has(id))
-        if (hasChanges) {
-          this.setData({ books: newBooks })
-          this.filterBooks(this.data.searchText)
-        }
-      } else {
-        this.setData({ books: newBooks })
-        this.filterBooks(this.data.searchText)
-      }
+      // 直接用新数据更新界面
+      this.setData({ books: newBooks })
+      this.filterBooks(this.data.searchText)
     } catch (e) {
       if (!this.data.books.length) {
         this.setData({ books: [] })

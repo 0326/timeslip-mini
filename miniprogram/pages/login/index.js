@@ -2,6 +2,29 @@ const { login } = require('../../utils/auth')
 const { isLoggedIn } = require('../../utils/loginGuard')
 const { storage } = require('../../utils/storage')
 const { requestCloud } = require('../../utils/cloudRequest')
+const { isTemporaryFileUrl } = require('../../utils/helpers')
+
+function uploadAvatarFile(filePath) {
+  return new Promise((resolve, reject) => {
+    if (!filePath || !isTemporaryFileUrl(filePath)) {
+      resolve(filePath || '')
+      return
+    }
+
+    const extMatch = filePath.match(/\.([a-zA-Z0-9]+)(?:\?|$)/)
+    const ext = (extMatch && extMatch[1]) || 'jpg'
+    const cloudPath = `avatar/login/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`
+    wx.cloud.uploadFile({
+      cloudPath,
+      filePath,
+      success: (res) => {
+        if (res && res.fileID) resolve(res.fileID)
+        else reject(new Error('头像上传失败'))
+      },
+      fail: reject
+    })
+  })
+}
 
 Page({
   data: {
@@ -13,6 +36,7 @@ Page({
     canSubmit: false,
     submitting: false,
     showRegister: false,
+    profileRepair: false,
     redirect: '',
     needLogin: true
   },
@@ -38,7 +62,7 @@ Page({
   async checkUserStatus() {
     try {
       const data = await requestCloud('getUser', 'get', {}, { throwError: false })
-      if (data && data._openid && data.nickName && data.avatarUrl) {
+      if (data && data._openid && data.nickName && data.avatarUrl && !isTemporaryFileUrl(data.avatarUrl)) {
         const app = getApp()
         if (!app.globalData) app.globalData = {}
         app.globalData.openid = data._openid
@@ -51,6 +75,13 @@ Page({
 
         setTimeout(() => { this.goTarget() }, 600)
         return
+      }
+      if (data && data._openid) {
+        this.setData({
+          profileRepair: true,
+          'form.nickName': data.nickName || '',
+          'form.agreed': true
+        })
       }
     } catch (e) {}
 
@@ -146,7 +177,8 @@ Page({
     this.setData({ submitting: true })
     wx.showLoading({ title: '登录中...', mask: true })
     try {
-      const result = await login(trimmedNick, avatarUrl)
+      const stableAvatarUrl = await uploadAvatarFile(avatarUrl)
+      const result = await login(trimmedNick, stableAvatarUrl)
       wx.hideLoading()
       if (result.ok) {
         wx.showToast({ title: '登录成功', icon: 'success' })
@@ -156,7 +188,7 @@ Page({
       }
     } catch (err) {
       wx.hideLoading()
-      wx.showToast({ title: '登录异常', icon: 'none' })
+      wx.showToast({ title: err && err.message ? err.message : '登录异常', icon: 'none' })
     } finally {
       this.setData({ submitting: false })
     }

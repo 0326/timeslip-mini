@@ -1,4 +1,5 @@
 const { storage } = require('./storage')
+const { isTemporaryFileUrl } = require('./helpers')
 
 const LOGIN_PAGE = '/pages/login/index'
 
@@ -24,11 +25,12 @@ function isLoggedIn() {
   try {
     const app = getApp()
     if (app && app.globalData && app.globalData.userInfo && app.globalData.openid) {
-      return true
+      const avatarUrl = app.globalData.userInfo.avatarUrl
+      return !!(avatarUrl && !isTemporaryFileUrl(avatarUrl))
     }
   } catch (e) {}
   const cached = storage.get('userInfo')
-  return !!(cached && cached._openid)
+  return !!(cached && cached._openid && cached.avatarUrl && !isTemporaryFileUrl(cached.avatarUrl))
 }
 
 function isAdmin() {

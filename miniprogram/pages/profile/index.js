@@ -91,6 +91,10 @@ Page({
     })
   },
 
+  onAvatarError() {
+    this.setData({ avatarSrc: '/images/icons/avatar.png' })
+  },
+
   onEditAvatar() {
     wx.showActionSheet({
       itemList: ['修改头像', '修改昵称'],

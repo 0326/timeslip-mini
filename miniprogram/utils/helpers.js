@@ -96,10 +96,19 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;')
 }
 
+function isTemporaryFileUrl(url) {
+  if (!url || typeof url !== 'string') return false
+  return /^(wxfile|http:\/\/tmp|https?:\/\/tmp|https?:\/\/127\.0\.0\.1|https?:\/\/localhost|\/tmp\/|tmp\/)/i.test(url.trim())
+}
+
 function resolveAvatarUrl(fileID, defaultUrl) {
   return new Promise((resolve) => {
     const fallback = defaultUrl || '/images/icons/avatar.png'
     if (!fileID) {
+      resolve(fallback)
+      return
+    }
+    if (isTemporaryFileUrl(fileID)) {
       resolve(fallback)
       return
     }
@@ -136,5 +145,6 @@ module.exports = {
   shuffle,
   clamp,
   escapeHtml,
+  isTemporaryFileUrl,
   resolveAvatarUrl
 }

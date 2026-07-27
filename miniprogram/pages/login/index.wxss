@@ -7,6 +7,7 @@
   padding-bottom: calc(60rpx + env(safe-area-inset-bottom));
   position: relative;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .login-hero {
@@ -17,24 +18,35 @@
   left: 0;
   right: 0;
   z-index: 10;
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  transition: top 0.58s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.58s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .login-hero.is-center {
   top: 50%;
-  transform: translateY(-60%);
+  transform: translateY(-50%);
 }
 
 .login-hero.is-top {
-  top: calc(120rpx + env(safe-area-inset-top));
+  top: calc(132rpx + env(safe-area-inset-top));
   transform: translateY(0);
 }
 
 .hero-logo {
-  width: 180rpx;
-  height: 180rpx;
+  width: 200rpx;
+  height: 200rpx;
   margin-bottom: 24rpx;
   animation: logo-spin 18s linear infinite;
+  transition: width 0.58s cubic-bezier(0.4, 0, 0.2, 1),
+    height 0.58s cubic-bezier(0.4, 0, 0.2, 1),
+    margin-bottom 0.58s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.login-hero.is-top .hero-logo {
+  width: 200rpx;
+  height: 200rpx;
+  margin-bottom: 12rpx;
 }
 
 @keyframes logo-spin {
@@ -46,29 +58,45 @@
   font-size: 56rpx;
   font-weight: bold;
   color: var(--ancient-ink);
-  letter-spacing: 12rpx;
+  letter-spacing: 8rpx;
   margin-bottom: 12rpx;
+  line-height: 1.12;
+  transition: font-size 0.58s cubic-bezier(0.4, 0, 0.2, 1),
+    margin-bottom 0.58s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.login-hero.is-top .hero-title {
+  font-size: 46rpx;
+  margin-bottom: 8rpx;
 }
 
 .hero-subtitle {
   font-size: 26rpx;
   color: var(--wechat-text2);
-  letter-spacing: 4rpx;
+  letter-spacing: 2rpx;
   opacity: 0.8;
+  line-height: 1.35;
+  transition: font-size 0.58s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.login-hero.is-top .hero-subtitle {
+  font-size: 24rpx;
 }
 
 .login-card {
   width: 100%;
   background: var(--wechat-white);
   border-radius: 24rpx;
-  padding: 56rpx 48rpx 40rpx;
+  padding: 48rpx 48rpx 40rpx;
   box-shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.06);
   box-sizing: border-box;
   opacity: 0;
   transform: translateY(40rpx);
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   transition-delay: 0.1s;
-  margin-top: calc(320rpx + env(safe-area-inset-top));
+  margin-top: calc(500rpx + env(safe-area-inset-top));
+  position: relative;
+  z-index: 1;
 }
 
 .login-card.show {
@@ -79,13 +107,14 @@
 .card-label {
   font-size: 28rpx;
   color: var(--wechat-text2);
-  margin-bottom: 40rpx;
+  margin-bottom: 36rpx;
   letter-spacing: 2rpx;
   text-align: center;
+  line-height: 1.35;
 }
 
 .avatar-wrap {
-  margin: 0 auto 40rpx;
+  margin: 0 auto 36rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -153,7 +182,7 @@
 
 .nickname-row {
   width: 100%;
-  margin-bottom: 40rpx;
+  margin-bottom: 36rpx;
   display: block;
   box-sizing: border-box;
 }
