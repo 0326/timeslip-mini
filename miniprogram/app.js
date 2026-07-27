@@ -12,7 +12,13 @@ App({
       figures: null,
       dnaQuestions: null
     },
-    currentTab: 0
+    currentTab: 0,
+    settings: {
+      bigFont: false,
+      themeName: '古纸原风',
+      notifyEnabled: true,
+      vibrationEnabled: true
+    }
   },
 
   tabList: [
@@ -40,6 +46,8 @@ App({
 
     // 仅从本地缓存恢复用户态，未登录时由 loginGuard 跳转到登录页
     restoreFromCache()
+    // 同步本地 app_settings 到 globalData
+    this.restoreSettings()
     // 确保青月（系统引导）会话存在
     require('./utils/chatSession').initQingyueSession()
     this.preloadCommonData()
@@ -47,6 +55,56 @@ App({
 
   pointsListeners: [],
   userListeners: [],
+  settingsListeners: [],
+
+  restoreSettings() {
+    try {
+      const { storage } = require('./utils/storage')
+      const saved = storage.get('app_settings')
+      if (saved && typeof saved === 'object') {
+        if (typeof saved.bigFont === 'boolean') this.globalData.settings.bigFont = saved.bigFont
+        if (typeof saved.themeName === 'string') this.globalData.settings.themeName = saved.themeName
+        if (typeof saved.notifyEnabled === 'boolean') this.globalData.settings.notifyEnabled = saved.notifyEnabled
+        if (typeof saved.vibrationEnabled === 'boolean') this.globalData.settings.vibrationEnabled = saved.vibrationEnabled
+      }
+    } catch (e) {
+      console.error('restoreSettings error:', e)
+    }
+  },
+
+  applySettings(settings) {
+    if (!settings || typeof settings !== 'object') return
+    const s = this.globalData.settings
+    if (typeof settings.bigFont === 'boolean') s.bigFont = settings.bigFont
+    if (typeof settings.themeName === 'string') s.themeName = settings.themeName
+    if (typeof settings.notifyEnabled === 'boolean') s.notifyEnabled = settings.notifyEnabled
+    if (typeof settings.vibrationEnabled === 'boolean') s.vibrationEnabled = settings.vibrationEnabled
+    try {
+      const { storage } = require('./utils/storage')
+      storage.set('app_settings', {
+        notifyEnabled: s.notifyEnabled,
+        vibrationEnabled: s.vibrationEnabled,
+        bigFont: s.bigFont,
+        theme: s.themeName
+      }, 86400 * 365)
+    } catch (e) {
+      console.error('applySettings persist error:', e)
+    }
+    this.emitSettingsUpdate(s)
+  },
+
+  subscribeSettings(cb) {
+    if (typeof cb === 'function') this.settingsListeners.push(cb)
+    return () => {
+      this.settingsListeners = this.settingsListeners.filter(l => l !== cb)
+    }
+  },
+
+  emitSettingsUpdate(settings) {
+    this.settingsListeners.forEach(cb => {
+      try { cb(settings) } catch (e) {}
+    })
+  },
 
   subscribePoints(cb) {
     this.pointsListeners.push(cb)

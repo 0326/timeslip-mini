@@ -61,6 +61,16 @@
     </block>
 
     <block wx:elif="{{tab === 'works'}}">
+      <view wx:if="{{figure.relations && figure.relations.length}}" class="section-card">
+        <view class="card-title">人物关系</view>
+        <view class="relations-list">
+          <view wx:for="{{figure.relations}}" wx:key="index" class="relation-item">
+            <view class="rel-name">{{item.name || item.targetName}}</view>
+            <view class="rel-type">{{item.relation || item.type}}</view>
+          </view>
+        </view>
+      </view>
+
       <view wx:if="{{figure.masterpieces && figure.masterpieces.length}}" class="section-card">
         <view class="card-title">主要著作</view>
         <view

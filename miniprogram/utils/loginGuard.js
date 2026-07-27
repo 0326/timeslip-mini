@@ -31,6 +31,36 @@ function isLoggedIn() {
   return !!(cached && cached._openid)
 }
 
+function isAdmin() {
+  try {
+    const app = getApp()
+    if (app && app.globalData && app.globalData.userInfo) {
+      const role = app.globalData.userInfo.role
+      if (role === 'admin') return true
+    }
+  } catch (e) {}
+  try {
+    const cached = storage.get('userInfo')
+    return !!(cached && cached.role === 'admin')
+  } catch (e) {}
+  return false
+}
+
+function requireAdmin(pageInst) {
+  if (!isLoggedIn()) {
+    wx.redirectTo({ url: LOGIN_PAGE })
+    return false
+  }
+  if (!isAdmin()) {
+    wx.showToast({ title: '无权限访问', icon: 'none' })
+    setTimeout(() => {
+      wx.navigateBack({ fail: () => wx.reLaunch({ url: '/pages/profile/index' }) })
+    }, 800)
+    return false
+  }
+  return true
+}
+
 function getCurrentPageUrl() {
   try {
     const pages = getCurrentPages()
@@ -76,6 +106,8 @@ function checkLogin(pageInst, needLogin = true) {
 module.exports = {
   checkLogin,
   isLoggedIn,
+  isAdmin,
+  requireAdmin,
   isOnLoginPage,
   LOGIN_PAGE
 }

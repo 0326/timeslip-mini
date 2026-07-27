@@ -3,6 +3,22 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
+async function tryUnlock(OPENID, key) {
+  try {
+    const userRes = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
+    if (!userRes.data || !userRes.data.length) return
+    const user = userRes.data[0]
+    const achievements = user.achievements || []
+    if (achievements.some(a => a.key === key)) return
+    const REWARDS = { first_chat: 10, first_letter: 10, first_like: 5, dna_done: 20, chat_10: 30, chat_50: 80, letter_5: 50, comment_10: 30, first_memorial: 20, memorial_5: 80, figure_10: 60, read_book: 15, all_dynasties: 200, collector: 500, time_master: 1000 }
+    const reward = REWARDS[key] || 0
+    achievements.push({ key, unlockedAt: new Date() })
+    await db.collection('users').doc(user._id).update({
+      data: { achievements, points: db.command.inc(reward), updatedAt: db.serverDate() }
+    })
+  } catch (e) { console.warn('tryUnlock fail', key, e.message) }
+}
+
 // 封面图云文件 ID（已上传到云存储）
 const COVER_FILE_IDS = {
   emperor: 'cloud://cloud1-d0gunpzup215cfd87.636c-cloud1-d0gunpzup215cfd87-1457646459/dna-covers/emperor.jpg',
@@ -987,6 +1003,8 @@ async function submit(OPENID, data) {
     console.warn('save record failed:', e.message)
     recordId = 'mock_' + Date.now()
   }
+
+  tryUnlock(OPENID, 'dna_done')
 
   return {
     code: 0, message: 'ok',

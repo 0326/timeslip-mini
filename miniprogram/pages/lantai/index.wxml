@@ -93,14 +93,14 @@
   </block>
 
   <block wx:else>
-    <view wx:if="{{books.length === 0}}" class="empty">
-      <text class="iconfont e-icon icon-content"></text>
-      <text class="e-text">暂无典籍数据</text>
+    <view wx:if="{{filteredBooks.length === 0}}" class="empty">
+      <text class="iconfont e-icon {{searchText ? 'icon-search' : 'icon-content'}}"></text>
+      <text class="e-text">{{searchText ? '未找到相关典籍' : '暂无典籍数据'}}</text>
     </view>
     <scroll-view wx:else class="book-scroll" scroll-y enhanced show-scrollbar="{{false}}">
       <view class="books-list">
         <view
-          wx:for="{{books}}"
+          wx:for="{{filteredBooks}}"
           wx:key="id"
           class="book-item"
           data-id="{{item.id}}"

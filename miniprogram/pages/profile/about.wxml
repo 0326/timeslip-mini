@@ -4,12 +4,12 @@
   <view class="container">
     <view class="logo-area">
       <text class="logo-text">穿越圈</text>
-      <text class="logo-slogan">和历史上物做朋友</text>
+      <text class="logo-slogan">和历史人物做朋友</text>
     </view>
 
     <view class="version-card">
       <text class="version-label">当前版本</text>
-      <text class="version-value">v1.0.0 (build 1)</text>
+      <text class="version-value">{{version}}</text>
     </view>
 
     <view class="section">
@@ -32,6 +32,13 @@
           <view class="cell-left">
             <view class="cell-icon iconfont icon-mail"></view>
             <view class="cell-label">联系我们</view>
+          </view>
+          <text class="arrow">›</text>
+        </view>
+        <view class="cell" bindtap="checkUpdate">
+          <view class="cell-left">
+            <view class="cell-icon iconfont icon-upload"></view>
+            <view class="cell-label">检查更新</view>
           </view>
           <text class="arrow">›</text>
         </view>

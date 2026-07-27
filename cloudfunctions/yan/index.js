@@ -3,6 +3,22 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
+async function tryUnlock(OPENID, key) {
+  try {
+    const userRes = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
+    if (!userRes.data || !userRes.data.length) return
+    const user = userRes.data[0]
+    const achievements = user.achievements || []
+    if (achievements.some(a => a.key === key)) return
+    const REWARDS = { first_chat: 10, first_letter: 10, first_like: 5, dna_done: 20, chat_10: 30, chat_50: 80, letter_5: 50, comment_10: 30, first_memorial: 20, memorial_5: 80, figure_10: 60, read_book: 15, all_dynasties: 200, collector: 500, time_master: 1000 }
+    const reward = REWARDS[key] || 0
+    achievements.push({ key, unlockedAt: new Date() })
+    await db.collection('users').doc(user._id).update({
+      data: { achievements, points: db.command.inc(reward), updatedAt: db.serverDate() }
+    })
+  } catch (e) { console.warn('tryUnlock fail', key, e.message) }
+}
+
 // ====== 信使配置 ======
 // 往返时长（毫秒）。开发模式自动缩短为秒级便于测试
 const DEV_MODE = process.env.NODE_ENV === 'dev' || process.env.YAN_DEV === '1'
@@ -381,6 +397,14 @@ async function processArrived(OPENID) {
             arrivedAt: db.serverDate()
           }
         })
+
+        tryUnlock(OPENID, 'first_letter')
+        ;(async () => {
+          try {
+            const cnt = await db.collection('yan_letters').where({ _openid: OPENID, status: 'arrived' }).count()
+            if ((cnt.total || 0) >= 5) await tryUnlock(OPENID, 'letter_5')
+          } catch (e) {}
+        })()
       } catch (e) {
         console.warn('processArrived single fail:', e.message)
       }

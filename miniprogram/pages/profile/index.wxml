@@ -65,7 +65,7 @@
   </view>
 
   <view class="about-row">
-    <text class="a-title">穿越圈 v1.0.0</text>
+    <text class="a-title">穿越圈 {{version}}</text>
   </view>
 
   <view class="bottom-pad"></view>

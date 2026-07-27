@@ -3,12 +3,8 @@ const { CONTENT_SECURITY } = require('../../utils/constants')
 const { throttle } = require('../../utils/helpers')
 const loginGuard = require('../../utils/loginGuard')
 const {
-  USE_MOCK_FALLBACK,
   enrichMomentView,
   enrichCommentView,
-  mockGetDetail,
-  mockToggleLike,
-  mockCreateComment,
   normalizeRemoteAssetUrl
 } = require('../../utils/momentAdapter')
 
@@ -73,16 +69,6 @@ Page({
       }
     } catch (e) {
       console.warn('[moment-detail] cloud load failed:', e && e.message)
-    }
-
-    if (!result && USE_MOCK_FALLBACK) {
-      const mock = mockGetDetail(id)
-      result = {
-        moment: mock.moment,
-        comments: mock.comments,
-        commentCursor: '',
-        commentHasMore: false
-      }
     }
 
     if (!result) {
@@ -151,10 +137,6 @@ Page({
     } catch (e) {
       console.warn('[moment-detail] like failed:', e && e.message)
     }
-    if (!result && USE_MOCK_FALLBACK) {
-      result = mockToggleLike({ momentId: this.data.id, openid })
-    }
-
     if (!result) {
       const snap = this.data.likeSnapshot || original
       const rollbackText = snap.likeCount > 999 ? (snap.likeCount / 1000).toFixed(1) + 'k' : snap.likeCount
@@ -274,15 +256,6 @@ Page({
       }, { throwError: false })
     } catch (e) {
       console.warn('[moment-detail] commentCreate failed:', e && e.message)
-    }
-
-    if (!result && USE_MOCK_FALLBACK) {
-      result = mockCreateComment({
-        momentId: this.data.id,
-        content: text,
-        replyTo: this.data.replyTo,
-        replyName: this.data.replyName
-      })
     }
 
     if (!result) {
@@ -408,10 +381,6 @@ Page({
       current: images[idx] || images[0],
       urls: images
     })
-  },
-
-  onLoadMoreComments() {
-    // TODO: 分页加载更多评论
   },
 
   onShare() {

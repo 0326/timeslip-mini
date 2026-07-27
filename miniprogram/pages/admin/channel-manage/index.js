@@ -16,10 +16,7 @@ Page({
   },
 
   onLoad() {
-    if (!loginGuard.isLoggedIn()) {
-      wx.redirectTo({ url: '/pages/login/index' })
-      return
-    }
+    if (!loginGuard.requireAdmin(this)) return
     this.loadChannels()
   },
 

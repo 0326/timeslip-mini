@@ -1,10 +1,43 @@
 Page({
-  rateApp: function () {
-    wx.previewImage({
-      current: '',
-      urls: ['https://img.icons8.com/color/96/five-star.png'],
-      fail: function () {
-        wx.showToast({ title: '感谢您的支持！', icon: 'none' })
+  data: { version: 'v1.0.0' },
+
+  onLoad() {
+    try {
+      const info = wx.getAccountInfoSync && wx.getAccountInfoSync()
+      if (info && info.miniProgram && info.miniProgram.version) {
+        this.setData({ version: 'v' + info.miniProgram.version })
+      }
+    } catch (e) {}
+  },
+
+  rateApp() {
+    wx.showModal({
+      title: '给我们评分',
+      content: '感谢您的支持！\n\n请在微信「发现-小程序」中搜索「穿越圈」，进入后点击右上角「···」选择「评价」即可为我们打分。',
+      showCancel: false,
+      confirmText: '知道了'
+    })
+  },
+
+  checkUpdate() {
+    const um = wx.getUpdateManager && wx.getUpdateManager()
+    if (!um) {
+      wx.showToast({ title: '当前版本不支持检查更新', icon: 'none' })
+      return
+    }
+    wx.showLoading({ title: '检查中...' })
+    um.onCheckForUpdate(function (res) {
+      wx.hideLoading()
+      if (res.hasUpdate) {
+        wx.showModal({
+          title: '发现新版本',
+          content: '新版本已下载，是否重启应用？',
+          success: function (r) {
+            if (r.confirm) um.applyUpdate()
+          }
+        })
+      } else {
+        wx.showToast({ title: '已是最新版本', icon: 'success' })
       }
     })
   },

@@ -15,7 +15,8 @@ Page({
     avatarSrc: '/images/icons/avatar.png',
     menus: MENU_LIST,
     statusBarHeight: 40,
-    isAdmin: false
+    isAdmin: false,
+    version: 'v1.0.0'
   },
 
   onLoad() {
@@ -23,6 +24,12 @@ Page({
       const sys = wx.getSystemInfoSync()
       const rpxRatio = 750 / sys.windowWidth
       this.setData({ statusBarHeight: Math.round((sys.statusBarHeight || 20) * rpxRatio) })
+    } catch (e) {}
+    try {
+      const info = wx.getAccountInfoSync && wx.getAccountInfoSync()
+      if (info && info.miniProgram && info.miniProgram.version) {
+        this.setData({ version: 'v' + info.miniProgram.version })
+      }
     } catch (e) {}
     this.refreshUser()
   },

@@ -476,3 +476,15 @@
   color: #999;
   font-size: 26rpx;
 }
+
+.relations-list { padding: 0 24rpx; }
+.relation-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f5f5f5;
+}
+.relation-item:last-child { border-bottom: none; }
+.rel-name { font-size: 28rpx; color: #191919; }
+.rel-type { font-size: 24rpx; color: #888; }

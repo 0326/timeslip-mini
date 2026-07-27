@@ -3,6 +3,22 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
+async function tryUnlock(OPENID, key) {
+  try {
+    const userRes = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
+    if (!userRes.data || !userRes.data.length) return
+    const user = userRes.data[0]
+    const achievements = user.achievements || []
+    if (achievements.some(a => a.key === key)) return
+    const REWARDS = { first_chat: 10, first_letter: 10, first_like: 5, dna_done: 20, chat_10: 30, chat_50: 80, letter_5: 50, comment_10: 30, first_memorial: 20, memorial_5: 80, figure_10: 60, read_book: 15, all_dynasties: 200, collector: 500, time_master: 1000 }
+    const reward = REWARDS[key] || 0
+    achievements.push({ key, unlockedAt: new Date() })
+    await db.collection('users').doc(user._id).update({
+      data: { achievements, points: db.command.inc(reward), updatedAt: db.serverDate() }
+    })
+  } catch (e) { console.warn('tryUnlock fail', key, e.message) }
+}
+
 const MAX_LIMIT = 100
 
 exports.main = async (event, context) => {
@@ -281,6 +297,10 @@ async function toggleLike(OPENID, data) {
 
     if (!result) return { code: -1, message: '动态不存在' }
 
+    if (result.liked) {
+      tryUnlock(OPENID, 'first_like')
+    }
+
     const latestLikes = result.likes || []
     const likeCount = latestLikes.length
     const likePreview = buildLikePreview(latestLikes)
@@ -393,6 +413,13 @@ async function createComment(OPENID, data) {
     createdAt: db.serverDate()
   }
   const r = await db.collection('moment_comments').add({ data: doc })
+
+  ;(async () => {
+    try {
+      const cnt = await db.collection('moment_comments').where({ _openid: OPENID }).count()
+      if ((cnt.total || 0) >= 10) await tryUnlock(OPENID, 'comment_10')
+    } catch (e) {}
+  })()
 
   let finalCommentCount = 0
   try {

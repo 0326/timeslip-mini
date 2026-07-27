@@ -87,6 +87,7 @@ Page({
     letters: [],
     toLetter: '',
     books: [],
+    filteredBooks: [],
     searchText: '',
     loading: true,
     refreshing: false,
@@ -194,6 +195,7 @@ Page({
 
     if (cached && !force) {
       this.setData({ books: cached })
+      this.filterBooks(this.data.searchText)
       this.fetchAndUpdateBooks()
       return
     }
@@ -222,13 +224,16 @@ Page({
           [...cacheIds].some(id => !newIds.has(id))
         if (hasChanges) {
           this.setData({ books: newBooks })
+          this.filterBooks(this.data.searchText)
         }
       } else {
         this.setData({ books: newBooks })
+        this.filterBooks(this.data.searchText)
       }
     } catch (e) {
       if (!this.data.books.length) {
         this.setData({ books: [] })
+        this.filterBooks(this.data.searchText)
       }
     }
   },
@@ -239,8 +244,24 @@ Page({
   },
 
   onSearchInput(e) {
-    this.setData({ searchText: e.detail.value })
+    const searchText = e.detail.value
+    this.setData({ searchText })
     this.applyFilter(this.data.figures)
+    this.filterBooks(searchText)
+  },
+
+  filterBooks(keyword) {
+    if (!keyword) {
+      this.setData({ filteredBooks: this.data.books })
+      return
+    }
+    const kw = keyword.toLowerCase()
+    const filtered = (this.data.books || []).filter(b =>
+      (b.title || '').toLowerCase().includes(kw) ||
+      (b.author || '').toLowerCase().includes(kw) ||
+      (b.desc || '').toLowerCase().includes(kw)
+    )
+    this.setData({ filteredBooks: filtered })
   },
 
   onLetterTap(e) {

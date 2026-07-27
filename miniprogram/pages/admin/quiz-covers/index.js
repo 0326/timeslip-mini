@@ -14,10 +14,7 @@ Page({
       var sys = wx.getSystemInfoSync()
       this.setData({ statusBarHeight: sys.statusBarHeight || 20 })
     } catch (e) {}
-    if (!loginGuard.isLoggedIn()) {
-      wx.redirectTo({ url: '/pages/login/index' })
-      return
-    }
+    if (!loginGuard.requireAdmin(this)) return
     this.loadQuizzes()
   },
 

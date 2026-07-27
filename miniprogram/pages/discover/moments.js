@@ -1,12 +1,8 @@
 const { requestCloud } = require('../../utils/cloudRequest')
 const { PAGINATION, DYNASTY_FILTERS, CONTENT_SECURITY } = require('../../utils/constants')
 const {
-  USE_MOCK_FALLBACK,
   enrichMomentView,
   enrichCommentView,
-  mockListMoments,
-  mockToggleLike,
-  mockCreateComment,
   normalizeRemoteAssetUrl
 } = require('../../utils/momentAdapter')
 const loginGuard = require('../../utils/loginGuard')
@@ -133,10 +129,6 @@ Page({
       }
     } catch (e) {
       console.warn('[moments] cloud list failed:', e && e.message)
-    }
-
-    if (!result && USE_MOCK_FALLBACK) {
-      result = mockListMoments({ cursor, limit, dynasty })
     }
 
     if (!result) {
@@ -266,10 +258,6 @@ Page({
       console.warn('[moments] like failed:', e && e.message)
     }
 
-    if (!result && USE_MOCK_FALLBACK) {
-      result = mockToggleLike({ momentId: id, openid })
-    }
-
     const curr = this.data.moments[idx]
     const cleanedPending = { ...this.data.pendingLikeIds }
     delete cleanedPending[id]
@@ -331,8 +319,6 @@ Page({
   onCommentInput(e) {
     this.setData({ commentInput: e.detail.value })
   },
-
-  onCommentFocus() {},
 
   async onSubmitComment() {
     const text = (this.data.commentInput || '').trim()
@@ -413,15 +399,6 @@ Page({
       }, { throwError: false })
     } catch (e) {
       console.warn('[moments] commentCreate failed:', e && e.message)
-    }
-
-    if (!result && USE_MOCK_FALLBACK) {
-      result = mockCreateComment({
-        momentId,
-        content: text,
-        replyTo: this.data.commentReplyTo,
-        replyName: this.data.commentReplyName
-      })
     }
 
     if (!result) {

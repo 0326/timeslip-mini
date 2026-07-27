@@ -258,7 +258,6 @@
         placeholder-style="color:#aaa"
         value="{{commentInput}}"
         bindinput="onCommentInput"
-        bindfocus="onCommentFocus"
         bindconfirm="onSubmitComment"
         confirm-type="send"
         auto-focus="{{showCommentBar}}"

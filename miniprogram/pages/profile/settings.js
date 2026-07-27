@@ -1,4 +1,4 @@
-const storage = require('../../utils/storage')
+const { storage } = require('../../utils/storage')
 const loginGuard = require('../../utils/loginGuard')
 
 Page({
@@ -30,12 +30,15 @@ Page({
   },
 
   saveSettings: function () {
-    storage.set('app_settings', {
+    const settings = {
       notifyEnabled: this.data.notifyEnabled,
       vibrationEnabled: this.data.vibrationEnabled,
       bigFont: this.data.bigFont,
       theme: this.data.themeName
-    }, 86400 * 365)
+    }
+    storage.set('app_settings', settings, 86400 * 365)
+    const app = getApp()
+    if (app && app.applySettings) app.applySettings(settings)
   },
 
   calcCache: function () {
@@ -50,52 +53,81 @@ Page({
   },
 
   onToggleNotify: function (e) {
-    this.setData({ notifyEnabled: e.detail.value }, this.saveSettings)
-    wx.showToast({ title: e.detail.value ? '通知已开启' : '通知已关闭', icon: 'none' })
+    const v = e.detail.value
+    if (v) {
+      wx.requestSubscribeMessage({
+        tmplIds: ['tmpl_achievement_unlocked', 'tmpl_letter_arrived'],
+        success: () => {
+          this.setData({ notifyEnabled: true }, this.saveSettings)
+          wx.showToast({ title: '通知已开启', icon: 'none' })
+        },
+        fail: () => {
+          this.setData({ notifyEnabled: false }, this.saveSettings)
+          wx.showToast({ title: '通知开启失败', icon: 'none' })
+        }
+      })
+    } else {
+      this.setData({ notifyEnabled: false }, this.saveSettings)
+      wx.showToast({ title: '通知已关闭', icon: 'none' })
+    }
   },
   onToggleVibration: function (e) {
     this.setData({ vibrationEnabled: e.detail.value }, this.saveSettings)
     if (e.detail.value) wx.vibrateShort({ type: 'light' })
   },
   onToggleBigFont: function (e) {
-    this.setData({ bigFont: e.detail.value }, this.saveSettings)
-    wx.showToast({ title: '设置已保存，下次启动生效', icon: 'none' })
-  },
-
-  toggleNotify: function () {
-    this.setData({ notifyEnabled: !this.data.notifyEnabled }, this.saveSettings)
-  },
-  toggleVibration: function () {
-    this.setData({ vibrationEnabled: !this.data.vibrationEnabled }, this.saveSettings)
-    if (this.data.vibrationEnabled) wx.vibrateShort({ type: 'light' })
-  },
-  toggleBigFont: function () {
-    this.setData({ bigFont: !this.data.bigFont }, this.saveSettings)
-    wx.showToast({ title: '设置已保存', icon: 'none' })
+    const v = e.detail.value
+    this.setData({ bigFont: v }, () => {
+      this.saveSettings()
+      const app = getApp()
+      if (app && app.applySettings) {
+        app.applySettings({ bigFont: v })
+      }
+      wx.showToast({ title: '已生效', icon: 'none' })
+    })
   },
 
   chooseTheme: function () {
-    var self = this
+    const self = this
     wx.showActionSheet({
       itemList: ['古纸原风（推荐）', '水墨素雅', '朱砂帝王', '微信原生'],
-      success: function (res) {
-        var names = ['古纸原风', '水墨素雅', '朱砂帝王', '微信原生']
-        self.setData({ themeName: names[res.tapIndex] }, self.saveSettings)
-        wx.showToast({ title: '主题已切换', icon: 'success' })
+      success(res) {
+        const names = ['古纸原风', '水墨素雅', '朱砂帝王', '微信原生']
+        const name = names[res.tapIndex]
+        self.setData({ themeName: name }, () => {
+          self.saveSettings()
+          const app = getApp()
+          if (app && app.applySettings) app.applySettings({ themeName: name })
+          wx.showToast({ title: '主题已切换', icon: 'success' })
+        })
       }
     })
   },
 
-  exportData: function () {
+  async exportData() {
     wx.showLoading({ title: '正在导出...' })
-    setTimeout(function () {
+    try {
+      const { requestCloud } = require('../../utils/cloudRequest')
+      const data = await requestCloud('getUser', 'export', {}, { throwError: false })
+      if (data && data.fileID) {
+        const r = await wx.cloud.downloadFile({ fileID: data.fileID })
+        wx.hideLoading()
+        wx.openDocument({
+          filePath: r.tempFilePath,
+          fileType: 'json',
+          success: () => {},
+          fail: () => {
+            wx.showToast({ title: '已保存到文件', icon: 'success' })
+          }
+        })
+      } else {
+        wx.hideLoading()
+        wx.showToast({ title: '导出失败', icon: 'none' })
+      }
+    } catch (e) {
       wx.hideLoading()
-      wx.showModal({
-        title: '导出成功',
-        content: '您的数据已打包生成。\n\n包含：用户资料、聊天记录、信件、成就、奏折进度。\n请通过"联系我们"获取完整版数据文件。',
-        showCancel: false
-      })
-    }, 1000)
+      wx.showToast({ title: '导出失败', icon: 'none' })
+    }
   },
 
   clearCache: function () {
@@ -123,24 +155,25 @@ Page({
   },
 
   onResetProfile: function () {
+    const self = this
     wx.showModal({
       title: '确认重置所有数据？',
-      content: '此操作会清空本地和云端的所有用户数据（聊天记录、信件、成就、奏折进度等），且无法恢复。是否继续？',
+      content: '此操作会清空云端的所有用户数据（聊天记录、信件、成就、奏折进度等），且无法恢复。是否继续？',
       confirmText: '确定重置',
       confirmColor: '#FA5151',
-      success: function (res) {
-        if (res.confirm) {
-          try {
-            wx.clearStorageSync()
-          } catch (e) {}
-          wx.showLoading({ title: '重置中...' })
-          setTimeout(function () {
-            wx.hideLoading()
-            wx.showToast({ title: '已重置', icon: 'success' })
-            setTimeout(function () {
-              wx.reLaunch({ url: '/pages/chat/index' })
-            }, 800)
-          }, 1000)
+      success: async (res) => {
+        if (!res.confirm) return
+        wx.showLoading({ title: '重置中...' })
+        try {
+          const { requestCloud } = require('../../utils/cloudRequest')
+          await requestCloud('getUser', 'reset', {}, { throwError: false })
+          try { wx.clearStorageSync() } catch (e) {}
+          wx.hideLoading()
+          wx.showToast({ title: '已重置', icon: 'success' })
+          setTimeout(() => wx.reLaunch({ url: '/pages/login/index' }), 800)
+        } catch (e) {
+          wx.hideLoading()
+          wx.showToast({ title: '重置失败', icon: 'none' })
         }
       }
     })

@@ -240,13 +240,6 @@ Page({
       .catch(() => {})
   },
 
-  onShare(e) {
-    const id = e.currentTarget.dataset.id
-    const video = this.data.videoList.find(v => v._id === id)
-    if (!video) return
-    wx.showShareMenu({ withShareTicket: true })
-  },
-
   onShareAppMessage() {
     const video = this.data.videoList[this.data.currentIndex]
     if (!video) return { title: '穿越圈', path: '/pages/discover/index' }

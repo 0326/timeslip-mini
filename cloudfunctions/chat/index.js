@@ -5,6 +5,22 @@ const _ = db.command
 
 const MAX_HISTORY = 30
 
+async function tryUnlock(OPENID, key) {
+  try {
+    const userRes = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
+    if (!userRes.data || !userRes.data.length) return
+    const user = userRes.data[0]
+    const achievements = user.achievements || []
+    if (achievements.some(a => a.key === key)) return
+    const REWARDS = { first_chat: 10, first_letter: 10, first_like: 5, dna_done: 20, chat_10: 30, chat_50: 80, letter_5: 50, comment_10: 30, first_memorial: 20, memorial_5: 80, figure_10: 60, read_book: 15, all_dynasties: 200, collector: 500, time_master: 1000 }
+    const reward = REWARDS[key] || 0
+    achievements.push({ key, unlockedAt: new Date() })
+    await db.collection('users').doc(user._id).update({
+      data: { achievements, points: db.command.inc(reward), updatedAt: db.serverDate() }
+    })
+  } catch (e) { console.warn('tryUnlock fail', key, e.message) }
+}
+
 const FIGURES = {
   'fig-kongzi': { name: '孔子', dynasty: '春秋·鲁', title: '儒家圣人', tone: '温厚谆谆，多用比喻，自称"丘"或"吾"。常引《诗》《书》，每以"子曰"结，语短而意长。' },
   'fig-simqian': { name: '司马迁', dynasty: '西汉', title: '太史公', tone: '严谨深沉，引史实作评，自称"愚"或"仆"，好作"太史公曰"式评论。' },
@@ -147,6 +163,16 @@ async function modeChat(OPENID, data) {
   })
 
   try { await bumpSession(OPENID, figureId, content) } catch (_) {}
+
+  tryUnlock(OPENID, 'first_chat')
+  ;(async () => {
+    try {
+      const cnt = await db.collection('chat_messages').where({ _openid: OPENID, role: 'user' }).count()
+      const total = cnt.total || 0
+      if (total >= 10) await tryUnlock(OPENID, 'chat_10')
+      if (total >= 50) await tryUnlock(OPENID, 'chat_50')
+    } catch (e) {}
+  })()
 
   return {
     code: 0, message: 'ok',

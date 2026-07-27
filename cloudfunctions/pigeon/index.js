@@ -3,6 +3,22 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
+async function tryUnlock(OPENID, key) {
+  try {
+    const userRes = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
+    if (!userRes.data || !userRes.data.length) return
+    const user = userRes.data[0]
+    const achievements = user.achievements || []
+    if (achievements.some(a => a.key === key)) return
+    const REWARDS = { first_chat: 10, first_letter: 10, first_like: 5, dna_done: 20, chat_10: 30, chat_50: 80, letter_5: 50, comment_10: 30, first_memorial: 20, memorial_5: 80, figure_10: 60, read_book: 15, all_dynasties: 200, collector: 500, time_master: 1000 }
+    const reward = REWARDS[key] || 0
+    achievements.push({ key, unlockedAt: new Date() })
+    await db.collection('users').doc(user._id).update({
+      data: { achievements, points: db.command.inc(reward), updatedAt: db.serverDate() }
+    })
+  } catch (e) { console.warn('tryUnlock fail', key, e.message) }
+}
+
 const PAPER_STYLES = [
   { key: 'rice', name: '宣纸', color: '#F5ECD7', desc: '唐代文人标配，古雅质朴' },
   { key: 'jade', name: '玉帛', color: '#EAF6F5', desc: '温润如玉，淡雅脱俗' },
@@ -103,6 +119,15 @@ async function sendLetter(OPENID, data) {
     createdAt: now
   }
   await db.collection('letters').add({ data: replyDoc })
+
+  tryUnlock(OPENID, 'first_letter')
+  ;(async () => {
+    try {
+      const cnt = await db.collection('letters').where({ _openid: OPENID, type: 'inbox' }).count()
+      if ((cnt.total || 0) >= 5) await tryUnlock(OPENID, 'letter_5')
+    } catch (e) {}
+  })()
+
   return { code: 0, message: 'ok', data: { userLetterId, replyId, replyContent, deliveryTime: replyDoc.deliveryTime } }
 }
 

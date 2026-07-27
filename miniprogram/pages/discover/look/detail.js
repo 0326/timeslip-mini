@@ -2,7 +2,7 @@ const { requestCloud } = require('../../../utils/cloudRequest')
 const { storage } = require('../../../utils/storage')
 const loginGuard = require('../../../utils/loginGuard')
 const { throttle } = require('../../../utils/helpers')
-const { getArticleDetail, formatCount, processArticle } = require('../../../utils/articleData')
+const { formatCount, processArticle } = require('../../../utils/articleData')
 
 const DETAIL_CACHE_TTL = 10 * 60
 const CACHE_VERSION = 'v4'
@@ -76,14 +76,6 @@ Page({
       return
     }
 
-    // 缓存也没有，用本地数据
-    const localArticle = getArticleDetail(id)
-    if (localArticle) {
-      await this.renderDetail({ article: localArticle, liked: false, bookmarked: false, pollVoted: false, pollResults: null })
-      return
-    }
-
-    // 本地数据也没有
     console.error('load look article detail failed: not found')
     this.setData({ loading: false })
     wx.showToast({ title: '文章不存在', icon: 'none' })

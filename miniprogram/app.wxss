@@ -104,6 +104,25 @@
   --font-xxl: 44rpx;
 }
 
+/* 大字体模式 */
+page.big-font {
+  --font-md: 32rpx;
+  --font-lg: 36rpx;
+  --font-xl: 40rpx;
+}
+
+/* 水墨素雅主题 */
+page.theme-ink {
+  --ancient-paper: #F5F5F5;
+  --wechat-bg: #F0F0F0;
+}
+
+/* 朱砂帝王主题 */
+page.theme-cinnabar {
+  --ancient-paper: #FFF5F0;
+  --wechat-bg: #FAF0F0;
+}
+
 page {
   background-color: var(--wechat-bg);
   font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Segoe UI, Arial, Roboto, 'PingFang SC', 'miui', 'Hiragino Sans GB', 'Microsoft Yahei', sans-serif;

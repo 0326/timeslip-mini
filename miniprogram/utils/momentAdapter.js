@@ -1,10 +1,5 @@
 const { getDynastyInfo } = require('./date')
 
-const USE_MOCK_FALLBACK = false
-// 调试说明：当云端接口未完成或需要本地联调 UI 时，
-// 将 USE_MOCK_FALLBACK 临时改为 true 即可回到 mock 数据模式；
-// 上线前必须保持为 false，避免线上异常时静默回退到假数据。
-
 // ========== 时间工具（统一使用毫秒） ==========
 function _pad2(n) { return n < 10 ? '0' + n : '' + n }
 function _normalizeMs(ts) {
@@ -313,81 +308,11 @@ function enrichCommentView(c) {
   }
 }
 
-function mockListMoments({ cursor = '', limit = 10, dynasty = '' } = {}) {
-  let rows = MOCK_MOMENTS.slice()
-  if (dynasty && dynasty !== 'all') {
-    rows = rows.filter(r => r.dynasty === dynasty)
-  }
-  const startIdx = cursor ? rows.findIndex(r => r._id === cursor) + 1 : 0
-  const sliced = startIdx >= 0 ? rows.slice(startIdx, startIdx + limit) : []
-  const hasMore = startIdx + limit < rows.length
-  const nextCursor = hasMore && sliced.length ? sliced[sliced.length - 1]._id : ''
-  const moments = sliced.map(r => enrichMomentView(adaptMockMoment(r)))
-  return { moments, nextCursor, hasMore }
-}
-
-function mockGetDetail(momentId) {
-  const row = MOCK_MOMENTS.find(r => r._id === momentId) || MOCK_MOMENTS[0]
-  const moment = enrichMomentView(adaptMockMoment(row))
-  const comments = adaptMockComments(row.comments || []).map(enrichCommentView)
-  return { moment, comments }
-}
-
-function mockToggleLike({ momentId, openid = 'local_user' }) {
-  const row = MOCK_MOMENTS.find(r => r._id === momentId)
-  if (!row) return { liked: false, likeCount: 0, likePreview: [] }
-  const likes = row.likes || []
-  const idx = likes.findIndex(l => (l.openid || l) === openid)
-  let liked
-  if (idx === -1) {
-    likes.unshift({ openid, name: '我' })
-    liked = true
-  } else {
-    likes.splice(idx, 1)
-    liked = false
-  }
-  row.likeCount = Math.max(0, (row.likeCount || 0) + (liked ? 1 : -1))
-  return {
-    liked,
-    likeCount: row.likeCount,
-    likePreview: buildLikePreview(likes)
-  }
-}
-
-function mockCreateComment({ momentId, content, replyTo = '', replyName = '' }) {
-  const row = MOCK_MOMENTS.find(r => r._id === momentId)
-  if (!row || !content) return null
-  const newComment = {
-    _id: 'mc_' + Date.now(),
-    openid: 'local_user',
-    name: '我',
-    avatar: '',
-    dynasty: '',
-    content,
-    replyTo,
-    replyName,
-    createdAt: Date.now(),
-    likes: []
-  }
-  row.comments = row.comments || []
-  row.comments.push(newComment)
-  row.commentCount = (row.commentCount || 0) + 1
-  return {
-    comment: enrichCommentView(adaptMockComments([newComment])[0]),
-    commentCount: row.commentCount
-  }
-}
-
 module.exports = {
-  USE_MOCK_FALLBACK,
   MOCK_MOMENTS,
   adaptMockMoment,
   adaptMockComments,
   enrichMomentView,
   enrichCommentView,
-  mockListMoments,
-  mockGetDetail,
-  mockToggleLike,
-  mockCreateComment,
   normalizeRemoteAssetUrl
 }

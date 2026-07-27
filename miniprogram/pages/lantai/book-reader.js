@@ -34,6 +34,7 @@ Page({
     showTranslation: false,
     content: { original: '', translation: '', notes: [] },
     fontSize: 30,
+    isFavorite: false,
     safeBottom: 0
   },
 
@@ -46,7 +47,10 @@ Page({
     } catch (e) {}
     wx.setNavigationBarTitle({ title })
     this.setData({ bookId: id, bookTitle: title })
+    const savedFont = storage.get('reader_fontSize')
+    if (savedFont) this.setData({ fontSize: savedFont })
     this.loadChapters(id)
+    this.loadFavoriteStatus(id)
   },
 
   onShow() {
@@ -99,6 +103,7 @@ Page({
     const cur = this.data.fontSize
     const next = type === 'plus' ? Math.min(44, cur + 2) : Math.max(22, cur - 2)
     this.setData({ fontSize: next })
+    storage.set('reader_fontSize', next)
   },
 
   addProgress() {
@@ -112,5 +117,29 @@ Page({
     storage.set('chapters_' + this.data.bookId, chapters, 86400)
     this.setData({ chapters })
     wx.showToast({ title: '进度已更新', icon: 'none' })
+  },
+
+  async loadFavoriteStatus(bookId) {
+    try {
+      const data = await requestCloud('shiji', 'book-favorites', {}, { throwError: false })
+      if (data && data.list) {
+        const fav = data.list.some(b => b.bookId === bookId)
+        this.setData({ isFavorite: fav })
+      }
+    } catch (e) {}
+  },
+
+  async toggleFavorite() {
+    const bookId = this.data.bookId
+    if (!bookId) return
+    try {
+      const data = await requestCloud('shiji', 'book-favoriteToggle', { bookId }, { throwError: false })
+      if (data) {
+        this.setData({ isFavorite: !!data.favorite })
+        wx.showToast({ title: data.favorite ? '已收藏' : '已取消', icon: 'none' })
+      }
+    } catch (e) {
+      wx.showToast({ title: '操作失败', icon: 'none' })
+    }
   }
 })

@@ -279,3 +279,21 @@
   background: var(--ancient-paper);
   transform: scale(0.97);
 }
+
+.fav-btn {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 12rpx 24rpx;
+  border-radius: 999rpx;
+  background: rgba(255,255,255,0.1);
+  font-size: 26rpx;
+  color: #666;
+  align-self: flex-start;
+  margin-top: 16rpx;
+}
+.fav-btn.active {
+  color: #C9A24D;
+  background: rgba(201,162,77,0.1);
+}
+.fav-text { font-size: 24rpx; }
