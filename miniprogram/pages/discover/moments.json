@@ -1,5 +1,6 @@
 {
   "navigationBarTitleText": "朋友圈",
+  "navigationStyle": "custom",
   "enablePullDownRefresh": true,
   "onReachBottomDistance": 100,
   "backgroundColor": "#EDEDED",

@@ -25,6 +25,44 @@ function _formatRelative(ts) {
   return `${_pad2(d.getMonth() + 1)}-${_pad2(d.getDate())}`
 }
 
+// ========== URL 工具 ==========
+function normalizeAssetUrl(url) {
+  if (!url || typeof url !== 'string') return ''
+  const value = url.trim()
+  if (!value) return ''
+  if (/^(wxfile|http:\/\/tmp|https?:\/\/tmp|https?:\/\/127\.0\.0\.1|https?:\/\/localhost|\/tmp\/|tmp\/)/i.test(value)) {
+    return ''
+  }
+  if (/^https?:\/\//i.test(value) || /^cloud:\/\//i.test(value)) return value
+  if (value.startsWith('/api/asset/')) return `https://timeslip.work${value}`
+  if (value.startsWith('/')) return value
+  return ''
+}
+
+function normalizeRemoteAssetUrl(url) {
+  return normalizeAssetUrl(url)
+}
+
+function normalizeImageList(images) {
+  if (!Array.isArray(images)) return []
+  return images.map(normalizeAssetUrl).filter(Boolean)
+}
+
+function normalizeFigureAsset(figure) {
+  const f = figure || {}
+  // 优先取 mini_avatar_url（小头像），然后是 avatar_url
+  const avatarRaw = f.mini_avatar_url || f.miniAvatarUrl || f.avatar_url || f.avatarUrl || f.avatar || f.portrait || ''
+  const avatar = normalizeAssetUrl(avatarRaw)
+  return {
+    ...f,
+    avatar,
+    avatarUrl: avatar,
+    miniAvatarUrl: avatar,
+    mini_avatar_url: avatarRaw,
+    avatar_url: f.avatar_url || avatarRaw
+  }
+}
+
 // ========== 排版工具 ==========
 function computeImageGridType(count) {
   if (!count || count <= 0) return 'none'
@@ -41,32 +79,6 @@ function computeHistoricalText(historical) {
   if (historical.date) parts.push(historical.date)
   if (!parts.length) return ''
   return '📍 ' + parts.join(' · ')
-}
-
-function normalizeRemoteAssetUrl(url) {
-  if (!url || typeof url !== 'string') return ''
-  const value = url.trim()
-  if (!value) return ''
-  if (/^(wxfile|http:\/\/tmp|https?:\/\/tmp|https?:\/\/127\.0\.0\.1|https?:\/\/localhost|\/tmp\/|tmp\/)/i.test(value)) {
-    return ''
-  }
-  if (/^(https?:\/\/|cloud:\/\/)/i.test(value)) return value
-  return ''
-}
-
-function normalizeImageList(images) {
-  if (!Array.isArray(images)) return []
-  return images.map(normalizeRemoteAssetUrl).filter(Boolean)
-}
-
-function normalizeFigureAsset(figure) {
-  const f = figure || {}
-  return {
-    ...f,
-    avatar: normalizeRemoteAssetUrl(f.avatar || f.avatarUrl || f.miniAvatarUrl),
-    avatarUrl: normalizeRemoteAssetUrl(f.avatarUrl || f.avatar || f.miniAvatarUrl),
-    miniAvatarUrl: normalizeRemoteAssetUrl(f.miniAvatarUrl || f.avatar || f.avatarUrl)
-  }
 }
 
 const MOCK_MOMENTS = [
@@ -172,7 +184,7 @@ function buildCommentPreview(comments, limit = 2) {
     id: c._id || c.id || '',
     figureId: c.figureId || c.openid || c.id || '',
     name: c.name || '匿名',
-    avatar: normalizeRemoteAssetUrl(c.avatar),
+    avatar: normalizeAssetUrl(c.mini_avatar_url || c.miniAvatarUrl || c.avatar_url || c.avatarUrl || c.avatar),
     dynasty: c.dynasty || '',
     content: c.content || '',
     replyTo: c.replyTo || '',
@@ -181,22 +193,30 @@ function buildCommentPreview(comments, limit = 2) {
 }
 
 function buildFigureView(row) {
+  // 优先使用 mini_avatar_url 小头像
+  const avatarRaw = row.mini_avatar_url || row.miniAvatarUrl || row.avatar_url || row.avatarUrl || row.avatar || row.figureAvatar || row.portrait || ''
+  const avatar = normalizeAssetUrl(avatarRaw)
   return {
-    id: row.figureId || row._openid || '',
+    id: row.figureId || row._openid || row.id || '',
     name: row.figureName || row.name || '匿名古人',
-    title: row.figureTitle || '',
-    avatar: normalizeRemoteAssetUrl(row.avatar),
-    dynasty: row.dynasty || ''
+    title: row.figureTitle || row.title || row.identity || '',
+    avatar,
+    avatarUrl: avatar,
+    miniAvatarUrl: avatar,
+    mini_avatar_url: avatarRaw,
+    avatar_url: row.avatar_url || avatarRaw,
+    dynasty: row.dynasty || row.dynastyKey || ''
   }
 }
 
 function buildHistoricalView(row) {
-  if (!row.historicalEvent && !row.historicalDate) return null
+  if (!row.historicalEvent && !row.historicalDate && !row.historical) return null
+  const h = row.historical || {}
   return {
-    event: row.historicalEvent || '',
-    date: row.historicalDate || '',
-    articleId: row.historicalArticleId || '',
-    chapterId: row.historicalChapterId || ''
+    event: row.historicalEvent || h.event || '',
+    date: row.historicalDate || h.date || '',
+    articleId: row.historicalArticleId || h.articleId || '',
+    chapterId: row.historicalChapterId || h.chapterId || ''
   }
 }
 
@@ -237,7 +257,7 @@ function adaptMockComments(comments) {
       id: c.figureId || c.openid || 'anon',
       name: c.name || '匿名',
       title: c.figureTitle || '',
-      avatar: normalizeRemoteAssetUrl(c.avatar),
+      avatar: normalizeAssetUrl(c.mini_avatar_url || c.miniAvatarUrl || c.avatar_url || c.avatarUrl || c.avatar),
       dynasty: c.dynasty || ''
     },
     content: c.content || '',
@@ -254,12 +274,12 @@ function enrichMomentView(m) {
   const createdAtMs = _normalizeMs(m.createdAt)
   const content = String(m.content || '')
   const images = normalizeImageList(m.images)
-  const figure = normalizeFigureAsset(m.figure)
+  const figure = buildFigureView(m.figure || m)
   const interaction = m.interaction || {}
   const commentPreview = Array.isArray(interaction.commentPreview)
     ? interaction.commentPreview.map(c => ({
         ...c,
-        avatar: normalizeRemoteAssetUrl(c.avatar)
+        avatar: normalizeAssetUrl(c.mini_avatar_url || c.miniAvatarUrl || c.avatar_url || c.avatarUrl || c.avatar)
       }))
     : []
   const imageLen = images.length
@@ -287,6 +307,7 @@ function enrichMomentView(m) {
     historicalText,
     sourceText: historicalText,
     source: m.historical ? { ...m.historical } : null,
+    historical: buildHistoricalView(m),
     interaction: {
       ...interaction,
       likePreview: Array.isArray(interaction.likePreview) ? interaction.likePreview : [],
@@ -314,5 +335,6 @@ module.exports = {
   adaptMockComments,
   enrichMomentView,
   enrichCommentView,
-  normalizeRemoteAssetUrl
+  normalizeRemoteAssetUrl,
+  normalizeAssetUrl
 }

@@ -49,7 +49,7 @@
               </view>
             </view>
             <view class="avatar-right">
-              <image class="avatar-user-img" src="{{userAvatar || '/images/avatar.png'}}" mode="aspectFill"></image>
+              <image class="avatar-user-img" src="{{userAvatar || '/images/icons/avatar.png'}}" mode="aspectFill"></image>
             </view>
           </block>
         </view>

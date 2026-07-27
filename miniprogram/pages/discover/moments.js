@@ -13,8 +13,10 @@ const MAX_COLLAPSE_LINES = 6
 Page({
   data: {
     dynastyFilters: DYNASTY_FILTERS,
+    dynastyNames: DYNASTY_FILTERS.map(d => d.name),
     selectedDynasty: 'all',
-    filterSticky: false,
+    selectedDynastyName: '全部',
+    selectedDynastyIndex: 0,
     moments: [],
     cursor: '',
     hasMore: true,
@@ -25,7 +27,7 @@ Page({
     actionMenuId: '',
     navOpaque: false,
     navBgColor: 'transparent',
-    navTextColor: '#ffffff',
+    navTextColor: '#333333',
     userInfo: {},
     coverFigure: { name: '穿越者', avatar: '', dynasty: '汉' },
     openid: '',
@@ -38,17 +40,34 @@ Page({
     commentReplyName: '',
     commentInput: '',
     commentSubmitting: false,
-    coverImg: '/images/pyq.png',
-    coverFallbackBg: 'linear-gradient(135deg, #2c3e50 0%, #4a6582 50%, #6b8db0 100%)'
+    coverImg: '/images/pyq-ink.jpg',
+    coverFallbackBg: 'linear-gradient(180deg, #f8f8f8 0%, #e8e4dc 40%, #d4cfc4 100%)',
+    statusBarHeight: 20,
+    coverHeight: 620
   },
 
   onLoad() {
     const app = getApp()
     const userInfo = (app.globalData && app.globalData.userInfo) || {}
     const openid = (app.globalData && app.globalData.openid) || ''
+
+    // 获取系统信息，用于沉浸式布局
+    let statusBarHeight = 20
+    let windowWidth = 375
+    try {
+      const sys = wx.getSystemInfoSync()
+      statusBarHeight = sys.statusBarHeight || 20
+      windowWidth = sys.windowWidth || 375
+    } catch (e) {}
+
+    // 620rpx 转换为 px (750rpx = windowWidth)
+    const coverHeightPx = Math.round(620 * windowWidth / 750)
+
     this.setData({
       userInfo,
       openid,
+      statusBarHeight,
+      coverHeight: coverHeightPx,
       coverFigure: {
         name: userInfo.nickName || '穿越者',
         avatar: normalizeRemoteAssetUrl(userInfo.avatarUrl || ''),
@@ -68,21 +87,15 @@ Page({
 
   onPageScroll(e) {
     const scrollTop = e.scrollTop
-    const navThreshold = 280
-    const stickyThreshold = 560
+    const navThreshold = 300
 
     const shouldOpaque = scrollTop > navThreshold
     if (shouldOpaque !== this.data.navOpaque) {
       this.setData({
         navOpaque: shouldOpaque,
         navBgColor: shouldOpaque ? '#ffffff' : 'transparent',
-        navTextColor: shouldOpaque ? '#191919' : '#ffffff'
+        navTextColor: shouldOpaque ? '#191919' : '#333333'
       })
-    }
-
-    const shouldSticky = scrollTop > stickyThreshold
-    if (shouldSticky !== this.data.filterSticky) {
-      this.setData({ filterSticky: shouldSticky })
     }
 
     if (this.data.actionMenuId) {
@@ -156,11 +169,16 @@ Page({
   },
 
   onSelectDynasty(e) {
-    const key = e.currentTarget.dataset.key
-    if (key === this.data.selectedDynasty) return
-    this.setData({ selectedDynasty: key, actionMenuId: '' }, () => {
+    const idx = Number(e.detail.value)
+    const item = this.data.dynastyFilters[idx]
+    if (!item || item.key === this.data.selectedDynasty) return
+    this.setData({
+      selectedDynasty: item.key,
+      selectedDynastyName: item.name,
+      selectedDynastyIndex: idx,
+      actionMenuId: ''
+    }, () => {
       this.loadMoments(true)
-      wx.pageScrollTo({ scrollTop: 560, duration: 200 })
     })
   },
 

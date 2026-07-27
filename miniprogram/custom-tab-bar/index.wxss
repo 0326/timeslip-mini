@@ -21,10 +21,6 @@
   justify-content: center;
   position: relative;
   padding: 8rpx 0;
-  transition: transform 0.2s ease;
-}
-.tab-item.active {
-  transform: translateY(-4rpx);
 }
 
 .tab-icon {
@@ -40,21 +36,16 @@
 .tab-img {
   width: 48rpx;
   height: 48rpx;
-  transition: transform 0.2s;
-}
-.tab-item.active .tab-img {
-  transform: scale(1.1);
 }
 
 .tab-label {
   font-size: 22rpx;
   color: #8E8E93;
   line-height: 1;
-  transition: color 0.2s, font-weight 0.2s;
   font-weight: 500;
 }
 .tab-item.active .tab-label {
-  color: #B8860B;
+  color: #2c2c2c;
   font-weight: 600;
 }
 

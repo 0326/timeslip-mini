@@ -1,28 +1,10 @@
 <custom-nav-bar
-  title="聊天"
+  title="穿越"
   showBack="{{false}}"
   bgColor="#fff"
->
-  <view slot="left" class="nav-actions" bindtap="goToLantai">
-    <text class="iconfont nav-action-icon icon-add"></text>
-  </view>
-</custom-nav-bar>
+/>
 
 <view class="chat-list-page">
-  <view class="search-wrap">
-    <view class="search-bar">
-      <text class="iconfont search-icon icon-search"></text>
-      <input
-        class="search-input"
-        placeholder="搜索历史人物..."
-        placeholder-style="color:#b2b2b2"
-        value="{{searchText}}"
-        bindinput="onSearchInput"
-        confirm-type="search"
-      />
-      <text wx:if="{{searchText}}" class="search-clear iconfont icon-close" bindtap="onClearSearch"></text>
-    </view>
-  </view>
 
   <view wx:if="{{loading}}" class="loading-wrap">
     <view class="loading-dots">

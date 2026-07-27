@@ -96,6 +96,33 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;')
 }
 
+function resolveAvatarUrl(fileID, defaultUrl) {
+  return new Promise((resolve) => {
+    const fallback = defaultUrl || '/images/icons/avatar.png'
+    if (!fileID) {
+      resolve(fallback)
+      return
+    }
+    if (fileID.indexOf('cloud://') !== 0) {
+      resolve(fileID)
+      return
+    }
+    wx.cloud.getTempFileURL({
+      fileList: [fileID],
+      success: (res) => {
+        if (res.fileList && res.fileList[0] && res.fileList[0].tempFileURL) {
+          resolve(res.fileList[0].tempFileURL)
+        } else {
+          resolve(fallback)
+        }
+      },
+      fail: () => {
+        resolve(fallback)
+      }
+    })
+  })
+}
+
 module.exports = {
   debounce,
   throttle,
@@ -108,5 +135,6 @@ module.exports = {
   chunk,
   shuffle,
   clamp,
-  escapeHtml
+  escapeHtml,
+  resolveAvatarUrl
 }

@@ -55,6 +55,12 @@
   border: 2rpx solid rgba(201, 162, 77, 0.3);
 }
 
+.hero-avatar .avatar-wrap {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 16rpx !important;
+}
+
 .hero-meta {
   flex: 1;
   min-width: 0;

@@ -1,5 +1,6 @@
 const { getUserInfo, updateUserInfo } = require('../../utils/auth')
 const loginGuard = require('../../utils/loginGuard')
+const { resolveAvatarUrl } = require('../../utils/helpers')
 
 var MENU_LIST = [
   { key: 'bookmarks', iconClass: 'mail', name: '我的收藏', desc: '看一看收藏的文章', url: '/pages/discover/look/bookmarks', color: '#1890FF' },
@@ -45,30 +46,28 @@ Page({
     var self = this
     const app = getApp()
     const cached = app.globalData && app.globalData.userInfo
-    if (cached) this.setData({ userInfo: cached })
+    if (cached) {
+      this.setData({ userInfo: cached })
+      if (cached.avatarUrl) {
+        resolveAvatarUrl(cached.avatarUrl).then(url => {
+          self.setData({ avatarSrc: url })
+        })
+      }
+    }
 
     try {
       const userInfo = await getUserInfo()
       if (userInfo && userInfo._openid) {
-        var avatarSrc = '/images/icons/avatar.png'
-        if (userInfo.avatarUrl) {
-          avatarSrc = userInfo.avatarUrl
-          if (avatarSrc.indexOf('cloud://') === 0) {
-            wx.cloud.getTempFileURL({
-              fileList: [avatarSrc],
-              success: function (res) {
-                if (res.fileList && res.fileList[0] && res.fileList[0].tempFileURL) {
-                  self.setData({ avatarSrc: res.fileList[0].tempFileURL })
-                }
-              }
-            })
-          }
-        }
         this.setData({
           userInfo,
-          avatarSrc: avatarSrc,
           isAdmin: userInfo.role === 'admin' || userInfo.role === 'superadmin'
         })
+        if (userInfo.avatarUrl) {
+          const avatarUrl = await resolveAvatarUrl(userInfo.avatarUrl)
+          this.setData({ avatarSrc: avatarUrl })
+        } else {
+          this.setData({ avatarSrc: '/images/icons/avatar.png' })
+        }
         if (!app.globalData) app.globalData = {}
         app.globalData.openid = userInfo._openid
         app.globalData.userInfo = userInfo
@@ -110,6 +109,7 @@ Page({
       sizeType: ['compressed'],
       success: (r) => {
         const tempFile = r.tempFiles[0].tempFilePath
+        self.setData({ avatarSrc: tempFile })
         wx.showLoading({ title: '上传中' })
         const openid = (getApp().globalData || {}).openid || 'tmp'
         const cloudPath = `avatar/${openid}/${Date.now()}_avatar.jpg`
@@ -118,16 +118,6 @@ Page({
           filePath: tempFile,
           success: function (up) {
             var fileID = up.fileID
-            wx.cloud.getTempFileURL({
-              fileList: [fileID],
-              success: function (urlRes) {
-                var src = fileID
-                if (urlRes.fileList && urlRes.fileList[0] && urlRes.fileList[0].tempFileURL) {
-                  src = urlRes.fileList[0].tempFileURL
-                }
-                self.setData({ avatarSrc: src })
-              }
-            })
             updateUserInfo({ avatarUrl: fileID })
               .then(function (ok) {
                 wx.hideLoading()

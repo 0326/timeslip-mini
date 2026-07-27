@@ -5,19 +5,6 @@
 ></custom-nav-bar>
 
 <view class="lantai-page ancient-paper">
-  <view class="top-search">
-    <view class="search-box">
-      <text class="s-icon iconfont icon-search"></text>
-      <input
-        class="s-input"
-        placeholder="搜索人物/典籍..."
-        placeholder-style="color:#aaa"
-        value="{{searchText}}"
-        bindinput="onSearchInput"
-      />
-    </view>
-  </view>
-
   <view class="tabs">
     <view
       class="tab-item {{tab === 'figures' ? 'is-active' : ''}}"

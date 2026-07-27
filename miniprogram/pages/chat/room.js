@@ -2,7 +2,7 @@ const { requestCloud } = require('../../utils/cloudRequest')
 const chatSession = require('../../utils/chatSession')
 const { AI_CONFIG, QINGYUE } = require('../../utils/constants')
 const { storage } = require('../../utils/storage')
-const { uid, sleep } = require('../../utils/helpers')
+const { uid, sleep, resolveAvatarUrl } = require('../../utils/helpers')
 const loginGuard = require('../../utils/loginGuard')
 
 Page({
@@ -11,7 +11,7 @@ Page({
     figureName: '',
     figureTitle: '',
     avatar: '',
-    userAvatar: '',
+    userAvatar: '/images/icons/avatar.png',
     userName: '',
     isSystem: false,
     messages: [],
@@ -45,10 +45,11 @@ Page({
       figureName: name,
       figureTitle: title || '',
       avatar,
-      userAvatar: userInfo.avatarUrl || '/images/avatar.png',
       userName: userInfo.nickName || '',
       isSystem
     })
+
+    this.loadUserAvatar(userInfo)
     wx.setNavigationBarTitle({ title: figureName })
 
     // 确保青月会话与欢迎消息存在
@@ -63,11 +64,22 @@ Page({
     app.setCurrentTab(this, 0)
     const userInfo = this.getUserInfo()
     this.setData({
-      userAvatar: userInfo.avatarUrl || '/images/avatar.png',
       userName: userInfo.nickName || ''
     })
+    this.loadUserAvatar(userInfo)
     // 进入房间清除未读
     chatSession.clearUnread(this.data.figureId)
+  },
+
+  async loadUserAvatar(userInfo) {
+    var self = this
+    userInfo = userInfo || this.getUserInfo()
+    if (userInfo && userInfo.avatarUrl) {
+      const url = await resolveAvatarUrl(userInfo.avatarUrl)
+      self.setData({ userAvatar: url })
+    } else {
+      self.setData({ userAvatar: '/images/icons/avatar.png' })
+    }
   },
 
   getUserInfo() {

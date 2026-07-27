@@ -81,13 +81,50 @@ async function secCheckText(text, openid) {
   }
 }
 
-function buildFigureView(row) {
+// 批量查询 figures 集合获取角色头像等信息
+async function batchFetchFigures(figureIds) {
+  const figureMap = {}
+  if (!figureIds || !figureIds.length) return figureMap
+  // 去重
+  const uniqueIds = [...new Set(figureIds.filter(Boolean))]
+  if (!uniqueIds.length) return figureMap
+  
+  try {
+    // 云数据库单次 in 查询最多支持 100 条
+    const batches = []
+    for (let i = 0; i < uniqueIds.length; i += 100) {
+      batches.push(uniqueIds.slice(i, i + 100))
+    }
+    for (const batch of batches) {
+      const res = await db.collection('figures')
+        .where({ id: _.in(batch) })
+        .field({ id: true, name: true, identity: true, avatar_url: true, mini_avatar_url: true, dynasty: true, avatar: true })
+        .limit(batch.length)
+        .get()
+      if (res.data && res.data.length) {
+        res.data.forEach(f => {
+          figureMap[f.id] = f
+        })
+      }
+    }
+  } catch (e) {
+    console.warn('batchFetchFigures error:', e.message)
+  }
+  return figureMap
+}
+
+function buildFigureView(row, figureData = null) {
+  // 优先使用从 figures 表查到的数据
+  const f = figureData || {}
+  const avatarRaw = f.mini_avatar_url || f.avatar_url || f.avatar || row.avatar || row.authorAvatar || row.mini_avatar_url || row.avatar_url || ''
   return {
-    id: row.figureId || row._openid || '',
-    name: row.figureName || row.name || row.authorName || '匿名古人',
-    title: row.figureTitle || row.authorTitle || '',
-    avatar: normalizeRemoteAssetUrl(row.avatar || row.authorAvatar || ''),
-    dynasty: row.dynasty || ''
+    id: row.figureId || f.id || row._openid || '',
+    name: f.name || row.figureName || row.name || row.authorName || '匿名古人',
+    title: f.identity || row.figureTitle || row.authorTitle || '',
+    avatar: normalizeRemoteAssetUrl(avatarRaw),
+    mini_avatar_url: avatarRaw,
+    avatar_url: f.avatar_url || row.avatar_url || '',
+    dynasty: f.dynasty || row.dynasty || ''
   }
 }
 
@@ -118,29 +155,49 @@ function buildLikePreview(likes, limit = 3) {
   return list
 }
 
-async function buildCommentPreview(momentId, limit = 2) {
+async function buildCommentPreview(momentId, limit = 2, figureMap = {}) {
   try {
     const r = await db.collection('moment_comments')
       .where({ momentId })
       .orderBy('createdAt', 'asc')
       .limit(limit)
       .get()
-    return r.data.map(c => ({
-      id: c._id,
-      name: c.name || c.authorSnapshot?.name || '匿名',
-      avatar: normalizeRemoteAssetUrl(c.avatar || c.authorSnapshot?.avatar || ''),
-      dynasty: c.dynasty || '',
-      content: c.content || '',
-      replyTo: c.replyTo || '',
-      replyName: c.replyName || ''
-    }))
+    
+    // 收集评论中的 figureId，批量查询头像
+    const commentFigureIds = r.data.map(c => c.figureId).filter(Boolean)
+    let commentFigureMap = figureMap
+    if (commentFigureIds.length) {
+      const missingIds = commentFigureIds.filter(id => !figureMap[id])
+      if (missingIds.length) {
+        const extraMap = await batchFetchFigures(missingIds)
+        commentFigureMap = { ...figureMap, ...extraMap }
+      }
+    }
+    
+    return r.data.map(c => {
+      const figureData = c.figureId ? commentFigureMap[c.figureId] : null
+      const f = figureData || {}
+      const avatarRaw = f.mini_avatar_url || f.avatar_url || f.avatar || c.avatar || c.authorSnapshot?.avatar || ''
+      return {
+        id: c._id,
+        figureId: c.figureId || '',
+        name: f.name || c.name || c.authorSnapshot?.name || '匿名',
+        avatar: normalizeRemoteAssetUrl(avatarRaw),
+        mini_avatar_url: avatarRaw,
+        avatar_url: f.avatar_url || '',
+        dynasty: f.dynasty || c.dynasty || '',
+        content: c.content || '',
+        replyTo: c.replyTo || '',
+        replyName: c.replyName || ''
+      }
+    })
   } catch (e) {
     return []
   }
 }
 
 async function buildMomentView(row, openid, options = {}) {
-  const { withCommentPreview = true } = options
+  const { withCommentPreview = true, figureMap = {} } = options
   const likes = row.likes || []
   const liked = likes.some(l => (typeof l === 'string' ? l : l.openid) === openid)
   const likeCount = likes.length
@@ -148,7 +205,7 @@ async function buildMomentView(row, openid, options = {}) {
   const commentCount = typeof row.commentCount === 'number' ? row.commentCount : 0
   let commentPreview = []
   if (withCommentPreview && commentCount > 0) {
-    commentPreview = await buildCommentPreview(row._id, 2)
+    commentPreview = await buildCommentPreview(row._id, 2, figureMap)
   }
 
   const ts = row.createdAt
@@ -156,9 +213,12 @@ async function buildMomentView(row, openid, options = {}) {
   if (ts instanceof Date) createdAtMs = ts.getTime()
   else if (typeof ts === 'number') createdAtMs = ts > 1e12 ? ts : ts * 1000
 
+  // 获取对应的 figure 数据
+  const figureData = row.figureId ? figureMap[row.figureId] : null
+
   return {
     _id: row._id,
-    figure: buildFigureView(row),
+    figure: buildFigureView(row, figureData),
     content: row.content || '',
     images: normalizeImageList(row.images),
     historical: buildHistoricalView(row),
@@ -202,9 +262,13 @@ async function listMoments(OPENID, data) {
   const hasMore = rows.length > pageLimit
   const sliced = hasMore ? rows.slice(0, pageLimit) : rows
 
+  // 批量查询所有动态对应的 figure 信息（头像、名称等）
+  const figureIds = sliced.map(r => r.figureId).filter(Boolean)
+  const figureMap = await batchFetchFigures(figureIds)
+
   const moments = []
   for (const r of sliced) {
-    moments.push(await buildMomentView(r, OPENID))
+    moments.push(await buildMomentView(r, OPENID, { figureMap }))
   }
   const nextCursor = hasMore ? sliced[sliced.length - 1]._id : ''
 
@@ -220,7 +284,9 @@ async function getDetail(OPENID, data) {
   if (!momentId) return { code: -1, message: '缺少 momentId' }
   const doc = await db.collection('moments').doc(momentId).get()
   if (!doc.data) return { code: -1, message: '动态不存在' }
-  const moment = await buildMomentView(doc.data, OPENID, { withCommentPreview: false })
+  // 查询对应的 figure 信息
+  const figureMap = doc.data.figureId ? await batchFetchFigures([doc.data.figureId]) : {}
+  const moment = await buildMomentView(doc.data, OPENID, { withCommentPreview: false, figureMap })
   return { code: 0, message: 'ok', data: { moment } }
 }
 
@@ -342,20 +408,29 @@ async function listComments(OPENID, data) {
   const hasMore = rows.length > pageLimit
   const sliced = hasMore ? rows.slice(0, pageLimit) : rows
 
+  // 批量查询评论对应的 figure 头像信息
+  const commentFigureIds = sliced.map(c => c.figureId).filter(Boolean)
+  const figureMap = await batchFetchFigures(commentFigureIds)
+
   const comments = sliced.map(c => {
     const ts = c.createdAt
     let createdAtMs = 0
     if (ts instanceof Date) createdAtMs = ts.getTime()
     else if (typeof ts === 'number') createdAtMs = ts > 1e12 ? ts : ts * 1000
+    const figureData = c.figureId ? figureMap[c.figureId] : null
+    const f = figureData || {}
+    const avatarRaw = f.mini_avatar_url || f.avatar_url || f.avatar || c.avatar || c.authorSnapshot?.avatar || ''
     return {
       _id: c._id,
       momentId: c.momentId,
       figure: {
-        id: c.figureId || c._openid || '',
-        name: c.name || c.authorSnapshot?.name || '匿名',
-        title: c.figureTitle || '',
-        avatar: normalizeRemoteAssetUrl(c.avatar || c.authorSnapshot?.avatar || ''),
-        dynasty: c.dynasty || ''
+        id: c.figureId || f.id || c._openid || '',
+        name: f.name || c.name || c.authorSnapshot?.name || '匿名',
+        title: f.identity || c.figureTitle || '',
+        avatar: normalizeRemoteAssetUrl(avatarRaw),
+        mini_avatar_url: avatarRaw,
+        avatar_url: f.avatar_url || '',
+        dynasty: f.dynasty || c.dynasty || ''
       },
       content: c.content || '',
       replyTo: c.replyTo || '',

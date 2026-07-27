@@ -1,17 +1,25 @@
 .moments-page {
   min-height: 100vh;
-  background: #EDEDED;
   position: relative;
 }
 
+/* ========== 封面区域 - 沉浸式 ========== */
 .cover-area {
   position: relative;
   width: 100%;
-  height: 560rpx;
-  overflow: hidden;
+  height: 620rpx;
+  overflow: visible;
+}
+
+.cover-nav-placeholder {
+  width: 100%;
+  pointer-events: none;
 }
 
 .cover-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   display: block;
@@ -22,86 +30,77 @@
   background-position: center;
 }
 
+/* 用户信息区域 - 头像一半在图内一半在图外 */
 .cover-user {
   position: absolute;
-  right: 24rpx;
+  right: 32rpx;
   bottom: -70rpx;
   display: flex;
   align-items: flex-end;
   z-index: 10;
 }
 
-.cover-name {
-  color: #fff;
-  font-size: 32rpx;
-  font-weight: 600;
+.cover-user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
   margin-right: 24rpx;
-  margin-bottom: 80rpx;
-  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.3);
+  margin-bottom: 20rpx;
+}
+
+.cover-name {
+  color: #333;
+  font-size: 36rpx;
+  font-weight: 700;
+  text-shadow: 0 2rpx 8rpx rgba(255, 255, 255, 0.9), 0 0 20rpx rgba(255, 255, 255, 0.5);
   max-width: 320rpx;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  margin-bottom: 12rpx;
+}
+
+/* 朝代选择器 - 纯文字+下拉箭头，无标签框 */
+.dynasty-picker-wrap {
+  /* display: inline-block; */
+  visibility: hidden;
+  position: relative;
+  z-index: 100;
+}
+
+.dynasty-picker {
+  display: inline-flex;
+  align-items: center;
+  padding: 12rpx 8rpx;
+  margin: -12rpx -8rpx;
+}
+
+.dp-text {
+  font-size: 26rpx;
+  color: #576B95;
+  font-weight: 500;
+  text-shadow: 0 1rpx 4rpx rgba(255, 255, 255, 0.8);
+}
+
+.dp-arrow {
+  font-size: 22rpx;
+  color: #576B95;
+  margin-left: 6rpx;
+  margin-top: -2rpx;
+  text-shadow: 0 1rpx 4rpx rgba(255, 255, 255, 0.8);
 }
 
 .cover-avatar-wrap {
   width: 140rpx;
   height: 140rpx;
   flex-shrink: 0;
+  position: relative;
+  z-index: 2;
 }
 
-.dynasty-filter {
-  background: #fff;
-  padding: 0 8rpx;
-  border-bottom: 1rpx solid #f0f0f0;
-  z-index: 50;
-}
-
-.dynasty-filter.is-sticky {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
-  z-index: 99;
-}
-
-.filter-scroll {
-  width: 100%;
-  white-space: nowrap;
-}
-
-.filter-row {
-  display: inline-flex;
-  align-items: center;
-  padding: 16rpx 8rpx;
-  gap: 8rpx;
-}
-
-.filter-item {
-  display: inline-block;
-  padding: 10rpx 28rpx;
-  border-radius: 999rpx;
-  font-size: 26rpx;
-  color: #555;
-  background: #f3f3f3;
-  transition: all 0.15s ease;
-  flex-shrink: 0;
-}
-
-.filter-item.is-active {
-  color: #fff;
-  background: linear-gradient(135deg, #576B95 0%, #6d86b8 100%);
-  font-weight: 500;
-  box-shadow: 0 4rpx 12rpx rgba(87, 107, 149, 0.25);
-}
-
-.filter-placeholder {
-  height: 84rpx;
-}
-
+/* ========== 状态区域 ========== */
 .state-wrap {
-  padding: 80rpx 32rpx 120rpx;
+  padding: 100rpx 32rpx 120rpx;
 }
 
 .skeleton-list {
@@ -190,13 +189,14 @@
 }
 .error-btn::after { border: none; }
 
+/* ========== 朋友圈列表 ========== */
 .moments-list {
-  padding-top: 24rpx;
+  padding-top: 100rpx;
 }
 
 .moment-item {
   display: flex;
-  padding: 20rpx 24rpx 32rpx;
+  padding: 24rpx 24rpx 32rpx;
   position: relative;
   background: #fff;
   margin-bottom: 12rpx;
