@@ -14,11 +14,11 @@
     <view class="c-content" bindtap="onContentTap">{{comment.content}}</view>
     <view class="c-bottom">
       <view class="c-action {{isLiked ? 'liked' : ''}}" catchtap="onLike">
-        <text class="icon">{{isLiked ? '👍' : '👍🏼'}}</text>
+        <text class="icon iconfont icon-good"></text>
         <text class="txt" wx:if="{{likeCount}}">{{likeCount}}</text>
       </view>
       <view class="c-action reply" catchtap="onReply">
-        <text class="icon">💬</text>
+        <text class="icon iconfont icon-chat"></text>
         <text class="txt">回复</text>
       </view>
       <view class="c-action delete" wx:if="{{canDelete}}" catchtap="onDelete">

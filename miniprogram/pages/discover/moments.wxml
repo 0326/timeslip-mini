@@ -143,7 +143,7 @@
         </view>
 
         <view wx:if="{{item.historical && (item.historical.event || item.historical.date)}}" class="mi-historical" data-id="{{item._id}}" catchtap="openMomentDetail">
-          <text class="mih-dot">📜</text>
+          <text class="mih-dot iconfont icon-content"></text>
           <view class="mih-info">
             <text wx:if="{{item.historical.event}}" class="mih-event">{{item.historical.event}}</text>
             <text wx:if="{{item.historical.date}}" class="mih-date"> · {{item.historical.date}}</text>

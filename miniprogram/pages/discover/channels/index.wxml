@@ -14,7 +14,7 @@
 </view>
 
 <view wx:elif="{{videoList.length === 0}}" class="empty-wrap">
-  <text class="empty-icon">🎬</text>
+  <text class="empty-icon iconfont icon-play"></text>
   <text class="empty-text">暂无视频</text>
   <text class="empty-desc">下拉刷新试试</text>
 </view>
@@ -115,7 +115,7 @@
 </swiper>
 
 <view wx:if="{{showHeart}}" class="double-heart" style="left: {{heartX}}px; top: {{heartY}}px;">
-  <text class="heart-text">♥</text>
+  <text class="heart-text iconfont icon-good"></text>
 </view>
 
 <view wx:if="{{showComments}}" class="comment-mask" bindtap="closeComments">

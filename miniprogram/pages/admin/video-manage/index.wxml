@@ -37,7 +37,7 @@
         <view class="item-title">{{item.title}}</view>
         <view class="item-meta">
           <text class="meta-author">{{item.figureName}}</text>
-          <text class="meta-stats">♥ {{item.likeCount || 0}}</text>
+          <text class="meta-stats"><text class="iconfont icon-good"></text> {{item.likeCount || 0}}</text>
         </view>
       </view>
       <view class="item-delete" catchtap="onDelete" data-id="{{item._id}}">

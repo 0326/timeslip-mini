@@ -26,6 +26,15 @@
     </view>
   </view>
 
+  <!-- Hero 骨架 -->
+  <view class="hero-skeleton" wx:elif="{{loading}}">
+    <view class="sk-hero-badge"></view>
+    <view class="sk-hero-line sk-hero-title"></view>
+    <view class="sk-hero-line sk-hero-subtitle"></view>
+    <view class="sk-hero-line sk-hero-meta"></view>
+    <view class="sk-hero-btn"></view>
+  </view>
+
   <!-- 列表区 -->
   <view class="list">
     <block wx:if="{{loading}}">
@@ -35,6 +44,7 @@
           <view class="loading-line loading-line-title"></view>
           <view class="loading-line loading-line-tag"></view>
         </view>
+        <view class="loading-arrow"></view>
       </view>
     </block>
 

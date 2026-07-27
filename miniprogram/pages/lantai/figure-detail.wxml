@@ -67,7 +67,7 @@
           wx:for="{{figure.masterpieces}}"
           wx:key="*this"
           class="work-item"
-        >📖 {{item}}</view>
+        ><text class="iconfont icon-content"></text> {{item}}</view>
       </view>
 
       <view wx:if="{{figure.famousQuotes && figure.famousQuotes.length}}" class="section-card ancient-paper">
@@ -175,18 +175,18 @@
               </view>
             </view>
             <text class="vg-text">{{item.title}}</text>
-            <text class="vg-stats">♥ {{item.likeCount || 0}}</text>
+            <text class="vg-stats"><text class="iconfont icon-good"></text> {{item.likeCount || 0}}</text>
           </view>
         </view>
 
         <view wx:else class="empty-card">
-          <text class="empty-icon">🎬</text>
+          <text class="empty-icon iconfont icon-play"></text>
           <text class="empty-text">暂无视频</text>
         </view>
       </view>
 
       <view wx:else class="empty-card">
-        <text class="empty-icon">🎬</text>
+        <text class="empty-icon iconfont icon-play"></text>
         <text class="empty-text">暂无视频号</text>
         <text class="empty-desc">该人物尚未开通视频号</text>
       </view>

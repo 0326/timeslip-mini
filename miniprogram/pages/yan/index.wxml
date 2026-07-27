@@ -251,7 +251,7 @@
   <!-- ====== 信件详情弹窗 ====== -->
   <view class="detail-mask" wx:if="{{showDetail}}" bindtap="closeDetail">
     <view class="detail-popup" catchtap="stopProp">
-      <view class="detail-close" bindtap="closeDetail">✕</view>
+      <view class="detail-close iconfont icon-close" bindtap="closeDetail"></view>
 
       <block wx:if="{{detailLetter}}">
         <view class="detail-badge">{{detailLetter.carrierName}}归来</view>
@@ -286,7 +286,7 @@
         <button class="btn-claim" wx:if="{{detailLetter.gift && !detailLetter.claimed}}" bindtap="claimGift" data-id="{{detailLetter._id}}">
           收入藏馆
         </button>
-        <view class="claimed-tip" wx:if="{{detailLetter.claimed}}">✓ 风物已收入藏馆</view>
+        <view class="claimed-tip" wx:if="{{detailLetter.claimed}}"><text class="iconfont icon-Selected"></text> 风物已收入藏馆</view>
       </block>
     </view>
   </view>

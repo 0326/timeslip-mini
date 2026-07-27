@@ -59,11 +59,11 @@
 
   <view class="mc-actions">
     <view class="action-item {{liked ? 'liked' : ''}}" catchtap="onLike">
-      <text class="icon">{{liked ? '❤️' : '🤍'}}</text>
+      <text class="icon iconfont icon-good"></text>
       <text class="num" wx:if="{{likeCount}}">{{likeCount}}</text>
     </view>
     <view class="action-item" catchtap="onComment">
-      <text class="icon">💬</text>
+      <text class="icon iconfont icon-chat"></text>
       <text class="num" wx:if="{{commentCount}}">{{commentCount}}</text>
     </view>
     <view class="action-item" catchtap="onShareTap">
@@ -72,7 +72,7 @@
   </view>
 
   <view class="mc-likes" wx:if="{{moment.likes && moment.likes.length}}">
-    <text class="like-icon">❤️</text>
+    <text class="like-icon iconfont icon-good"></text>
     <text class="like-users">{{likeSummary}}</text>
   </view>
 

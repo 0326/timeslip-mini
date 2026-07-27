@@ -20,7 +20,7 @@
         bindinput="onSearchInput"
         confirm-type="search"
       />
-      <text wx:if="{{searchText}}" class="search-clear" bindtap="onClearSearch">✕</text>
+      <text wx:if="{{searchText}}" class="search-clear iconfont icon-close" bindtap="onClearSearch"></text>
     </view>
   </view>
 
@@ -33,7 +33,7 @@
 
   <block wx:else>
     <view wx:if="{{filteredSessions.length === 0}}" class="empty-wrap">
-      <text class="empty-icon">🔍</text>
+      <text class="empty-icon iconfont icon-search"></text>
       <text class="empty-title">未找到相关会话</text>
       <text wx:if="{{searchText}}" class="empty-desc">换个关键词试试</text>
       <button wx:else class="btn btn-primary empty-btn" bindtap="goToLantai">去兰台结识历史人物</button>

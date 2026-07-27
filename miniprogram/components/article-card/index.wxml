@@ -18,7 +18,7 @@
         <text class="ac-author-text">{{article.author || '穿越圈'}}</text>
       </view>
       <view class="ac-stats">
-        <text class="ac-stat-item">❤ {{article.likeText || 0}}</text>
+        <text class="ac-stat-item"><text class="iconfont icon-good"></text> {{article.likeText || 0}}</text>
       </view>
     </view>
   </view>

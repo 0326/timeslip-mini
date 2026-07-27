@@ -63,7 +63,7 @@
       <view class="video-info">
         <text class="video-grid-title">{{item.title}}</text>
         <view class="video-stats">
-          <text class="stat">♥ {{item.likeCount || 0}}</text>
+          <text class="stat"><text class="iconfont icon-good"></text> {{item.likeCount || 0}}</text>
         </view>
       </view>
     </view>

@@ -7,7 +7,7 @@
 <view class="lantai-page ancient-paper">
   <view class="top-search">
     <view class="search-box">
-      <text class="s-icon">🔍</text>
+      <text class="s-icon iconfont icon-search"></text>
       <input
         class="s-input"
         placeholder="搜索人物/典籍..."
@@ -23,12 +23,12 @@
       class="tab-item {{tab === 'figures' ? 'is-active' : ''}}"
       data-tab="figures"
       bindtap="switchTab"
-    >人物</view>
+    >{{tab === 'figures' && refreshing ? '人物·更新中' : '人物'}}</view>
     <view
       class="tab-item {{tab === 'books' ? 'is-active' : ''}}"
       data-tab="books"
       bindtap="switchTab"
-    >典籍</view>
+    >{{tab === 'books' && refreshing ? '典籍·更新中' : '典籍'}}</view>
   </view>
 
   <block wx:if="{{tab === 'figures'}}">
@@ -48,6 +48,7 @@
       scroll-into-view="{{toLetter}}"
       enhanced
       show-scrollbar="{{false}}"
+      bindscrolltoupper="onPullDownRefresh"
     >
       <view
         wx:for="{{groups}}"

@@ -15,7 +15,7 @@
           <view class="beak"></view>
         </view>
         <view class="tail"></view>
-        <view class="letter-pouch" wx:if="{{showLetter}}">✉️</view>
+        <view class="letter-pouch" wx:if="{{showLetter}}"><text class="iconfont icon-mail"></text></view>
       </view>
     </view>
     <view class="trail-line" wx:if="{{showTrail}}"></view>

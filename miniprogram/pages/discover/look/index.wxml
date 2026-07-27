@@ -12,7 +12,7 @@
   <loading-skeleton wx:if="{{loading && articles.length === 0}}" count="4" />
 
   <view wx:elif="{{articles.length === 0 && !loading}}" class="empty-state">
-    <text class="empty-icon">📜</text>
+    <text class="empty-icon iconfont icon-content"></text>
     <text class="empty-text">暂无文章</text>
     <text class="empty-desc">下拉刷新试试</text>
   </view>

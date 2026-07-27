@@ -91,9 +91,9 @@
     </view>
 
     <view class="reply-actions">
-      <button class="btn-save" bindtap="saveLetter">💾 保存至信鸽驿站</button>
-      <button class="btn-write" bindtap="writeAgain">✍️ 再写一封</button>
-      <button class="btn-chat" bindtap="goChat">💬 找{{selectedFigure.figureName}}聊天</button>
+      <button class="btn-save" bindtap="saveLetter"><text class="iconfont icon-downland"></text> 保存至信鸽驿站</button>
+      <button class="btn-write" bindtap="writeAgain"><text class="iconfont icon-edit"></text> 再写一封</button>
+      <button class="btn-chat" bindtap="goChat"><text class="iconfont icon-chat"></text> 找{{selectedFigure.figureName}}聊天</button>
     </view>
   </view>
 
@@ -116,7 +116,7 @@
             <view class="picker-name">{{item.figureName}} · {{item.figureTitle}}</view>
             <view class="picker-dynasty">{{item.dynastyName}}</view>
           </view>
-          <view class="picker-check" wx:if="{{selectedFigure && selectedFigure.figureId === item.figureId}}">✓</view>
+          <view class="picker-check iconfont icon-Selected" wx:if="{{selectedFigure && selectedFigure.figureId === item.figureId}}"></view>
         </view>
       </scroll-view>
     </view>

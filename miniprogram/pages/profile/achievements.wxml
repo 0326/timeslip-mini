@@ -45,7 +45,7 @@
 
     <view class="category">
       <view class="cat-header">
-        <view class="cat-title">💬 交流互动</view>
+        <view class="cat-title"><text class="iconfont icon-chat"></text> 交流互动</view>
         <view class="cat-progress">{{categoryProgress.communicate}}</view>
       </view>
       <view class="card-grid">
@@ -68,7 +68,7 @@
 
     <view class="category">
       <view class="cat-header">
-        <view class="cat-title">📜 历史探索</view>
+        <view class="cat-title"><text class="iconfont icon-content"></text> 历史探索</view>
         <view class="cat-progress">{{categoryProgress.explore}}</view>
       </view>
       <view class="card-grid">
@@ -118,7 +118,7 @@
       <view class="dm-hero {{detailData.unlocked ? 'unlocked' : 'locked'}}">
         <view class="dm-icon">{{detailData.icon}}</view>
         <view class="dm-name">{{detailData.name}}</view>
-        <view class="dm-status">{{detailData.unlocked ? '✓ 已解锁' : '🔒 未解锁'}}</view>
+        <view class="dm-status"><block wx:if="{{detailData.unlocked}}"><text class="iconfont icon-Selected"></text> 已解锁</block><block wx:else>🔒 未解锁</block></view>
       </view>
       <view class="dm-body">
         <view class="dm-section">

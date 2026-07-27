@@ -4,7 +4,7 @@
 >
   <block wx:if="{{currentChapter}}">
     <view slot="right" class="reader-actions">
-      <text class="r-btn" bindtap="backToCatalog">📚</text>
+      <text class="r-btn iconfont icon-content" bindtap="backToCatalog"></text>
       <text class="r-btn" bindtap="toggleTranslation">{{showTranslation ? '原文' : '译文'}}</text>
     </view>
   </block>
@@ -40,7 +40,7 @@
             </view>
           </view>
           <view class="cat-icon">
-            <text wx:if="{{item.read}}" class="ci-check">✓</text>
+            <text wx:if="{{item.read}}" class="ci-check iconfont icon-Selected"></text>
             <text wx:else class="ci-arrow">›</text>
           </view>
         </view>
@@ -76,7 +76,7 @@
 
     <view class="reader-toolbar" style="padding-bottom: {{safeBottom + 16}}rpx;">
       <view class="t-btn" bindtap="changeFontSize" data-type="minus">A-</view>
-      <view class="t-btn" bindtap="addProgress">📝 进度</view>
+      <view class="t-btn" bindtap="addProgress"><text class="iconfont icon-edit"></text> 进度</view>
       <view class="t-btn" bindtap="toggleTranslation">{{showTranslation ? '原文' : '译文'}}</view>
       <view class="t-btn" bindtap="changeFontSize" data-type="plus">A+</view>
     </view>

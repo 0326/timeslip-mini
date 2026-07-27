@@ -4,7 +4,7 @@
   <loading-skeleton wx:if="{{loading && articles.length === 0}}" count="4" />
 
   <view wx:elif="{{articles.length === 0 && !loading}}" class="empty-state">
-    <text class="empty-icon">📑</text>
+    <text class="empty-icon iconfont icon-collection"></text>
     <text class="empty-text">还没有收藏文章</text>
     <text class="empty-desc">去「看一看」发现更多好内容</text>
     <view class="go-look" bindtap="goLook">去看看</view>

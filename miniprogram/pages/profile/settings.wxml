@@ -5,21 +5,21 @@
     <view class="cell-group">
       <view class="cell" bindtap="toggleNotify">
         <view class="cell-left">
-          <view class="cell-icon">🔔</view>
+          <view class="cell-icon iconfont icon-volume"></view>
           <view class="cell-label">消息通知</view>
         </view>
         <switch class="cell-switch" checked="{{notifyEnabled}}" bindchange="onToggleNotify" color="#07C160" />
       </view>
       <view class="cell" bindtap="toggleVibration">
         <view class="cell-left">
-          <view class="cell-icon">📳</view>
+          <view class="cell-icon iconfont icon-close_volume"></view>
           <view class="cell-label">震动反馈</view>
         </view>
         <switch class="cell-switch" checked="{{vibrationEnabled}}" bindchange="onToggleVibration" color="#07C160" />
       </view>
       <view class="cell" bindtap="toggleBigFont">
         <view class="cell-left">
-          <view class="cell-icon">🔠</view>
+          <view class="cell-icon iconfont icon-type"></view>
           <view class="cell-label">大字体模式</view>
         </view>
         <switch class="cell-switch" checked="{{bigFont}}" bindchange="onToggleBigFont" color="#07C160" />
@@ -36,14 +36,14 @@
       </view>
       <view class="cell" bindtap="exportData">
         <view class="cell-left">
-          <view class="cell-icon">📤</view>
+          <view class="cell-icon iconfont icon-upload"></view>
           <view class="cell-label">导出我的数据</view>
         </view>
         <text class="arrow">›</text>
       </view>
       <view class="cell danger" bindtap="clearCache">
         <view class="cell-left">
-          <view class="cell-icon">🗑️</view>
+          <view class="cell-icon iconfont icon-trash"></view>
           <view class="cell-label">清除本地缓存</view>
         </view>
         <view class="cell-right">

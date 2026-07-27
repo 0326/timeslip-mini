@@ -153,7 +153,7 @@
           <text class="picker-name">{{item.figureName}}</text>
           <text class="picker-title">{{item.figureTitle}}</text>
         </view>
-        <text wx:if="{{idx === selectedChannelIdx}}" class="picker-check">✓</text>
+        <text wx:if="{{idx === selectedChannelIdx}}" class="picker-check iconfont icon-Selected"></text>
       </view>
     </scroll-view>
   </view>

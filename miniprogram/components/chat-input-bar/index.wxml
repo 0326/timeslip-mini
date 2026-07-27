@@ -1,6 +1,6 @@
 <view class="input-bar" style="padding-bottom: {{safeBottom}}px;">
   <view class="bar-left">
-    <view class="icon-btn" bindtap="onVoice" wx:if="{{showVoice}}">🎤</view>
+    <view class="icon-btn" bindtap="onVoice" wx:if="{{showVoice}}"><text class="iconfont icon-voice"></text></view>
     <view class="icon-btn" bindtap="onEmoji">😊</view>
   </view>
   <view class="bar-center">
@@ -20,7 +20,7 @@
     />
   </view>
   <view class="bar-right">
-    <view class="icon-btn" bindtap="onImage" wx:if="{{showImage}}">🖼️</view>
+    <view class="icon-btn" bindtap="onImage" wx:if="{{showImage}}"><text class="iconfont icon-picture"></text></view>
     <button
       class="send-btn {{canSend ? 'active' : ''}}"
       bindtap="onSend"

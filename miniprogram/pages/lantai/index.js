@@ -7,6 +7,7 @@ const { getPinyinInitial } = require('../../utils/pinyin')
 const PAGE_SIZE = 20
 const FIGURES_CACHE_KEY = 'figures_star5_v4'
 const BOOKS_CACHE_KEY = 'books_v2'
+const CACHE_TTL_SECONDS = 86400
 
 function normalizeAssetUrl(url) {
   if (!url) return ''
@@ -28,7 +29,7 @@ function normalizeFigure(f) {
     title: f.identity || f.title || '',
     bio: f.bio_summary || f.bio || '',
     avatar: normalizeAssetUrl(f.mini_avatar_url || f.avatar_url || f.avatar),
-    initial: getPinyinInitial(name),
+    initial: f.initial || getPinyinInitial(name) || '#',
     unlocked: true
   }
 }
@@ -63,7 +64,7 @@ async function loadAll(queryFactory, pageSize = PAGE_SIZE, max = 300) {
 function buildGroups(list) {
   const map = {}
   list.forEach(f => {
-    const letter = getPinyinInitial(f.name || f.figureName || f.initial)
+    const letter = (f.initial || getPinyinInitial(f.name || f.figureName) || '#').toUpperCase()
     if (!map[letter]) map[letter] = []
     map[letter].push({
       ...f,
@@ -88,6 +89,7 @@ Page({
     books: [],
     searchText: '',
     loading: true,
+    refreshing: false,
     loadError: false,
     isLoggedIn: false
   },
@@ -109,27 +111,58 @@ Page({
   },
 
   async loadFigures(force = false) {
+    const cached = storage.get(FIGURES_CACHE_KEY)
+
+    if (cached && !force) {
+      this.applyFilter(cached)
+      this.setData({ refreshing: true })
+      this.fetchAndUpdateFigures()
+      return
+    }
+
+    this.setData({ refreshing: true })
+    await this.fetchAndUpdateFigures()
+  },
+
+  async fetchAndUpdateFigures() {
     try {
-      let figures
-      if (!force) {
-        const cached = storage.get(FIGURES_CACHE_KEY)
-        if (cached) figures = cached
+      const rows = await loadAll(
+        () => db.collection('figures')
+          .where({ star: _.eq(5) }),
+        PAGE_SIZE,
+        200
+      )
+      const newFigures = rows
+        .map(normalizeFigure)
+        .sort((a, b) => {
+          const initA = a.initial || '#'
+          const initB = b.initial || '#'
+          if (initA !== initB) return initA < initB ? -1 : 1
+          return (a.name || '').localeCompare(b.name || '', 'zh-Hans-CN')
+        })
+
+      if (newFigures.length) {
+        storage.set(FIGURES_CACHE_KEY, newFigures, CACHE_TTL_SECONDS)
       }
-      if (!figures) {
-        const rows = await loadAll(
-          () => db.collection('figures')
-            .where({ star: _.eq(5) }),
-          PAGE_SIZE,
-          200
-        )
-        figures = rows
-          .map(normalizeFigure)
-          .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'zh-Hans-CN'))
-        if (figures.length) storage.set(FIGURES_CACHE_KEY, figures, 86400)
+
+      const cached = storage.get(FIGURES_CACHE_KEY)
+      if (cached) {
+        const cacheIds = new Set(cached.map(f => f._id))
+        const newIds = new Set(newFigures.map(f => f._id))
+        const hasChanges = cacheIds.size !== newIds.size || 
+          [...cacheIds].some(id => !newIds.has(id))
+        if (hasChanges) {
+          this.applyFilter(newFigures)
+        }
+      } else {
+        this.applyFilter(newFigures)
       }
-      this.applyFilter(figures)
     } catch (e) {
-      this.setData({ figures: [], groups: [], letters: [], loading: false, loadError: true })
+      if (!this.data.figures.length) {
+        this.setData({ figures: [], groups: [], letters: [], loadError: true })
+      }
+    } finally {
+      this.setData({ refreshing: false })
       wx.stopPullDownRefresh()
     }
   },
@@ -157,22 +190,46 @@ Page({
   },
 
   async loadBooks(force = false) {
-    const cached = !force ? storage.get(BOOKS_CACHE_KEY) : null
-    if (cached) {
+    const cached = storage.get(BOOKS_CACHE_KEY)
+
+    if (cached && !force) {
       this.setData({ books: cached })
+      this.fetchAndUpdateBooks()
       return
     }
+
+    await this.fetchAndUpdateBooks()
+  },
+
+  async fetchAndUpdateBooks() {
     try {
       const rows = await loadAll(
         () => db.collection('books').orderBy('sort_order', 'asc'),
         PAGE_SIZE,
         100
       )
-      const books = rows.map(normalizeBook)
-      if (books.length) storage.set(BOOKS_CACHE_KEY, books, 86400)
-      this.setData({ books })
+      const newBooks = rows.map(normalizeBook)
+
+      if (newBooks.length) {
+        storage.set(BOOKS_CACHE_KEY, newBooks, CACHE_TTL_SECONDS)
+      }
+
+      const cached = storage.get(BOOKS_CACHE_KEY)
+      if (cached) {
+        const cacheIds = new Set(cached.map(b => b.id))
+        const newIds = new Set(newBooks.map(b => b.id))
+        const hasChanges = cacheIds.size !== newIds.size ||
+          [...cacheIds].some(id => !newIds.has(id))
+        if (hasChanges) {
+          this.setData({ books: newBooks })
+        }
+      } else {
+        this.setData({ books: newBooks })
+      }
     } catch (e) {
-      this.setData({ books: [] })
+      if (!this.data.books.length) {
+        this.setData({ books: [] })
+      }
     }
   },
 
@@ -188,7 +245,10 @@ Page({
 
   onLetterTap(e) {
     const letter = e.currentTarget.dataset.letter
-    this.setData({ toLetter: 'letter-' + letter })
+    this.setData({ toLetter: '' })
+    wx.nextTick(() => {
+      this.setData({ toLetter: 'letter-' + letter })
+    })
   },
 
   onFigureTap(e) {

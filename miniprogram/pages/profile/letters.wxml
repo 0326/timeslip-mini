@@ -57,8 +57,8 @@
             <view class="lc-content reply-content">{{item.replyContent}}</view>
           </view>
           <view class="lc-actions">
-            <view class="lc-action" bindtap="writeAgain" data-figure="{{item}}">✍️ 再写一封</view>
-            <view class="lc-action" bindtap="deleteLetter" data-id="{{item._id}}">🗑️ 删除</view>
+            <view class="lc-action" bindtap="writeAgain" data-figure="{{item}}"><text class="iconfont icon-edit"></text> 再写一封</view>
+            <view class="lc-action" bindtap="deleteLetter" data-id="{{item._id}}"><text class="iconfont icon-delete"></text> 删除</view>
           </view>
         </view>
       </view>

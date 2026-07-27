@@ -8,7 +8,7 @@
   <loading-skeleton wx:if="{{loading}}" count="4" />
 
   <view wx:elif="{{comments.length === 0}}" class="empty-state">
-    <text class="empty-icon">💬</text>
+    <text class="empty-icon iconfont icon-chat"></text>
     <text class="empty-text">暂无评论</text>
     <text class="empty-desc">快来发表第一条评论吧</text>
   </view>
@@ -74,7 +74,7 @@
 >
   <view wx:if="{{replyTo}}" class="reply-hint">
     <text class="rh-text">回复 {{replyToName}}</text>
-    <text class="rh-cancel" bindtap="cancelReply">✕</text>
+    <text class="rh-cancel iconfont icon-close" bindtap="cancelReply"></text>
   </view>
 
   <view class="ib-inner">

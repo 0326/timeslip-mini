@@ -35,7 +35,7 @@
           </view>
           <view class="card-progress">
             <block wx:if="{{item.completed}}">
-              <text class="tag done">已批阅 ✓</text>
+              <text class="tag done">已批阅 <text class="iconfont icon-Selected"></text></text>
               <text class="choice">选择：{{item.userChoice}}</text>
             </block>
             <block wx:elif="{{item.unlocked}}">
@@ -92,7 +92,7 @@
             <view class="opt-text">{{opt.text}}</view>
             <view class="opt-hint" wx:if="{{opt.hint}}">{{opt.hint}}</view>
           </view>
-          <view class="opt-check" wx:if="{{selectedOpt === opt.key}}">✓</view>
+          <view class="opt-check iconfont icon-Selected" wx:if="{{selectedOpt === opt.key}}"></view>
         </view>
       </view>
 
@@ -112,7 +112,8 @@
         bindtap="onDecide"
         disabled="{{!selectedOpt || simulating}}"
       >
-        {{simulating ? '推演中...' : '✍️ 朱批此折'}}
+        <block wx:if="{{simulating}}">推演中...</block>
+        <block wx:else><text class="iconfont icon-edit"></text> 朱批此折</block>
       </button>
     </view>
   </view>
@@ -128,7 +129,9 @@
   <view class="result-page" wx:if="{{!loading && simulationResult}}">
     <view class="result-hero {{simulationResult.outcome === 'better' ? 'good' : simulationResult.outcome === 'worse' ? 'bad' : 'neutral'}}">
       <view class="outcome-badge">
-        {{simulationResult.outcome === 'better' ? '✦ 盛世之治' : simulationResult.outcome === 'worse' ? '⚠ 内忧外患' : '— 波澜不惊'}}
+        <text wx:if="{{simulationResult.outcome === 'better'}}">✦ 盛世之治</text>
+        <text wx:elif="{{simulationResult.outcome === 'worse'}}"><text class="iconfont icon-warn"></text> 内忧外患</text>
+        <text wx:else>— 波澜不惊</text>
       </view>
       <view class="outcome-title">你的选择：{{simulationResult.choiceText}}</view>
       <view class="outcome-hint" wx:if="{{zhupi}}">朱批：「{{zhupi}}」</view>
@@ -136,7 +139,7 @@
 
     <view class="result-cards">
       <view class="rcard">
-        <view class="rcard-title">📜 真实历史</view>
+        <view class="rcard-title"><text class="iconfont icon-content"></text> 真实历史</view>
         <view class="rcard-content">{{memorial.historicalOutcome}}</view>
       </view>
 
@@ -153,7 +156,7 @@
 
     <view class="result-actions">
       <button class="btn-next" bindtap="goNext" wx:if="{{nextMemorialId}}">
-        📋 批阅下一折
+        <text class="iconfont icon-content"></text> 批阅下一折
       </button>
       <button class="btn-list" bindtap="backToList">
         ← 返回奏折列表

@@ -1,7 +1,7 @@
 <view class="page" wx:if="{{quiz}}">
   <!-- 顶部进度 -->
   <view class="topbar" style="padding-top: {{statusBarHeight + 12}}px;">
-    <view class="topbar-exit" bindtap="onTapExit">✕</view>
+    <view class="topbar-exit iconfont icon-close" bindtap="onTapExit"></view>
     <view class="topbar-progress">
       <view class="topbar-progress-bar" style="width: {{(currentIndex + 1) / questions.length * 100}}%;"></view>
     </view>
