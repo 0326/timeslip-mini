@@ -1,8 +1,7 @@
 {
   "usingComponents": {
     "custom-nav-bar": "/components/custom-nav-bar/index",
-    "article-card": "/components/article-card/index",
-    "loading-skeleton": "/components/loading-skeleton/index"
+    "article-card": "/components/article-card/index"
   },
   "enablePullDownRefresh": true,
   "backgroundColor": "#F7F6F3"

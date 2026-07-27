@@ -9,7 +9,35 @@
     </view>
   </scroll-view>
 
-  <loading-skeleton wx:if="{{loading && articles.length === 0}}" count="4" />
+  <!-- 双列骨架屏 -->
+  <view wx:if="{{loading && articles.length === 0}}" class="sk-grid">
+    <view class="sk-column">
+      <view class="sk-card" wx:for="{{[1,2,3]}}" wx:key="*this">
+        <view class="sk-cover sk-shimmer" style="height: {{item === 2 ? '380rpx' : item === 3 ? '280rpx' : '340rpx'}};"></view>
+        <view class="sk-body">
+          <view class="sk-title-line sk-shimmer"></view>
+          <view class="sk-title-line sk-shimmer w-70"></view>
+          <view class="sk-footer">
+            <view class="sk-meta-line sk-shimmer w-40"></view>
+            <view class="sk-meta-line sk-shimmer w-20"></view>
+          </view>
+        </view>
+      </view>
+    </view>
+    <view class="sk-column">
+      <view class="sk-card" wx:for="{{[1,2,3]}}" wx:key="*this">
+        <view class="sk-cover sk-shimmer" style="height: {{item === 1 ? '280rpx' : item === 2 ? '360rpx' : '320rpx'}};"></view>
+        <view class="sk-body">
+          <view class="sk-title-line sk-shimmer"></view>
+          <view class="sk-title-line sk-shimmer w-70"></view>
+          <view class="sk-footer">
+            <view class="sk-meta-line sk-shimmer w-40"></view>
+            <view class="sk-meta-line sk-shimmer w-20"></view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
 
   <view wx:elif="{{articles.length === 0 && !loading}}" class="empty-state">
     <text class="empty-icon iconfont icon-content"></text>
