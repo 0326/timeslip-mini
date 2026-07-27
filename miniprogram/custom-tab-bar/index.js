@@ -3,10 +3,10 @@ Component({
   data: {
     selected: 0,
     list: [
-      { pagePath: '/pages/chat/index', text: '穿越', icon: '💬', iconActive: '💬' },
-      { pagePath: '/pages/lantai/index', text: '兰台', icon: '📖', iconActive: '📚' },
-      { pagePath: '/pages/discover/index', text: '发现', icon: '🧭', iconActive: '🧭' },
-      { pagePath: '/pages/profile/index', text: '我的', icon: '👤', iconActive: '🏵️' }
+      { pagePath: '/pages/chat/index', text: '穿越', icon: '/images/tabbar/chat.png', iconActive: '/images/tabbar/chat_f.png' },
+      { pagePath: '/pages/lantai/index', text: '兰台', icon: '/images/tabbar/lantai.png', iconActive: '/images/tabbar/lantai_f.png' },
+      { pagePath: '/pages/discover/index', text: '发现', icon: '/images/tabbar/find.png', iconActive: '/images/tabbar/find_f.png' },
+      { pagePath: '/pages/profile/index', text: '我的', icon: '/images/tabbar/mine.png', iconActive: '/images/tabbar/mine_f.png' }
     ]
   },
   lifetimes: {
