@@ -11,7 +11,7 @@ exports.main = async (event, context) => {
   try {
     switch (action) {
       // ============ 公共接口 ============
-      case 'feedList': return await feedList(data)
+      case 'feedList': return await feedList(OPENID, data)
       case 'videoDetail': return await videoDetail(OPENID, data)
       case 'commentList': return await commentList(data)
       case 'channelDetail': return await channelDetail(OPENID, data)
@@ -61,7 +61,7 @@ async function checkAdmin(OPENID) {
 
 // ==================== 公共接口 ====================
 
-async function feedList(data) {
+async function feedList(OPENID, data) {
   const { lastCreatedAt = '', lastId = '', limit = 10, type = 'recommend', figureId = '' } = data
   let where = { status: 'published' }
   if (figureId) where.figureId = figureId
@@ -79,6 +79,48 @@ async function feedList(data) {
   const list = res.data
   const hasMore = list.length === Math.min(limit, 20)
   const newLast = list.length > 0 ? list[list.length - 1] : null
+
+  // 批量查询用户点赞/关注状态和评论计数
+  if (list.length > 0) {
+    const videoIds = list.map(v => v._id)
+    const channelIds = [...new Set(list.map(v => v.channelId).filter(Boolean))]
+
+    // 评论计数（所有用户都需要）
+    const commentCountMap = {}
+    try {
+      for (const vid of videoIds) {
+        const c = await db.collection('video_comments').where({ videoId: vid }).count()
+        commentCountMap[vid] = c.total
+      }
+    } catch (_) {}
+
+    // 点赞和关注状态（需要登录）
+    let likedSet = new Set()
+    let followedSet = new Set()
+    if (OPENID) {
+      try {
+        const likes = await db.collection('video_likes')
+          .where({ videoId: _.in(videoIds), _openid: OPENID })
+          .get()
+        likedSet = new Set(likes.data.map(l => l.videoId))
+      } catch (_) {}
+
+      if (channelIds.length > 0) {
+        try {
+          const follows = await db.collection('video_follows')
+            .where({ channelId: _.in(channelIds), _openid: OPENID })
+            .get()
+          followedSet = new Set(follows.data.map(f => f.channelId))
+        } catch (_) {}
+      }
+    }
+
+    list.forEach(v => {
+      v.liked = likedSet.has(v._id)
+      v.followed = followedSet.has(v.channelId)
+      v.commentCount = commentCountMap[v._id] || 0
+    })
+  }
 
   return {
     code: 0,

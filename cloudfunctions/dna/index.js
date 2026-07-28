@@ -19,6 +19,15 @@ async function tryUnlock(OPENID, key) {
   } catch (e) { console.warn('tryUnlock fail', key, e.message) }
 }
 
+// 管理员权限校验：users 集合 role 字段须为 admin 或 superadmin
+async function checkAdmin(OPENID) {
+  const res = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
+  if (!res.data || res.data.length === 0) throw new Error('用户不存在')
+  const role = res.data[0].role || 'user'
+  if (role !== 'admin' && role !== 'superadmin') throw new Error('无管理员权限')
+  return res.data[0]
+}
+
 // 封面图云文件 ID（已上传到云存储）
 const COVER_FILE_IDS = {
   emperor: 'cloud://cloud1-d0gunpzup215cfd87.636c-cloud1-d0gunpzup215cfd87-1457646459/dna-covers/emperor.jpg',
@@ -1135,10 +1144,22 @@ exports.main = async (event, context) => {
       case 'submit': return await submit(OPENID, data)
       case 'get-record': return await getRecord(OPENID, data)
       case 'my-records': return await myRecords(OPENID, data)
-      case 'admin-quiz-list': return await adminQuizList(OPENID, data)
-      case 'admin-update-quiz-cover': return await adminUpdateQuizCover(OPENID, data)
-      case 'admin-figure-list': return await adminFigureList(OPENID, data)
-      case 'admin-update-figure-avatar': return await adminUpdateFigureAvatar(OPENID, data)
+      case 'admin-quiz-list': {
+        await checkAdmin(OPENID)
+        return await adminQuizList(OPENID, data)
+      }
+      case 'admin-update-quiz-cover': {
+        await checkAdmin(OPENID)
+        return await adminUpdateQuizCover(OPENID, data)
+      }
+      case 'admin-figure-list': {
+        await checkAdmin(OPENID)
+        return await adminFigureList(OPENID, data)
+      }
+      case 'admin-update-figure-avatar': {
+        await checkAdmin(OPENID)
+        return await adminUpdateFigureAvatar(OPENID, data)
+      }
       default: return { code: -1, message: '未知 action: ' + action }
     }
   } catch (e) {

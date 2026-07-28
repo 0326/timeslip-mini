@@ -124,9 +124,24 @@
   margin-right: 20rpx;
 }
 
-.item-delete {
-  padding: 20rpx;
+.item-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
   flex-shrink: 0;
+}
+
+.item-edit {
+  padding: 16rpx 20rpx;
+}
+
+.item-edit .iconfont {
+  font-size: 36rpx;
+  color: #576b95;
+}
+
+.item-delete {
+  padding: 16rpx 20rpx;
 }
 
 .item-delete .iconfont {

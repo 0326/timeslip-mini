@@ -25,15 +25,55 @@ Page({
 
   onLoad(options) {
     if (!loginGuard.requireAdmin(this)) return
+    this._editId = (options && options.editId) || ''
     this.loadChannels()
+    if (this._editId) {
+      this.loadVideoForEdit(this._editId)
+    }
+  },
+
+  async loadVideoForEdit(videoId) {
+    try {
+      const data = await requestCloud('videoChannel', 'videoDetail', { videoId }, { throwError: false })
+      if (!data) return
+      this._editVideoData = data
+      this.setData({
+        editId: videoId,
+        title: data.title || '',
+        description: data.description || '',
+        historicalEvent: data.historicalEvent || '',
+        tags: data.tags || [],
+        videoFileID: data.videoUrl || '',
+        coverFileID: data.coverUrl || '',
+        duration: data.duration || 0
+      })
+    } catch (e) {
+      wx.showToast({ title: '加载视频信息失败', icon: 'none' })
+    }
   },
 
   async loadChannels() {
     try {
       const data = await requestCloud('videoChannel', 'adminChannelList', {}, { throwError: false })
       this.setData({ channelList: data || [] })
+      // 编辑模式下，channelList 加载完成后预选视频号
+      if (this._editId && this.data.editId) {
+        this._preselectChannel()
+      }
     } catch (e) {
       wx.showToast({ title: '加载视频号列表失败', icon: 'none' })
+    }
+  },
+
+  _preselectChannel() {
+    const videoData = this._editVideoData
+    if (!videoData || !videoData.channelId) return
+    const idx = this.data.channelList.findIndex(c => c._id === videoData.channelId)
+    if (idx >= 0) {
+      this.setData({
+        selectedChannel: this.data.channelList[idx],
+        selectedChannelIdx: idx
+      })
     }
   },
 
@@ -163,44 +203,58 @@ Page({
       return
     }
 
-    wx.showLoading({ title: '上传中...', mask: true })
+    const isEdit = !!this.data.editId
+    wx.showLoading({ title: isEdit ? '保存中...' : '上传中...', mask: true })
     this.setData({ uploading: true, uploadProgress: 0 })
 
     try {
       let videoFileID = this.data.videoFileID
-      if (!videoFileID && this.data.videoTempPath) {
+      if (this.data.videoTempPath) {
         videoFileID = await this.uploadFile(this.data.videoTempPath, 'video')
       }
 
       let coverFileID = this.data.coverFileID
-      if (!coverFileID && this.data.coverTempPath) {
+      if (this.data.coverTempPath) {
         coverFileID = await this.uploadFile(this.data.coverTempPath, 'cover')
       }
 
-      const res = await requestCloud('videoChannel', 'adminVideoCreate', {
-        channelId: this.data.selectedChannel._id,
-        title: this.data.title.trim(),
-        description: this.data.description.trim(),
-        coverUrl: coverFileID,
-        videoUrl: videoFileID,
-        duration: this.data.duration,
-        historicalEvent: this.data.historicalEvent.trim(),
-        tags: this.data.tags
-      }, { throwError: false })
+      if (isEdit) {
+        await requestCloud('videoChannel', 'adminVideoUpdate', {
+          videoId: this.data.editId,
+          title: this.data.title.trim(),
+          description: this.data.description.trim(),
+          coverUrl: coverFileID,
+          videoUrl: videoFileID,
+          duration: this.data.duration,
+          historicalEvent: this.data.historicalEvent.trim(),
+          tags: this.data.tags
+        }, { throwError: false })
+      } else {
+        const res = await requestCloud('videoChannel', 'adminVideoCreate', {
+          channelId: this.data.selectedChannel._id,
+          title: this.data.title.trim(),
+          description: this.data.description.trim(),
+          coverUrl: coverFileID,
+          videoUrl: videoFileID,
+          duration: this.data.duration,
+          historicalEvent: this.data.historicalEvent.trim(),
+          tags: this.data.tags
+        }, { throwError: false })
+
+        if (res && res._id && this.data.aiComments.length > 0) {
+          await this.uploadAiComments(res._id)
+        }
+      }
 
       wx.hideLoading()
-      wx.showToast({ title: '发布成功', icon: 'success' })
-
-      if (res && res._id && this.data.aiComments.length > 0) {
-        await this.uploadAiComments(res._id)
-      }
+      wx.showToast({ title: isEdit ? '保存成功' : '发布成功', icon: 'success' })
 
       setTimeout(() => {
         wx.navigateBack()
       }, 1500)
     } catch (e) {
       wx.hideLoading()
-      wx.showToast({ title: e.message || '发布失败', icon: 'none' })
+      wx.showToast({ title: e.message || (isEdit ? '保存失败' : '发布失败'), icon: 'none' })
     } finally {
       this.setData({ uploading: false })
     }

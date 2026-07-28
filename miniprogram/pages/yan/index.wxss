@@ -755,7 +755,11 @@
   border-radius: 24rpx;
   padding: 48rpx 32rpx 32rpx;
   position: relative;
-  overflow-y: auto;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.detail-scroll {
+  max-height: calc(85vh - 80rpx);
 }
 .detail-close {
   position: absolute;

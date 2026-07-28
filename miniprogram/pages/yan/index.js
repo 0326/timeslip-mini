@@ -9,6 +9,7 @@ const CARRIERS = [
   {
     key: 'qinghong',
     name: '轻鸿',
+    emoji: '🕊️',
     speed: 95, speedLabel: '4小时',
     accuracy: 80, accuracyLabel: '80%',
     load: 30, loadLabel: '轻薄',
@@ -20,6 +21,7 @@ const CARRIERS = [
   {
     key: 'guiyan',
     name: '归雁',
+    emoji: '🦢',
     speed: 60, speedLabel: '12小时',
     accuracy: 100, accuracyLabel: '100%',
     load: 60, loadLabel: '中等',
@@ -31,6 +33,7 @@ const CARRIERS = [
   {
     key: 'daocao',
     name: '大雕',
+    emoji: '🦅',
     speed: 30, speedLabel: '24小时',
     accuracy: 90, accuracyLabel: '90%',
     load: 100, loadLabel: '厚重',
@@ -62,6 +65,53 @@ const GIFT_FILTERS = [
 ]
 
 const MAX_LETTER_LEN = 500
+
+// 信使 / 人物头像 emoji 统一映射（避免散落在 WXML 各处不一致）
+const CARRIER_EMOJI = { qinghong: '🕊️', guiyan: '🦢', daocao: '🦅' }
+const FIGURE_EMOJI = {
+  'fig-kongzi': '🎓',
+  'fig-simqian': '📜',
+  'fig-caocao': '⚔️',
+  'fig-taoqian': '🌼',
+  'fig-libai': '🍶',
+  'fig-baijuyi': '🖋️',
+  'fig-wuzetian': '👑',
+  'fig-sushi': '🍖',
+  'fig-liqingzhao': '🌸',
+  'fig-xinqiji': '🗡️',
+  'fig-guanhanqing': '🎭',
+  'fig-zhenghe': '⛵',
+  'fig-wangyangming': '🕯️',
+  'fig-nalan': '🍂',
+  'fig-caoxueqin': '📕'
+}
+
+function figureEmoji(figureId) {
+  return FIGURE_EMOJI[figureId] || '🏛️'
+}
+
+function carrierEmoji(carrierKey) {
+  return CARRIER_EMOJI[carrierKey] || '🕊️'
+}
+
+// 人物兜底：云端 figures 接口失败时仍可选择收信人（与云函数 FIGURES 保持一致）
+const FALLBACK_FIGURES = [
+  { figureId: 'fig-kongzi', name: '孔子', title: '至圣先师', dynasty: 'xianqin', dynastyName: '春秋' },
+  { figureId: 'fig-simqian', name: '司马迁', title: '太史公', dynasty: 'han', dynastyName: '西汉' },
+  { figureId: 'fig-caocao', name: '曹操', title: '魏武帝', dynasty: 'han', dynastyName: '东汉末' },
+  { figureId: 'fig-taoqian', name: '陶渊明', title: '五柳先生', dynasty: 'weijin', dynastyName: '东晋' },
+  { figureId: 'fig-libai', name: '李白', title: '诗仙', dynasty: 'tang', dynastyName: '盛唐' },
+  { figureId: 'fig-baijuyi', name: '白居易', title: '诗魔', dynasty: 'tang', dynastyName: '中唐' },
+  { figureId: 'fig-wuzetian', name: '武则天', title: '则天大圣皇帝', dynasty: 'tang', dynastyName: '武周' },
+  { figureId: 'fig-sushi', name: '苏轼', title: '东坡居士', dynasty: 'song', dynastyName: '北宋' },
+  { figureId: 'fig-liqingzhao', name: '李清照', title: '易安居士', dynasty: 'song', dynastyName: '两宋之交' },
+  { figureId: 'fig-xinqiji', name: '辛弃疾', title: '词中之龙', dynasty: 'song', dynastyName: '南宋' },
+  { figureId: 'fig-guanhanqing', name: '关汉卿', title: '已斋叟', dynasty: 'yuan', dynastyName: '元' },
+  { figureId: 'fig-zhenghe', name: '郑和', title: '三保太监', dynasty: 'ming', dynastyName: '明' },
+  { figureId: 'fig-wangyangming', name: '王阳明', title: '文成公', dynasty: 'ming', dynastyName: '明' },
+  { figureId: 'fig-nalan', name: '纳兰性德', title: '容若', dynasty: 'qing', dynastyName: '清' },
+  { figureId: 'fig-caoxueqin', name: '曹雪芹', title: '芹溪', dynasty: 'qing', dynastyName: '清' }
+]
 
 Page({
   data: {
@@ -118,17 +168,20 @@ Page({
     this.clearCountdownLoop()
   },
 
-  // 加载静态数据（人物列表）
+  // 加载静态数据（人物列表），云端失败时使用本地兜底
   async loadStaticData() {
     const cached = storage.get('yan_figures')
-    if (cached) {
-      this.setData({ allFigures: cached.figures || [], dynasties: cached.dynasties || DYNASTIES })
+    if (cached && Array.isArray(cached.figures) && cached.figures.length) {
+      this.setData({ allFigures: cached.figures, dynasties: cached.dynasties || DYNASTIES })
+      this.filterFigures(this.data.selectedDynasty)
+    } else if (!this.data.allFigures.length) {
+      this.setData({ allFigures: FALLBACK_FIGURES })
       this.filterFigures(this.data.selectedDynasty)
     }
     try {
       const data = await requestCloud('yan', 'figures', {}, { throwError: false })
-      if (data) {
-        this.setData({ allFigures: data.figures || [], dynasties: data.dynasties || DYNASTIES })
+      if (data && Array.isArray(data.figures) && data.figures.length) {
+        this.setData({ allFigures: data.figures, dynasties: data.dynasties || DYNASTIES })
         storage.set('yan_figures', data, 3600)
         this.filterFigures(this.data.selectedDynasty)
       }
@@ -141,7 +194,9 @@ Page({
     if (dynasty === 'random') {
       figures = []
     } else {
-      figures = this.data.allFigures.filter(f => f.dynasty === dynasty)
+      figures = this.data.allFigures
+        .filter(f => f.dynasty === dynasty)
+        .map(f => ({ ...f, avatarEmoji: figureEmoji(f.figureId) }))
     }
     const selectedFigureId = figures.length ? figures[0].figureId : ''
     const selectedFigureName = figures.length ? figures[0].name : ''
@@ -151,7 +206,9 @@ Page({
 
   // ====== Tab 切换 ======
   switchTab(e) {
-    const idx = e.currentTarget.dataset.idx
+    // dataset 可能为字符串，统一转数字避免严格比较失效
+    const idx = Number(e.currentTarget.dataset.idx)
+    if (idx === this.data.activeTab) return
     this.setData({ activeTab: idx })
     if (idx === 1) this.loadLetters()
     if (idx === 2) this.loadCollection()
@@ -213,13 +270,18 @@ Page({
     const { canSend, carrierIndex, selectedDynasty, selectedFigureId, letterContent } = this.data
     if (!canSend || this.data.sending) return
 
+    // 署名：优先用户昵称，兜底「远方友人」
+    const userInfo = (app.globalData && app.globalData.userInfo) || {}
+    const fromName = (userInfo.nickName || '').trim().slice(0, 20) || '远方友人'
+
     this.setData({ sending: true })
     try {
       const data = await requestCloud('yan', 'send', {
         carrier: CARRIERS[carrierIndex].key,
         dynasty: selectedDynasty,
         figureId: selectedFigureId || 'random',
-        content: letterContent
+        content: letterContent,
+        fromName
       }, { showLoading: true, loadingText: '托付信使...' })
 
       if (data) {
@@ -241,27 +303,40 @@ Page({
 
   // ====== 加载记录 ======
   async loadLetters() {
+    // 节流：生成回信中避免并发重复拉取
+    if (this._loadingLetters) return
+    this._loadingLetters = true
     try {
       const data = await requestCloud('yan', 'list', {}, { throwError: false })
       if (data) {
-        const traveling = data.letters.filter(l => l.status === 'traveling').map(l => ({
-          ...l,
-          sentAtText: this.formatTime(l.sentAt),
-          remainText: this.formatCountdown(Math.max(0, l.arriveAt - Date.now())),
-          progress: this.calcProgress(l)
-        }))
-        const arrived = data.letters.filter(l => l.status === 'arrived').map(l => ({
-          ...l,
-          arrivedAtText: this.formatTime(l.arriveAt)
-        }))
+        const letters = data.letters || []
+        // processing 视为旅途中展示，避免状态锁期间信件从列表消失
+        const traveling = letters
+          .filter(l => l.status === 'traveling' || l.status === 'processing')
+          .map(l => ({
+            ...l,
+            avatarEmoji: carrierEmoji(l.carrier),
+            sentAtText: this.formatTime(l.sentAt),
+            remainText: this.formatCountdown(Math.max(0, l.arriveAt - Date.now())),
+            progress: this.calcProgress(l)
+          }))
+        const arrived = letters
+          .filter(l => l.status === 'arrived')
+          .map(l => ({
+            ...l,
+            avatarEmoji: figureEmoji(l.figureId),
+            arrivedAtText: this.formatTime(l.arriveAt)
+          }))
         this.setData({
-          letters: data.letters,
+          letters,
           travelingLetters: traveling,
           arrivedLetters: arrived,
           unreadCount: data.unread || 0
         })
       }
-    } catch (e) {}
+    } catch (e) {} finally {
+      this._loadingLetters = false
+    }
   },
 
   formatTime(ts) {
@@ -321,12 +396,26 @@ Page({
     try {
       const data = await requestCloud('yan', 'detail', { letterId: id }, { throwError: false })
       if (data) {
-        this.setData({ showDetail: true, detailLetter: data })
+        this.setData({
+          showDetail: true,
+          detailLetter: { ...data, avatarEmoji: figureEmoji(data.figureId) }
+        })
         if (data.status === 'arrived' && !data.read) {
+          // 标记已读后同步本地列表与未读角标，避免返回列表仍显示未读
           requestCloud('yan', 'read', { letterId: id }, { throwError: false })
+          this.syncReadLocal(id)
         }
       }
     } catch (e) {}
+  },
+
+  // 本地同步已读状态
+  syncReadLocal(letterId) {
+    const arrivedLetters = this.data.arrivedLetters.map(l =>
+      l._id === letterId ? { ...l, read: true } : l
+    )
+    const unreadCount = arrivedLetters.filter(l => !l.read).length
+    this.setData({ arrivedLetters, unreadCount })
   },
 
   closeDetail() {
@@ -340,8 +429,15 @@ Page({
       const data = await requestCloud('yan', 'claim', { letterId: id }, { showLoading: true, loadingText: '收入藏馆...' })
       if (data) {
         wx.showToast({ title: '已收入藏馆', icon: 'success' })
-        this.setData({ showDetail: false, detailLetter: null })
-        this.loadLetters()
+        // 同步详情弹窗与列表的领取状态
+        const detailLetter = this.data.detailLetter
+          ? { ...this.data.detailLetter, claimed: true }
+          : null
+        const arrivedLetters = this.data.arrivedLetters.map(l =>
+          l._id === id ? { ...l, claimed: true } : l
+        )
+        this.setData({ showDetail: false, detailLetter, arrivedLetters })
+        // 藏馆数据惰性刷新：下次切到藏馆 Tab 时 loadCollection 会拉取
       }
     } catch (e) {}
   },

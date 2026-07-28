@@ -27,7 +27,9 @@ const COLLECTIONS = [
   'videos',
   'video_likes',
   'video_comments',
-  'video_follows'
+  'video_follows',
+  'yan_letters',
+  'yan_user_gifts'
 ]
 
 // ============================================================
@@ -170,26 +172,51 @@ const VIDEO_CHANNEL_SEED = [
 ]
 
 // ============================================================
-// 视频种子：每个视频号 2-3 条示例视频（无真实文件，占位用）
+// 视频种子：每个视频号 2-3 条示例视频
+// 视频来源：Archive.org (Public Domain) + Mixkit (免费可商用)
+// 转存流程：seedVideos 写入外部URL → 调用 transferVideos 云函数下载并上传到云存储
+// 一键操作：调用 initDB { action: 'seedAndTransfer' } 自动完成播种+转存
 // ============================================================
 const VIDEO_SEED = [
   // 李白
-  { figureId: 'fig-libai', title: '将进酒', description: '君不见黄河之水天上来，奔流到海不复回！', historicalEvent: '将进酒', tags: ['唐诗', '酒', '豪放'], duration: 45 },
-  { figureId: 'fig-libai', title: '望庐山瀑布', description: '飞流直下三千尺，疑是银河落九天。', historicalEvent: '游庐山', tags: ['唐诗', '山水'], duration: 30 },
-  { figureId: 'fig-libai', title: '赠汪伦', description: '桃花潭水深千尺，不及汪伦送我情。', historicalEvent: '赠汪伦', tags: ['唐诗', '友情'], duration: 25 },
+  { figureId: 'fig-libai', title: '将进酒', description: '君不见黄河之水天上来，奔流到海不复回！', historicalEvent: '将进酒', tags: ['唐诗', '酒', '豪放'], duration: 45,
+    videoUrl: 'https://assets.mixkit.co/videos/20806/20806-720.mp4',
+    coverUrl: 'https://assets.mixkit.co/videos/20806/20806-thumb-720-0.jpg' },
+  { figureId: 'fig-libai', title: '望庐山瀑布', description: '飞流直下三千尺，疑是银河落九天。', historicalEvent: '游庐山', tags: ['唐诗', '山水'], duration: 30,
+    videoUrl: 'https://assets.mixkit.co/videos/11123/11123-720.mp4',
+    coverUrl: 'https://assets.mixkit.co/videos/11123/11123-thumb-360-0.jpg' },
+  { figureId: 'fig-libai', title: '赠汪伦', description: '桃花潭水深千尺，不及汪伦送我情。', historicalEvent: '赠汪伦', tags: ['唐诗', '友情'], duration: 25,
+    videoUrl: 'https://assets.mixkit.co/videos/19011/19011-720.mp4',
+    coverUrl: 'https://assets.mixkit.co/videos/19011/19011-thumb-360-0.jpg' },
   // 苏轼
-  { figureId: 'fig-sushi', title: '赤壁怀古', description: '大江东去，浪淘尽，千古风流人物。', historicalEvent: '念奴娇·赤壁怀古', tags: ['宋词', '豪放'], duration: 40 },
-  { figureId: 'fig-sushi', title: '东坡肉秘方', description: '黄州好猪肉，价贱如泥土。慢着火，少着水，火候足时它自美。', historicalEvent: '东坡肉', tags: ['美食', '生活'], duration: 35 },
+  { figureId: 'fig-sushi', title: '赤壁怀古', description: '大江东去，浪淘尽，千古风流人物。', historicalEvent: '念奴娇·赤壁怀古', tags: ['宋词', '豪放'], duration: 40,
+    videoUrl: 'https://assets.mixkit.co/videos/28663/28663-720.mp4',
+    coverUrl: 'https://assets.mixkit.co/videos/28663/28663-thumb-360-0.jpg' },
+  { figureId: 'fig-sushi', title: '东坡肉秘方', description: '黄州好猪肉，价贱如泥土。慢着火，少着水，火候足时它自美。', historicalEvent: '东坡肉', tags: ['美食', '生活'], duration: 35,
+    videoUrl: 'https://assets.mixkit.co/active_storage/video_items/100500/1725309516/100500-video-360.mp4',
+    coverUrl: 'https://assets.mixkit.co/active_storage/video_items/100500/1725309516/100500-video-thumb-360-0.jpg' },
   // 诸葛亮
-  { figureId: 'fig-zhugeliang', title: '出师表', description: '臣本布衣，躬耕于南阳，苟全性命于乱世...', historicalEvent: '出师表', tags: ['三国', '忠义'], duration: 60 },
-  { figureId: 'fig-zhugeliang', title: '空城计', description: '瑶琴三尺胜雄师，诸葛西城退敌时。', historicalEvent: '空城计', tags: ['三国', '谋略'], duration: 38 },
+  { figureId: 'fig-zhugeliang', title: '出师表', description: '臣本布衣，躬耕于南阳，苟全性命于乱世...', historicalEvent: '出师表', tags: ['三国', '忠义'], duration: 60,
+    videoUrl: 'https://assets.mixkit.co/videos/31010/31010-720.mp4',
+    coverUrl: 'https://assets.mixkit.co/videos/31010/31010-thumb-720-0.jpg' },
+  { figureId: 'fig-zhugeliang', title: '空城计', description: '瑶琴三尺胜雄师，诸葛西城退敌时。', historicalEvent: '空城计', tags: ['三国', '谋略'], duration: 38,
+    videoUrl: 'https://assets.mixkit.co/active_storage/video_items/100498/1725309129/100498-video-360.mp4',
+    coverUrl: 'https://assets.mixkit.co/active_storage/video_items/100498/1725309129/100498-video-thumb-360-0.jpg' },
   // 刘邦
-  { figureId: 'fig-liubang', title: '大风歌', description: '大风起兮云飞扬，威加海内兮归故乡，安得猛士兮守四方！', historicalEvent: '大风歌', tags: ['汉朝', '诗歌'], duration: 28 },
-  { figureId: 'fig-liubang', title: '鸿门宴惊魂', description: '项庄舞剑，意在沛公。今日之险，终生难忘。', historicalEvent: '鸿门宴', tags: ['汉朝', '历史'], duration: 50 },
+  { figureId: 'fig-liubang', title: '大风歌', description: '大风起兮云飞扬，威加海内兮归故乡，安得猛士兮守四方！', historicalEvent: '大风歌', tags: ['汉朝', '诗歌'], duration: 28,
+    videoUrl: 'https://archive.org/download/ChinaCli1935/ChinaCli1935_512kb.mp4',
+    coverUrl: 'https://archive.org/download/ChinaCli1935/__ia_thumb.jpg' },
+  { figureId: 'fig-liubang', title: '鸿门宴惊魂', description: '项庄舞剑，意在沛公。今日之险，终生难忘。', historicalEvent: '鸿门宴', tags: ['汉朝', '历史'], duration: 50,
+    videoUrl: 'https://archive.org/download/6ca-65f-16-e-7b-5-4d-2b-824d-be-4f-1cef-63e-0/6ca65f16-e7b5-4d2b-824d-be4f1cef63e0.mp4',
+    coverUrl: 'https://archive.org/download/6ca-65f-16-e-7b-5-4d-2b-824d-be-4f-1cef-63e-0/__ia_thumb.jpg' },
   // 武则天
-  { figureId: 'fig-wuzetian', title: '无字碑', description: '千秋功过，留待后人评说。', historicalEvent: '无字碑', tags: ['唐朝', '女皇'], duration: 32 },
+  { figureId: 'fig-wuzetian', title: '无字碑', description: '千秋功过，留待后人评说。', historicalEvent: '无字碑', tags: ['唐朝', '女皇'], duration: 32,
+    videoUrl: 'https://assets.mixkit.co/videos/4108/4108-720.mp4',
+    coverUrl: 'https://assets.mixkit.co/videos/4108/4108-thumb-360-0.jpg' },
   // 司马迁
-  { figureId: 'fig-simqian', title: '史记自序', description: '究天人之际，通古今之变，成一家之言。', historicalEvent: '史记', tags: ['史学', '文学'], duration: 55 }
+  { figureId: 'fig-simqian', title: '史记自序', description: '究天人之际，通古今之变，成一家之言。', historicalEvent: '史记', tags: ['史学', '文学'], duration: 55,
+    videoUrl: 'https://assets.mixkit.co/videos/20806/20806-720.mp4',
+    coverUrl: 'https://assets.mixkit.co/videos/20806/20806-thumb-720-0.jpg' }
 ]
 
 // ============================================================
@@ -225,6 +252,8 @@ exports.main = async (event, context) => {
       case 'seedVideoChannels': return await seedVideoChannels()
       case 'seedVideos': return await seedVideos()
       case 'seedVideoComments': return await seedVideoComments()
+      case 'fixVideoUrls': return await fixVideoUrls()
+      case 'seedAndTransfer': return await seedAndTransfer(data)
       default: return { code: -1, message: '未知 action: ' + action }
     }
   } catch (e) {
@@ -395,8 +424,8 @@ async function seedVideos() {
           dynasty: channel.dynasty || '',
           title: v.title,
           description: v.description,
-          coverUrl: '',
-          videoUrl: '',
+          coverUrl: v.coverUrl || '',
+          videoUrl: v.videoUrl || '',
           duration: v.duration || 30,
           historicalEvent: v.historicalEvent || '',
           tags: v.tags || [],
@@ -475,4 +504,105 @@ async function resetDB(data) {
     }
   }
   return { code: 0, message: 'ok', data: result }
+}
+
+// ============================================================
+// 存量数据修复：为已有空 videoUrl/coverUrl 的视频记录回填真实 URL
+// ============================================================
+async function fixVideoUrls() {
+  // 按 figureId + title 匹配 VIDEO_SEED，回填 videoUrl 和 coverUrl
+  const seedMap = {}
+  VIDEO_SEED.forEach(v => {
+    seedMap[v.figureId + '_' + v.title] = v
+  })
+
+  let fixed = 0, skipped = 0, failed = 0
+  try {
+    const res = await db.collection('videos')
+      .where({ status: 'published' })
+      .limit(100)
+      .get()
+
+    for (const video of res.data) {
+      // 已有有效 URL 的跳过（含 cloud:// 和 http://）
+      if (video.videoUrl && (video.videoUrl.startsWith('http') || video.videoUrl.startsWith('cloud://'))) {
+        skipped++
+        continue
+      }
+
+      const key = video.figureId + '_' + video.title
+      const seed = seedMap[key]
+      if (!seed) {
+        skipped++
+        continue
+      }
+
+      try {
+        await db.collection('videos').doc(video._id).update({
+          data: {
+            videoUrl: seed.videoUrl,
+            coverUrl: seed.coverUrl
+          }
+        })
+        fixed++
+      } catch (e) {
+        console.warn('fixVideoUrls update err:', video._id, e)
+        failed++
+      }
+    }
+  } catch (e) {
+    return { code: -1, message: e.message, data: null }
+  }
+
+  return {
+    code: 0,
+    message: `修复完成：${fixed} 条已更新，${skipped} 条跳过，${failed} 条失败`,
+    data: { fixed, skipped, failed }
+  }
+}
+
+// ============================================================
+// 一键播种 + 转存：先写入种子数据（外部URL），再调用 transferVideos 转存到云存储
+// ============================================================
+async function seedAndTransfer(data) {
+  const log = []
+
+  // 1. 播种视频号
+  try {
+    const chRes = await seedVideoChannels()
+    log.push('视频号: ' + chRes.message)
+  } catch (e) {
+    log.push('视频号失败: ' + e.message)
+  }
+
+  // 2. 播种视频
+  try {
+    const vRes = await seedVideos()
+    log.push('视频: ' + vRes.message)
+  } catch (e) {
+    log.push('视频失败: ' + e.message)
+  }
+
+  // 3. 播种评论
+  try {
+    const cRes = await seedVideoComments()
+    log.push('评论: ' + cRes.message)
+  } catch (e) {
+    log.push('评论失败: ' + e.message)
+  }
+
+  // 4. 调用 transferVideos 转存到云存储
+  try {
+    const tRes = await cloud.callFunction({ name: 'transferVideos', data: { action: 'run' } })
+    const tData = tRes.result || {}
+    log.push('转存: ' + (tData.message || JSON.stringify(tData)))
+  } catch (e) {
+    log.push('转存失败（需手动部署 transferVideos 云函数后重试）: ' + e.message)
+  }
+
+  return {
+    code: 0,
+    message: log.join('；'),
+    data: { log }
+  }
 }

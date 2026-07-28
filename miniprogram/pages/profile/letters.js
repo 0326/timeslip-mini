@@ -12,30 +12,19 @@ const FILTERS = [
   { key: 'other', name: '其他' }
 ]
 
-const MOCK_LETTERS = [
-  {
-    _id: 'l_mock1',
-    figureId: 'libai',
-    figureName: '李白',
-    figureTitle: '诗仙',
-    dynasty: 'tang',
-    avatar: 'https://img.icons8.com/color/96/poet.png',
-    content: '太白先生，近来学业繁重，心下烦闷。读先生之诗，顿觉心胸开阔。不知先生可有排解忧愁之法？',
-    replyContent: '哈哈哈！人生在世不称意，明朝散发弄扁舟。烦忧之时，且持一杯酒，对一轮月，听一夜风。君不见黄河之水天上来，奔流到海不复回？忧愁亦如此水，终将逝去。少年且珍重，前路正长！',
-    createdAt: Date.now() - 86400000 * 3
-  },
-  {
-    _id: 'l_mock2',
-    figureId: 'sushi',
-    figureName: '苏轼',
-    figureTitle: '东坡居士',
-    dynasty: 'song',
-    avatar: 'https://img.icons8.com/color/96/writer.png',
-    content: '东坡居士，晚辈初入职场，诸事不顺，屡遭排挤。读先生《定风波》，感慨万千，敢问如何方能做到「一蓑烟雨任平生」？',
-    replyContent: '少年听吾一言：人有悲欢离合，月有阴晴圆缺，此事古难全。黄州惠州儋州，吾一生颠沛，然未尝一日忘食也。且去做一碗东坡肉，吃饱了再说。烦恼如浮云，饿时方知皆虚。记住：「竹杖芒鞋轻胜马，谁怕？」',
-    createdAt: Date.now() - 86400000 * 10
-  }
-]
+// pigeon 集合不存储 figureTitle，前端补充
+const FIGURE_TITLES = {
+  libai: '诗仙',
+  sushi: '东坡居士',
+  xiangyu: '西楚霸王',
+  caocao: '魏武帝',
+  wuzetian: '则天大圣皇帝',
+  mulan: '巾帼英雄',
+  simaqian: '太史公',
+  kongzi: '儒家圣人',
+  zhenghe: '三保太监',
+  baijuyi: '诗魔'
+}
 
 Page({
   data: {
@@ -54,16 +43,91 @@ Page({
   },
 
   async loadLetters() {
-    let letters = storage.get('letters') || []
-    if (!letters.length) {
-      try {
-        const data = await requestCloud('pigeon', 'listLetters', {}, { throwError: false })
-        letters = (data && data.letters) || MOCK_LETTERS
-      } catch (e) {
-        letters = MOCK_LETTERS
-      }
+    // 先展示本地缓存
+    let cached = storage.get('pigeon_letters') || []
+    if (cached.length) {
+      this.renderLetters(cached)
     }
 
+    // 拉取云端数据
+    try {
+      const data = await requestCloud('pigeon', 'inbox', { type: 'all' }, { throwError: false })
+      if (data && Array.isArray(data) && data.length) {
+        const letters = this.pairLetters(data)
+        storage.set('pigeon_letters', letters, 86400 * 30)
+        this.renderLetters(letters)
+      }
+    } catch (e) {
+      // 云端失败时保留缓存数据，不回退 mock
+    }
+  },
+
+  // 将 outbox（去信）与 inbox（回信）配对组合成展示模型
+  pairLetters(rawLetters) {
+    const outbox = rawLetters.filter(l => l.type === 'outbox')
+    const inbox = rawLetters.filter(l => l.type === 'inbox')
+    const pairs = []
+    const usedInbox = new Set()
+
+    const toTs = (t) => {
+      if (!t) return 0
+      if (typeof t === 'number') return t
+      const d = new Date(t)
+      return isNaN(d.getTime()) ? 0 : d.getTime()
+    }
+
+    outbox.forEach(out => {
+      // 找同 figureId 且时间最近的未使用 inbox
+      const match = inbox
+        .filter(i => i.figureId === out.figureId && !usedInbox.has(i._id))
+        .sort((a, b) => Math.abs(toTs(a.createdAt) - toTs(out.createdAt)) - Math.abs(toTs(b.createdAt) - toTs(out.createdAt)))[0]
+
+      if (match) {
+        usedInbox.add(match._id)
+        pairs.push({
+          _id: match._id,
+          figureId: out.figureId,
+          figureName: out.figureName,
+          figureTitle: FIGURE_TITLES[out.figureId] || '',
+          content: out.content,
+          replyContent: match.content,
+          subject: out.subject || '',
+          createdAt: toTs(match.createdAt) || toTs(out.createdAt)
+        })
+      } else {
+        pairs.push({
+          _id: out._id,
+          figureId: out.figureId,
+          figureName: out.figureName,
+          figureTitle: FIGURE_TITLES[out.figureId] || '',
+          content: out.content,
+          replyContent: '',
+          subject: out.subject || '',
+          createdAt: toTs(out.createdAt)
+        })
+      }
+    })
+
+    // 兜底：未配对的 inbox 单独展示
+    inbox.forEach(i => {
+      if (!usedInbox.has(i._id)) {
+        pairs.push({
+          _id: i._id,
+          figureId: i.figureId,
+          figureName: i.figureName,
+          figureTitle: FIGURE_TITLES[i.figureId] || '',
+          content: '',
+          replyContent: i.content,
+          subject: i.subject || '',
+          createdAt: toTs(i.createdAt)
+        })
+      }
+    })
+
+    return pairs
+  },
+
+  renderLetters(letters) {
     letters = letters
       .map(l => ({ ...l, displayTime: formatRelative(l.createdAt), expanded: false }))
       .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
@@ -123,12 +187,15 @@ Page({
       content: '删除后无法恢复，是否继续？',
       confirmText: '删除',
       confirmColor: '#FA5151',
-      success: (res) => {
+      success: async (res) => {
         if (res.confirm) {
-          const letters = (storage.get('letters') || []).filter(l => l._id !== id)
-          storage.set('letters', letters, 86400 * 30)
+          // 调用云函数删除
+          await requestCloud('pigeon', 'delete', { _id: id }, { throwError: false })
+          // 更新本地缓存
+          const letters = (storage.get('pigeon_letters') || []).filter(l => l._id !== id)
+          storage.set('pigeon_letters', letters, 86400 * 30)
           wx.showToast({ title: '已删除', icon: 'success' })
-          this.loadLetters()
+          this.renderLetters(letters)
         }
       }
     })

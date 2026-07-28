@@ -38,7 +38,7 @@
           <swiper-item wx:for="{{carriers}}" wx:key="key">
             <view class="carrier-figure" style="--aura-color: {{item.aura}};">
               <view class="carrier-aura"></view>
-              <view class="carrier-bird carrier-bird-{{index}}">{{item.key === 'daocao' ? '🦅' : '🕊️'}}</view>
+              <view class="carrier-bird carrier-bird-{{index}}">{{item.emoji}}</view>
             </view>
           </swiper-item>
         </swiper>
@@ -99,7 +99,7 @@
       <view class="section-label">选择收信人</view>
       <scroll-view scroll-x class="scroll-row" enhanced show-scrollbar="{{false}}">
         <view class="figure-chip {{selectedFigureId === item.figureId ? 'selected' : ''}}" wx:for="{{figures}}" wx:key="figureId" bindtap="selectFigure" data-id="{{item.figureId}}">
-          <view class="fc-avatar">{{item.figureId === 'fig-libai' ? '🎭' : item.figureId === 'fig-sushi' ? '📜' : item.figureId === 'fig-caocao' ? '⚔️' : '🏛️'}}</view>
+          <view class="fc-avatar">{{item.avatarEmoji}}</view>
           <view class="fc-name">{{item.name}}</view>
         </view>
       </scroll-view>
@@ -150,7 +150,7 @@
 
       <view class="traveling-card" wx:for="{{travelingLetters}}" wx:key="_id">
         <view class="tc-header">
-          <view class="tc-avatar">{{item.carrier === 'daocao' ? '🦅' : '🕊️'}}</view>
+          <view class="tc-avatar">{{item.avatarEmoji}}</view>
           <view class="tc-info">
             <view class="tc-carrier">{{item.carrierName}} · 前往{{item.dynastyName}}</view>
             <view class="tc-target">收信人：{{item.figureName}}</view>
@@ -184,14 +184,14 @@
 
       <view class="letter-card {{!item.read ? 'unread' : ''}}" wx:for="{{arrivedLetters}}" wx:key="_id" bindtap="viewLetter" data-id="{{item._id}}">
         <view class="lc-header">
-          <view class="lc-avatar">{{item.figureId === 'fig-libai' ? '🎭' : item.figureId === 'fig-sushi' ? '📜' : '🏛️'}}</view>
+          <view class="lc-avatar">{{item.avatarEmoji}}</view>
           <view class="lc-info">
             <view class="lc-from">{{item.figureName}} 回信</view>
             <view class="lc-meta">{{item.carrierName}}送达 · {{item.arrivedAtText}}</view>
           </view>
           <view class="lc-unread-dot" wx:if="{{!item.read}}"></view>
         </view>
-        <view class="lc-preview">{{item.reply.content}}</view>
+        <view class="lc-preview">{{item.reply ? item.reply.content : ''}}</view>
         <view class="lc-gift" wx:if="{{item.gift}}">{{item.gift.icon}} {{item.gift.name}} · {{item.gift.rarityLabel}}</view>
       </view>
     </view>
@@ -253,41 +253,43 @@
     <view class="detail-popup" catchtap="stopProp">
       <view class="detail-close iconfont icon-close" bindtap="closeDetail"></view>
 
-      <block wx:if="{{detailLetter}}">
-        <view class="detail-badge">{{detailLetter.carrierName}}归来</view>
-        <view class="detail-title">鸿雁踏云归</view>
+      <scroll-view scroll-y class="detail-scroll" enhanced show-scrollbar="{{false}}">
+        <block wx:if="{{detailLetter}}">
+          <view class="detail-badge">{{detailLetter.carrierName}}归来</view>
+          <view class="detail-title">鸿雁踏云归</view>
 
-        <view class="detail-reply-paper">
-          <view class="reply-from">
-            <view class="reply-from-avatar">{{detailLetter.figureId === 'fig-libai' ? '🎭' : '🏛️'}}</view>
-            <view class="reply-from-info">
-              <view class="reply-from-name">{{detailLetter.figureName}}</view>
-              <view class="reply-from-meta">{{detailLetter.dynastyName}} · {{detailLetter.figureTitle}}</view>
+          <view class="detail-reply-paper">
+            <view class="reply-from">
+              <view class="reply-from-avatar">{{detailLetter.avatarEmoji}}</view>
+              <view class="reply-from-info">
+                <view class="reply-from-name">{{detailLetter.figureName}}</view>
+                <view class="reply-from-meta">{{detailLetter.dynastyName}} · {{detailLetter.figureTitle}}</view>
+              </view>
             </view>
+            <view class="reply-body">{{detailLetter.reply ? detailLetter.reply.content : '回信撰写中，请稍后再来查看…'}}</view>
           </view>
-          <view class="reply-body">{{detailLetter.reply.content}}</view>
-        </view>
 
-        <view class="detail-original">
-          <view class="detail-original-label">你的来信</view>
-          <view class="detail-original-body">{{detailLetter.content}}</view>
-        </view>
-
-        <view class="detail-gift-section" wx:if="{{detailLetter.gift}}">
-          <view class="gift-section-title">带回风物</view>
-          <view class="gift-item">
-            <view class="gift-icon">{{detailLetter.gift.icon}}</view>
-            <view class="gift-name">{{detailLetter.gift.name}}</view>
-            <view class="gift-rarity rarity-dot-{{detailLetter.gift.rarity}}">{{detailLetter.gift.rarityLabel}}</view>
+          <view class="detail-original">
+            <view class="detail-original-label">你的来信</view>
+            <view class="detail-original-body">{{detailLetter.content}}</view>
           </view>
-          <view class="gift-desc">{{detailLetter.gift.desc}}</view>
-        </view>
 
-        <button class="btn-claim" wx:if="{{detailLetter.gift && !detailLetter.claimed}}" bindtap="claimGift" data-id="{{detailLetter._id}}">
-          收入藏馆
-        </button>
-        <view class="claimed-tip" wx:if="{{detailLetter.claimed}}"><text class="iconfont icon-Selected"></text> 风物已收入藏馆</view>
-      </block>
+          <view class="detail-gift-section" wx:if="{{detailLetter.gift}}">
+            <view class="gift-section-title">带回风物</view>
+            <view class="gift-item">
+              <view class="gift-icon">{{detailLetter.gift.icon}}</view>
+              <view class="gift-name">{{detailLetter.gift.name}}</view>
+              <view class="gift-rarity rarity-dot-{{detailLetter.gift.rarity}}">{{detailLetter.gift.rarityLabel}}</view>
+            </view>
+            <view class="gift-desc">{{detailLetter.gift.desc}}</view>
+          </view>
+
+          <button class="btn-claim" wx:if="{{detailLetter.gift && !detailLetter.claimed}}" bindtap="claimGift" data-id="{{detailLetter._id}}">
+            收入藏馆
+          </button>
+          <view class="claimed-tip" wx:if="{{detailLetter.claimed}}"><text class="iconfont icon-Selected"></text> 风物已收入藏馆</view>
+        </block>
+      </scroll-view>
     </view>
   </view>
 

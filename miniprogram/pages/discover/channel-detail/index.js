@@ -16,7 +16,11 @@ Page({
     const channelId = options.channelId || ''
     const figureId = options.figureId || ''
     this.setData({ channelId, figureId })
-    this.loadChannel()
+    this._init()
+  },
+
+  async _init() {
+    await this.loadChannel()
     this.loadVideos()
   },
 
@@ -42,12 +46,13 @@ Page({
   async loadVideos() {
     this.setData({ loading: true })
     try {
-      if (!this.data.channelId && !this.data.figureId) {
+      const chId = this.data.channelId
+      if (!chId) {
         this.setData({ loading: false })
         return
       }
       const data = await requestCloud('videoChannel', 'channelVideos', {
-        channelId: this.data.channelId
+        channelId: chId
       }, { throwError: false })
       this.setData({
         videoList: data || [],

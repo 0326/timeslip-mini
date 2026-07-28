@@ -21,16 +21,25 @@ Page({
     isLoggedIn: false,
     showHeart: false,
     heartX: 0,
-    heartY: 0
+    heartY: 0,
+    videoPaused: false
   },
 
-  onLoad() {
+  onLoad(options) {
     const sys = wx.getSystemInfoSync()
     this.setData({
       windowHeight: sys.windowHeight,
       windowWidth: sys.windowWidth
     })
     this._viewReported = {}
+    this._targetVideoId = (options && options.videoId) || ''
+    this._lastTapTime = 0
+    this._lastTapId = ''
+    this._reportViewFn = debounce((id) => {
+      if (this._viewReported[id]) return
+      this._viewReported[id] = true
+      requestCloud('videoChannel', 'increaseView', { videoId: id }, { throwError: false })
+    }, 2000)
     this.loadFeed(true)
   },
 
@@ -43,8 +52,23 @@ Page({
     })
   },
 
+  onHide() {
+    this._pauseCurrentVideo()
+  },
+
+  onUnload() {
+    this._pauseCurrentVideo()
+  },
+
   onPullDownRefresh() {
     this.loadFeed(true)
+  },
+
+  _pauseCurrentVideo() {
+    try {
+      const ctx = wx.createVideoContext('video-' + this.data.currentIndex)
+      if (ctx) ctx.pause()
+    } catch (_) {}
   },
 
   formatCount(num) {
@@ -61,7 +85,8 @@ Page({
   processVideoList(list) {
     return list.map(v => ({
       ...v,
-      likeCountText: this.formatCount(v.likeCount || 0)
+      likeCountText: this.formatCount(v.likeCount || 0),
+      commentCountText: this.formatCount(v.commentCount || 0)
     }))
   },
 
@@ -92,6 +117,10 @@ Page({
         loading: false,
         refreshing: false
       })
+
+      if (this._targetVideoId && reset) {
+        this._locateTargetVideo(newList)
+      }
     } catch (e) {
       console.warn('loadFeed error:', e)
       this.setData({ loading: false, refreshing: false })
@@ -105,9 +134,35 @@ Page({
     wx.stopPullDownRefresh()
   },
 
+  _locateTargetVideo(list) {
+    const idx = list.findIndex(v => v._id === this._targetVideoId)
+    if (idx >= 0) {
+      this.setData({ currentIndex: idx })
+      const video = list[idx]
+      if (video && video._id) {
+        this._reportView(video._id)
+      }
+    }
+    this._targetVideoId = ''
+  },
+
   onSwiperChange(e) {
     const current = e.detail.current
-    this.setData({ currentIndex: current })
+    const prev = this.data.currentIndex
+
+    if (prev !== current) {
+      try {
+        const prevCtx = wx.createVideoContext('video-' + prev)
+        if (prevCtx) prevCtx.pause()
+      } catch (_) {}
+    }
+
+    this.setData({ currentIndex: current, videoPaused: false })
+
+    try {
+      const curCtx = wx.createVideoContext('video-' + current)
+      if (curCtx) curCtx.play()
+    } catch (_) {}
 
     if (current >= this.data.videoList.length - 2 && this.data.hasMore && !this.data.loading) {
       this.loadFeed(false)
@@ -115,60 +170,49 @@ Page({
 
     const video = this.data.videoList[current]
     if (video && video._id) {
-      this._debouncedReportView(video._id)
+      this._reportView(video._id)
     }
   },
 
-  _debouncedReportView: null,
-  _viewReported: {},
-  _debouncedReportView(videoId) {
-    if (!this._debouncedReportView) {
-      this._debouncedReportView = debounce((id) => {
-        if (this._viewReported[id]) return
-        this._viewReported[id] = true
-        requestCloud('videoChannel', 'increaseView', { videoId: id }, { throwError: false })
-      }, 2000)
+  _reportView(videoId) {
+    if (this._reportViewFn) {
+      this._reportViewFn(videoId)
     }
-    this._debouncedReportView(videoId)
   },
 
   onVideoTap(e) {
+    const now = Date.now()
     const videoId = e.currentTarget.dataset.id
-    const videoContext = wx.createVideoContext('video-' + this.data.currentIndex)
-    videoContext.pause()
+    const touch = (e.touches && e.touches[0]) || {}
+
+    if (this._lastTapTime && (now - this._lastTapTime) < 300 && this._lastTapId === videoId) {
+      this._lastTapTime = 0
+      this._lastTapId = ''
+      this._handleDoubleTap(videoId, touch)
+    } else {
+      this._lastTapTime = now
+      this._lastTapId = videoId
+      setTimeout(() => {
+        if (this._lastTapTime === now) {
+          this._togglePlay()
+        }
+      }, 300)
+    }
   },
 
-  _onLike: null,
-  onLike(e) {
-    if (!this._onLike) this._onLike = throttle(this.handleLike.bind(this), 300)
-    this._onLike(e)
+  _togglePlay() {
+    const ctx = wx.createVideoContext('video-' + this.data.currentIndex)
+    if (!ctx) return
+    if (this.data.videoPaused) {
+      ctx.play()
+      this.setData({ videoPaused: false })
+    } else {
+      ctx.pause()
+      this.setData({ videoPaused: true })
+    }
   },
 
-  async handleLike(e) {
-    if (!loginGuard.checkLogin(this)) return
-    const id = e.currentTarget.dataset.id
-    const list = this.data.videoList.slice()
-    const idx = list.findIndex(v => v._id === id)
-    if (idx < 0) return
-    const item = list[idx]
-    const nowLiked = !item.liked
-
-    item.liked = nowLiked
-    item.likeCount = Math.max(0, (item.likeCount || 0) + (nowLiked ? 1 : -1))
-    item.likeCountText = this.formatCount(item.likeCount)
-    list[idx] = item
-    this.setData({ videoList: list })
-
-    try {
-      await requestCloud('videoChannel', 'toggleLike', { videoId: id }, { throwError: false })
-    } catch (_) {}
-  },
-
-  onDoubleTap(e) {
-    const { id } = e.currentTarget.dataset
-    const { touches } = e
-    const touch = touches[0] || {}
-
+  _handleDoubleTap(videoId, touch) {
     this.setData({
       showHeart: true,
       heartX: touch.pageX || (this.data.windowWidth / 2),
@@ -180,9 +224,9 @@ Page({
     }, 800)
 
     const list = this.data.videoList.slice()
-    const idx = list.findIndex(v => v._id === id)
+    const idx = list.findIndex(v => v._id === videoId)
     if (idx >= 0 && !list[idx].liked) {
-      this.handleLike({ currentTarget: { dataset: { id } } })
+      this.handleLike({ currentTarget: { dataset: { id: videoId } } })
     }
   },
 

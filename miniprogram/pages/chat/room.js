@@ -193,7 +193,7 @@ Page({
           userInput: text,
           history: this.data.messages.slice(-AI_CONFIG.maxHistoryPairs * 2)
         }, { throwError: false })
-        aiContent = (data && data.content) || this.generateMockReply(text, this.data.figureName)
+        aiContent = (data && data.aiMsg && data.aiMsg.content) || (data && data.content) || this.generateMockReply(text, this.data.figureName)
       }
       this.addAiMessage(aiContent)
     } catch (e) {
@@ -303,7 +303,7 @@ Page({
       '君不见当年之事，已作尘埃矣。',
       '非也非也，君有所不知，其中另有隐情。'
     ]
-    return replies[Math.floor(Math.random() * replies.length)] + '\n（注：云函数未部署，此为本地模拟回复）'
+    return replies[Math.floor(Math.random() * replies.length)]
   },
 
   onQuickReply(e) {

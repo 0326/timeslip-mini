@@ -104,8 +104,15 @@ function figuresByDynasty(dynasty) {
   return FIGURES.filter(f => f.dynasty === dynasty)
 }
 
-function randomFigure(exclude) {
-  const pool = exclude ? FIGURES.filter(f => f.figureId !== exclude) : FIGURES
+function randomFigure(exclude, dynasty) {
+  let pool = FIGURES
+  if (dynasty && dynasty !== 'random' && dynasty !== 'all') {
+    pool = pool.filter(f => f.dynasty === dynasty)
+  }
+  if (exclude) {
+    pool = pool.filter(f => f.figureId !== exclude)
+  }
+  if (!pool.length) pool = FIGURES
   return pool[Math.floor(Math.random() * pool.length)]
 }
 
@@ -170,12 +177,17 @@ ${letterContent}
 }
 
 // 尝试调用真实大模型（若配置了 API）
+// 注意：低版本 Node 运行时无全局 fetch，需判空兜底；AI 调用限时 8s，超时回退模板
 async function callRealAI(prompt) {
   const apiKey = process.env.AI_API_KEY || process.env.DOUBAO_API_KEY
   const apiUrl = process.env.AI_API_URL || process.env.DOUBAO_API_URL
   if (!apiKey || !apiUrl) return null
+  if (typeof fetch !== 'function') {
+    console.warn('callRealAI: runtime without fetch, use fallback')
+    return null
+  }
   try {
-    const res = await fetch(apiUrl, {
+    const req = fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -188,6 +200,10 @@ async function callRealAI(prompt) {
         max_tokens: 600
       })
     })
+    const res = await Promise.race([
+      req,
+      new Promise((_, reject) => setTimeout(() => reject(new Error('ai request timeout')), 8000))
+    ])
     if (!res.ok) return null
     const json = await res.json()
     const text = json.choices && json.choices[0] && json.choices[0].message && json.choices[0].message.content
@@ -252,7 +268,7 @@ exports.main = async (event, context) => {
       case 'send': return await sendLetter(OPENID, data)
       case 'list': return await getList(OPENID, data)
       case 'collection': return await getCollection(OPENID, data)
-      case 'figures': return { code: 0, message: 'ok', data: { dynasties: DYNASTIES, figures: FIGURES } }
+      case 'figures': return { code: 0, message: 'ok', data: { dynasties: [{ key: 'random', name: '随机漂流' }, ...DYNASTIES], figures: FIGURES.map(({ tone, ...f }) => f) } }
       case 'carriers': return { code: 0, message: 'ok', data: CARRIER_LIST }
       case 'read': return await markRead(OPENID, data)
       case 'detail': return await getDetail(OPENID, data)
@@ -272,8 +288,10 @@ function normalizeEventData(event) {
 
 // ====== 发送雁书 ======
 async function sendLetter(OPENID, data) {
-  const { carrier: carrierKey, dynasty, figureId, content, fromName = '远方友人' } = data
-  if (!content || !content.trim()) return { code: -1, message: '请书写信笺内容' }
+  const { carrier: carrierKey, dynasty, figureId } = data
+  const content = String(data.content || '').trim()
+  const fromName = String(data.fromName || '').trim().slice(0, 20) || '远方友人'
+  if (!content) return { code: -1, message: '请书写信笺内容' }
   if (content.length > 500) return { code: -1, message: '信笺内容不超过500字' }
 
   const carrier = CARRIERS[carrierKey]
@@ -282,24 +300,17 @@ async function sendLetter(OPENID, data) {
   const sec = await checkText(content, OPENID)
   if (!sec.ok) return { code: 403, message: sec.reason }
 
-  // 随机漂流：朝代或人物为 random
-  const isDrift = dynasty === 'random' || figureId === 'random'
-
-  // 准确率判定（漂流模式忽略准确率）
+  // 投递目标判定：
+  // 1. 朝代或人物为 random → 随机漂流（无视准确率）
+  // 2. 指定人物 + 信使准确率未命中 → 跑偏为随机漂流
+  const isDrift = dynasty === 'random' || !figureId || figureId === 'random'
   let targetFigureId = figureId
   let drifted = false
-  if (!isDrift && carrier.accuracy < 1.0) {
-    if (Math.random() > carrier.accuracy) {
-      // 未命中，转为随机漂流
-      drifted = true
-      targetFigureId = randomFigure(figureId).figureId
-    }
-  }
-  if (isDrift || drifted) {
-    if (dynasty === 'random' || isDrift) {
-      const fig = randomFigure(figureId !== 'random' ? figureId : null)
-      targetFigureId = fig.figureId
-    }
+  if (isDrift) {
+    targetFigureId = randomFigure(null, dynasty).figureId
+  } else if (carrier.accuracy < 1.0 && Math.random() > carrier.accuracy) {
+    drifted = true
+    targetFigureId = randomFigure(figureId).figureId
   }
 
   const figure = findFigure(targetFigureId)
@@ -374,16 +385,33 @@ async function getList(OPENID, data) {
 }
 
 // 处理已到期的 traveling 信件，实时生成回信与风物
+// 并发安全：先用原子更新把 status 从 traveling 改为 processing 抢占处理权，
+// 避免 list / detail 并发调用时重复生成回信；失败时回滚为 traveling
+const PROCESSING_STALE_MS = 2 * 60 * 1000
+
 async function processArrived(OPENID) {
   const now = Date.now()
   try {
+    // 到期的 traveling + 超时未完成的 processing（上次崩溃残留）
     const r = await db.collection('yan_letters')
-      .where({ _openid: OPENID, status: 'traveling', arriveAt: _.lte(now) })
+      .where({
+        _openid: OPENID,
+        ..._.or([
+          { status: 'traveling', arriveAt: _.lte(now) },
+          { status: 'processing', processingAt: _.lt(now - PROCESSING_STALE_MS) }
+        ])
+      })
       .limit(20)
       .get()
 
     for (const letter of r.data) {
+      // 原子抢占：仅当状态仍是 traveling/processing 时才更新，避免并发重复处理
       try {
+        const lock = await db.collection('yan_letters')
+          .where({ _id: letter._id, _openid: OPENID, status: letter.status })
+          .update({ data: { status: 'processing', processingAt: now } })
+        if (!lock.stats || !lock.stats.updated) continue
+
         const figure = findFigure(letter.figureId)
         const carrier = CARRIERS[letter.carrier] || CARRIERS.qinghong
         const reply = await generateReply(figure, letter.content, letter.fromName)
@@ -392,6 +420,7 @@ async function processArrived(OPENID) {
         await db.collection('yan_letters').doc(letter._id).update({
           data: {
             status: 'arrived',
+            processingAt: _.remove(),
             reply: { content: reply, figureName: figure.name },
             gift,
             arrivedAt: db.serverDate()
@@ -407,6 +436,14 @@ async function processArrived(OPENID) {
         })()
       } catch (e) {
         console.warn('processArrived single fail:', e.message)
+        // 回滚为 traveling，下次进入列表时重试
+        try {
+          await db.collection('yan_letters')
+            .where({ _id: letter._id, _openid: OPENID, status: 'processing' })
+            .update({ data: { status: 'traveling', processingAt: _.remove() } })
+        } catch (rollbackErr) {
+          console.warn('processArrived rollback fail:', rollbackErr.message)
+        }
       }
     }
   } catch (e) {

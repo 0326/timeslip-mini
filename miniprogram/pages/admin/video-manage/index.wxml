@@ -40,8 +40,13 @@
           <text class="meta-stats"><text class="iconfont icon-good"></text> {{item.likeCount || 0}}</text>
         </view>
       </view>
-      <view class="item-delete" catchtap="onDelete" data-id="{{item._id}}">
-        <text class="iconfont icon-delete"></text>
+      <view class="item-actions">
+        <view class="item-edit" catchtap="onEdit" data-id="{{item._id}}">
+          <text class="iconfont icon-edit"></text>
+        </view>
+        <view class="item-delete" catchtap="onDelete" data-id="{{item._id}}">
+          <text class="iconfont icon-delete"></text>
+        </view>
       </view>
     </view>
   </view>

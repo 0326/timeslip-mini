@@ -62,6 +62,11 @@ Page({
     })
   },
 
+  onEdit(e) {
+    const id = e.currentTarget.dataset.id
+    wx.navigateTo({ url: `/pages/admin/video-upload/index?editId=${id}` })
+  },
+
   onDelete(e) {
     const id = e.currentTarget.dataset.id
     wx.showModal({

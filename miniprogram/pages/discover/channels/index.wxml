@@ -33,7 +33,7 @@
     wx:for-item="video"
     wx:for-index="idx"
   >
-    <view class="video-item" data-id="{{video._id}}" bindtap="onVideoTap" bindlongpress="onDoubleTap">
+    <view class="video-item" data-id="{{video._id}}" bindtap="onVideoTap">
       <block wx:if="{{video.videoUrl}}">
         <video
           id="video-{{idx}}"
@@ -59,6 +59,10 @@
           </view>
         </view>
       </block>
+
+      <view wx:if="{{videoPaused && idx === currentIndex}}" class="pause-overlay">
+        <text class="pause-icon iconfont icon-play"></text>
+      </view>
 
       <view class="video-overlay" catchtap="stopPropagation">
         <view class="bottom-info">
@@ -96,7 +100,7 @@
           <view class="action-icon">
             <text class="iconfont icon-chat"></text>
           </view>
-          <text class="action-text">评论</text>
+          <text class="action-text">{{video.commentCountText || '评论'}}</text>
         </view>
 
         <button

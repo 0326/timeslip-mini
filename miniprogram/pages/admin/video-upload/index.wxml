@@ -1,7 +1,7 @@
 <custom-nav-bar
-  title="上传视频"
+  title="{{editId ? '编辑视频' : '上传视频'}}"
   showBack="{{true}}"
-  rightText="发布"
+  rightText="{{editId ? '保存' : '发布'}}"
   bindRightTap="onSubmit"
 ></custom-nav-bar>
 
@@ -11,6 +11,10 @@
     <view class="video-preview" bindtap="chooseVideo">
       <block wx:if="{{videoTempPath}}">
         <video class="preview-video" src="{{videoTempPath}}" controls="{{true}}" object-fit="cover"></video>
+        <view class="duration-tag" wx:if="{{duration}}">{{duration}}秒</view>
+      </block>
+      <block wx:elif="{{videoFileID}}">
+        <video class="preview-video" src="{{videoFileID}}" controls="{{true}}" object-fit="cover"></video>
         <view class="duration-tag" wx:if="{{duration}}">{{duration}}秒</view>
       </block>
       <view wx:else class="upload-placeholder">
@@ -26,6 +30,7 @@
     <view class="cover-row">
       <view class="cover-box" bindtap="chooseCover">
         <image wx:if="{{coverTempPath}}" class="cover-img" src="{{coverTempPath}}" mode="aspectFill"></image>
+        <image wx:elif="{{coverFileID}}" class="cover-img" src="{{coverFileID}}" mode="aspectFill"></image>
         <view wx:else class="cover-placeholder">
           <text class="iconfont icon-picture"></text>
           <text class="cover-hint">选择封面</text>
@@ -106,7 +111,7 @@
     </view>
   </view>
 
-  <view class="section">
+  <view class="section" wx:if="{{!editId}}">
     <view class="section-title">
       AI评论
       <text class="section-sub">（可选，发布后自动生成）</text>
