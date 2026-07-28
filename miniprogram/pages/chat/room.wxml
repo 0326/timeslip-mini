@@ -38,6 +38,7 @@
               <block wx:else>
                 <text class="bubble-text" user-select="{{true}}">{{item.content}}</text>
                 <text wx:if="{{aiTyping && index === messages.length - 1 && item.role === 'figure' && item.content.length > 0}}" class="typing-cursor">▊</text>
+                <button wx:if="{{item.status === 'failed'}}" class="retry-btn" data-id="{{item._id}}" bindtap="onRetry">重试</button>
               </block>
             </view>
           </block>

@@ -66,18 +66,18 @@ const CARRIERS = {
 const CARRIER_LIST = ['qinghong', 'guiyan', 'daocao'].map(k => ({ key: k, ...CARRIERS[k] }))
 
 // ====== 朝代与人物 ======
-const DYNASTIES = [
-  { key: 'xianqin', name: '先秦' },
-  { key: 'han', name: '汉' },
-  { key: 'weijin', name: '魏晋' },
-  { key: 'tang', name: '唐' },
-  { key: 'song', name: '宋' },
-  { key: 'yuan', name: '元' },
-  { key: 'ming', name: '明' },
-  { key: 'qing', name: '清' }
-]
+// 朝代显示名映射（云端维护，前端不存简化值）
+const DYNASTY_NAME_MAP = {
+  xianqin: '先秦', xia: '夏', shang: '商', zhou: '周', chunqiu: '春秋', zhanguo: '战国',
+  han: '汉', xihan: '西汉', donghan: '东汉', sanguo: '三国',
+  weijin: '魏晋', jin: '晋', nanbeichao: '南北',
+  tang: '唐', wuzhou: '武周',
+  song: '宋', beisong: '北宋', nansong: '南宋',
+  yuan: '元', ming: '明', qing: '清'
+}
 
-const FIGURES = [
+// 硬编码兜底数据（DB 不可用时使用；同时提供 tone 字段供 AI 回信使用）
+const FIGURES_FALLBACK = [
   { figureId: 'fig-kongzi', name: '孔子', title: '至圣先师', dynasty: 'xianqin', dynastyName: '春秋', tone: '温厚谆谆，自称"丘"或"吾"。常引《诗》《书》，语短意长。' },
   { figureId: 'fig-simqian', name: '司马迁', title: '太史公', dynasty: 'han', dynastyName: '西汉', tone: '严谨深沉，引史实作评，自称"仆"，好作"太史公曰"。' },
   { figureId: 'fig-caocao', name: '曹操', title: '魏武帝', dynasty: 'han', dynastyName: '东汉末', tone: '深沉果决，权谋在胸，自称"孤"或"吾"。好引《短歌行》。' },
@@ -95,24 +95,58 @@ const FIGURES = [
   { figureId: 'fig-caoxueqin', name: '曹雪芹', title: '芹溪', dynasty: 'qing', dynastyName: '清', tone: '博雅多情，自称"雪芹"。阅尽繁华，笔落沧桑。' }
 ]
 
-function findFigure(id) {
-  return FIGURES.find(f => f.figureId === id) || { name: '古代贤人', title: '', dynasty: '', dynastyName: '', tone: '温文尔雅，自称"某"' }
+// 模块级缓存：从数据库 figures 集合加载的人物列表
+let _dbFigures = null
+let _dbFiguresTime = 0
+const DB_CACHE_TTL = 5 * 60 * 1000
+
+async function loadDbFigures() {
+  const now = Date.now()
+  if (_dbFigures && (now - _dbFiguresTime) < DB_CACHE_TTL) return _dbFigures
+  try {
+    const r = await db.collection('figures')
+      .field({ id: true, figureId: true, name: true, title: true, figureTitle: true, dynasty: true, avatar_url: true, mini_avatar_url: true, avatar: true })
+      .limit(200)
+      .get()
+    _dbFigures = (r.data || []).map(f => {
+      const figureId = f.figureId || (f.id ? 'fig-' + f.id : '')
+      const fb = FIGURES_FALLBACK.find(hf => hf.figureId === figureId)
+      return {
+        figureId,
+        name: f.name || (fb ? fb.name : ''),
+        title: f.title || f.figureTitle || (fb ? fb.title : ''),
+        dynasty: f.dynasty || (fb ? fb.dynasty : ''),
+        dynastyName: DYNASTY_NAME_MAP[f.dynasty] || (fb ? fb.dynastyName : '') || f.dynasty || '',
+        avatar: f.mini_avatar_url || f.avatar_url || f.avatar || '',
+        tone: fb ? fb.tone : '温文尔雅，自称"某"'
+      }
+    }).filter(f => f.figureId && f.name)
+    _dbFiguresTime = now
+    return _dbFigures
+  } catch (e) {
+    console.warn('loadDbFigures error:', e.message)
+    return null
+  }
 }
 
-function figuresByDynasty(dynasty) {
-  if (!dynasty || dynasty === 'all') return FIGURES
-  return FIGURES.filter(f => f.dynasty === dynasty)
+function getActiveFigures() {
+  return _dbFigures && _dbFigures.length ? _dbFigures : FIGURES_FALLBACK
+}
+
+function findFigure(id) {
+  const figures = getActiveFigures()
+  return figures.find(f => f.figureId === id) || { name: '古代贤人', title: '', dynasty: '', dynastyName: '', tone: '温文尔雅，自称"某"' }
 }
 
 function randomFigure(exclude, dynasty) {
-  let pool = FIGURES
+  let pool = getActiveFigures()
   if (dynasty && dynasty !== 'random' && dynasty !== 'all') {
     pool = pool.filter(f => f.dynasty === dynasty)
   }
   if (exclude) {
     pool = pool.filter(f => f.figureId !== exclude)
   }
-  if (!pool.length) pool = FIGURES
+  if (!pool.length) pool = getActiveFigures()
   return pool[Math.floor(Math.random() * pool.length)]
 }
 
@@ -268,7 +302,7 @@ exports.main = async (event, context) => {
       case 'send': return await sendLetter(OPENID, data)
       case 'list': return await getList(OPENID, data)
       case 'collection': return await getCollection(OPENID, data)
-      case 'figures': return { code: 0, message: 'ok', data: { dynasties: [{ key: 'random', name: '随机漂流' }, ...DYNASTIES], figures: FIGURES.map(({ tone, ...f }) => f) } }
+      case 'figures': return await getFigures()
       case 'carriers': return { code: 0, message: 'ok', data: CARRIER_LIST }
       case 'read': return await markRead(OPENID, data)
       case 'detail': return await getDetail(OPENID, data)
@@ -286,6 +320,30 @@ function normalizeEventData(event) {
   return data && typeof data === 'object' ? { ...rest, ...data } : rest
 }
 
+// ====== 人物列表接口（从数据库 figures 集合查询） ======
+async function getFigures() {
+  const figures = await loadDbFigures()
+  const list = figures || FIGURES_FALLBACK
+  // 朝代列表以数据库实际数据为准，去重排序
+  const dynastySet = new Map()
+  list.forEach(f => {
+    if (f.dynasty && !dynastySet.has(f.dynasty)) {
+      dynastySet.set(f.dynasty, { key: f.dynasty, name: DYNASTY_NAME_MAP[f.dynasty] || f.dynastyName || f.dynasty })
+    }
+  })
+  const dynasties = [{ key: 'random', name: '随机漂流' }, ...Array.from(dynastySet.values())]
+  // 返回人物列表（不含 tone 字段，tone 仅服务端 AI 回信用）
+  const safeFigures = list.map(f => ({
+    figureId: f.figureId,
+    name: f.name,
+    title: f.title,
+    dynasty: f.dynasty,
+    dynastyName: f.dynastyName,
+    avatar: f.avatar
+  }))
+  return { code: 0, message: 'ok', data: { dynasties, figures: safeFigures } }
+}
+
 // ====== 发送雁书 ======
 async function sendLetter(OPENID, data) {
   const { carrier: carrierKey, dynasty, figureId } = data
@@ -299,6 +357,9 @@ async function sendLetter(OPENID, data) {
 
   const sec = await checkText(content, OPENID)
   if (!sec.ok) return { code: 403, message: sec.reason }
+
+  // 确保数据库人物已加载（用于随机/查找目标人物）
+  await loadDbFigures()
 
   // 投递目标判定：
   // 1. 朝代或人物为 random → 随机漂流（无视准确率）

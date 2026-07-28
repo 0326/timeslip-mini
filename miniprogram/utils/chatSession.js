@@ -36,17 +36,22 @@ function findSession(figureId) {
 
 // 新增或更新会话（按 figureId 去重）
 // patch 会与现有会话合并，lastMessage / lastTime 会更新
+// 空值不覆盖已有字段，避免丢失头像等信息
 function upsertSession(session) {
   const list = storage.get(SESSIONS_KEY) || []
   const idx = list.findIndex(s => s.figureId === session.figureId)
   const now = Date.now()
+
+  // 过滤掉空值，防止覆盖已有数据
+  const patch = {}
+  Object.keys(session).forEach(k => {
+    const v = session[k]
+    if (v !== '' && v !== null && v !== undefined) patch[k] = v
+  })
+
   if (idx >= 0) {
-    const merged = Object.assign({}, list[idx], session)
-    if (session.lastTime !== undefined) {
-      merged.lastTime = session.lastTime
-    } else {
-      merged.lastTime = now
-    }
+    const merged = Object.assign({}, list[idx], patch)
+    merged.lastTime = session.lastTime !== undefined ? session.lastTime : now
     list[idx] = merged
   } else {
     const item = Object.assign(
@@ -61,7 +66,7 @@ function upsertSession(session) {
         unreadCount: 0,
         isSystem: !!session.isSystem
       },
-      session,
+      patch,
       { lastTime: session.lastTime !== undefined ? session.lastTime : now }
     )
     list.push(item)
@@ -126,9 +131,9 @@ function clearMessages(figureId) {
 // 仅当本地不存在青月会话时创建，避免覆盖已有对话
 function initQingyueSession() {
   let list = storage.get(SESSIONS_KEY) || []
-  const exists = list.some(s => s.figureId === QINGYUE.figureId)
-  if (!exists) {
-    const session = {
+  const idx = list.findIndex(s => s.figureId === QINGYUE.figureId)
+  if (idx < 0) {
+    list.push({
       figureId: QINGYUE.figureId,
       figureName: QINGYUE.name,
       figureTitle: QINGYUE.title,
@@ -138,8 +143,7 @@ function initQingyueSession() {
       lastTime: Date.now(),
       unreadCount: 1,
       isSystem: true
-    }
-    list.push(session)
+    })
     saveSessions(list)
 
     const msgs = storage.get(msgKey(QINGYUE.figureId)) || []
@@ -147,6 +151,13 @@ function initQingyueSession() {
       msgs.push(Object.assign({}, QINGYUE_WELCOME, { createdAt: Date.now() }))
       saveMessages(QINGYUE.figureId, msgs)
     }
+  } else {
+    // 已存在：强制更新头像等信息，防止旧缓存头像失效
+    list[idx].avatar = QINGYUE.avatar
+    list[idx].figureName = QINGYUE.name
+    list[idx].figureTitle = QINGYUE.title
+    list[idx].isSystem = true
+    saveSessions(list)
   }
   return getSessions()
 }

@@ -1,0 +1,117 @@
+<view class="records-page">
+
+  <view class="nav-bar" style="padding-top: {{statusBarHeight}}px; height: {{navHeight}}px;">
+    <view class="nav-left" bindtap="goBack">
+      <view class="nav-back-arrow"></view>
+    </view>
+    <view class="nav-title">记录</view>
+    <view class="nav-placeholder"></view>
+  </view>
+
+  <scroll-view scroll-y class="view-area" bindscrolltolower="loadLetters">
+
+    <view class="loading-state" wx:if="{{loading}}">
+      <view class="loading-text">加载中...</view>
+    </view>
+
+    <block wx:else>
+      <view class="record-section" wx:if="{{travelingLetters.length > 0}}">
+        <view class="section-header">
+          <view class="section-title">
+            <view class="live-dot"></view>
+            <text>旅途中</text>
+          </view>
+          <view class="section-count">{{travelingLetters.length}} 封信使在途</view>
+        </view>
+
+        <view class="traveling-card" wx:for="{{travelingLetters}}" wx:key="_id">
+          <view class="tc-header">
+            <view class="tc-info">
+              <view class="tc-carrier">{{item.carrierName}} · 前往{{item.dynastyName}}</view>
+              <view class="tc-target">收信人：{{item.figureName}}</view>
+            </view>
+            <view class="tc-countdown">
+              <view class="tc-time">{{item.remainText || '计算中'}}</view>
+              <view class="tc-label">剩余</view>
+            </view>
+          </view>
+          <view class="tc-progress">
+            <view class="tc-progress-fill" style="width: {{item.progress || 0}}%"></view>
+          </view>
+          <view class="tc-footer">
+            <text>出发于 {{item.sentAtText}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="record-section">
+        <view class="section-header">
+          <view class="section-title"><text>已收信</text></view>
+          <view class="section-count" wx:if="{{arrivedLetters.length > 0}}">共 {{arrivedLetters.length}} 封</view>
+        </view>
+
+        <view class="empty-state" wx:if="{{arrivedLetters.length === 0 && travelingLetters.length === 0}}">
+          <view class="empty-text">尚无书信往来</view>
+          <view class="empty-hint">去雁书写一封寄往古时空的信吧</view>
+        </view>
+
+        <view class="letter-card {{!item.read ? 'unread' : ''}}" wx:for="{{arrivedLetters}}" wx:key="_id" bindtap="viewLetter" data-id="{{item._id}}">
+          <view class="lc-header">
+            <view class="lc-info">
+              <view class="lc-from">{{item.figureName}} 回信</view>
+              <view class="lc-meta">{{item.carrierName}}送达 · {{item.arrivedAtText}}</view>
+            </view>
+            <view class="lc-unread-dot" wx:if="{{!item.read}}"></view>
+          </view>
+          <view class="lc-preview">{{item.reply ? item.reply.content : ''}}</view>
+          <view class="lc-gift" wx:if="{{item.gift}}">{{item.gift.icon}} {{item.gift.name}} · {{item.gift.rarityLabel}}</view>
+        </view>
+      </view>
+    </block>
+
+  </scroll-view>
+
+  <view class="detail-mask" wx:if="{{showDetail}}" bindtap="closeDetail">
+    <view class="detail-popup" catchtap="stopProp">
+      <view class="detail-close" bindtap="closeDetail">✕</view>
+
+      <scroll-view scroll-y class="detail-scroll" enhanced show-scrollbar="{{false}}">
+        <block wx:if="{{detailLetter}}">
+          <view class="detail-badge">{{detailLetter.carrierName}}归来</view>
+          <view class="detail-title">鸿雁踏云归</view>
+
+          <view class="detail-reply-paper">
+            <view class="reply-from">
+              <view class="reply-from-info">
+                <view class="reply-from-name">{{detailLetter.figureName}}</view>
+                <view class="reply-from-meta">{{detailLetter.dynastyName}} · {{detailLetter.figureTitle}}</view>
+              </view>
+            </view>
+            <view class="reply-body">{{detailLetter.reply ? detailLetter.reply.content : '回信撰写中，请稍后再来查看…'}}</view>
+          </view>
+
+          <view class="detail-original">
+            <view class="detail-original-label">你的来信</view>
+            <view class="detail-original-body">{{detailLetter.content}}</view>
+          </view>
+
+          <view class="detail-gift-section" wx:if="{{detailLetter.gift}}">
+            <view class="gift-section-title">带回风物</view>
+            <view class="gift-item">
+              <view class="gift-icon">{{detailLetter.gift.icon}}</view>
+              <view class="gift-name">{{detailLetter.gift.name}}</view>
+              <view class="gift-rarity rarity-dot-{{detailLetter.gift.rarity}}">{{detailLetter.gift.rarityLabel}}</view>
+            </view>
+            <view class="gift-desc">{{detailLetter.gift.desc}}</view>
+          </view>
+
+          <button class="btn-claim" wx:if="{{detailLetter.gift && !detailLetter.claimed}}" bindtap="claimGift" data-id="{{detailLetter._id}}">
+            收入藏馆
+          </button>
+          <view class="claimed-tip" wx:if="{{detailLetter.claimed}}">风物已收入藏馆</view>
+        </block>
+      </scroll-view>
+    </view>
+  </view>
+
+</view>

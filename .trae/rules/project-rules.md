@@ -163,7 +163,25 @@ miniprogram/
 
 ---
 
-## 八、Git 提交规范
+## 八、导航栏规范（铁律）
+
+> 所有自定义导航栏页面必须遵守以下规则，无需用户反复提醒。
+
+1. **非沉浸式导航栏**：导航栏必须有不透明背景色（亮色主题下为 `#ffffff`），不得使用透明/半透明沉浸式样式
+2. **与微信胶囊按钮水平对齐**：导航栏高度通过 `wx.getMenuButtonBoundingClientRect()` 计算：
+   ```js
+   const menuBtn = wx.getMenuButtonBoundingClientRect()
+   navHeight = (menuBtn.top - statusBarHeight) * 2 + menuBtn.height
+   ```
+3. **内容垂直居中**：导航栏使用 `display: flex; align-items: center;`，确保返回箭头、标题与右侧胶囊按钮在同一水平线上
+4. **返回箭头颜色**：亮色主题下使用深色箭头（如 `rgba(0, 0, 0, 0.85)`），不得使用白色
+5. **标题颜色**：亮色主题下使用深色文字（如 `#333333`），不得使用白色
+6. **所有页面统一**：yan/index、yan/records、yan/collection 以及未来新增的所有自定义导航栏页面，均须遵守此规范
+7. **导航栏底部边框**：使用 `border-bottom: 1rpx solid #f0f0f0` 提供视觉分隔
+
+---
+
+## 九、Git 提交规范
 
 Conventional Commits（中文）：
 
@@ -186,3 +204,16 @@ type 可选值：
 | `chore` | 构建/工具/依赖等 |
 
 示例：`feat: 新增首页推荐卡片列表`
+
+---
+
+## 十、云资源上传规范（铁律）
+
+> 上传文件到云存储时，默认使用 `tcb` 命令行工具，不创建临时云函数。
+
+1. **默认用 tcb 上传**：需要上传图片/文件到云存储时，使用 `tcb storage upload` 命令，不要创建临时云函数
+2. **命令格式**：`tcb storage upload <localFile> <cloudPath> -e cloud1-d0gunpzup215cfd87`
+3. **批量上传**：多个文件逐个执行，或用 `&&` 链接
+4. **上传后清理**：上传成功后删除本地文件，不要残留临时资源
+5. **云存储路径约定**：`mini-assets/<模块名>/<文件名>`，如 `mini-assets/yan/qinghong.jpg`
+6. **引用方式**：上传后代码中用 `cloud://cloud1-d0gunpzup215cfd87.636c-cloud1-d0gunpzup215cfd87-1457646459/mini-assets/...` 引用

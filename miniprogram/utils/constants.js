@@ -34,7 +34,7 @@ const QINGYUE = {
   figureId: 'sys_qingyue',
   name: '青月',
   title: '系统',
-  avatar: 'https://img.icons8.com/color/96/crescent-moon.png',
+  avatar: '/images/qingyue.jpg',
   isSystem: true
 }
 

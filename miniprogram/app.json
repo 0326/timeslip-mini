@@ -22,6 +22,8 @@
     "pages/discover/look/bookmarks",
     "pages/discover/look/comment",
     "pages/yan/index",
+    "pages/yan/records",
+    "pages/yan/collection",
     "pages/profile/index",
     "pages/profile/letters",
     "pages/profile/achievements",

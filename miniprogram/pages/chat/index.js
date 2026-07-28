@@ -1,7 +1,11 @@
 const { formatChatTime } = require('../../utils/date')
 const chatSession = require('../../utils/chatSession')
 const { QINGYUE } = require('../../utils/constants')
+const { storage } = require('../../utils/storage')
 const loginGuard = require('../../utils/loginGuard')
+
+const FIGURES_CACHE_KEY = 'figures_star5_v4'
+const FIGURE_DETAIL_PREFIX = 'figure_v2_'
 
 Page({
   data: {
@@ -38,12 +42,41 @@ Page({
 
   loadSessions() {
     this.setData({ loading: false, loadError: false })
-    const sessions = chatSession.getSessions()
+    let sessions = chatSession.getSessions()
+    // 从人物缓存刷新头像，防止旧缓存头像失效
+    sessions = this.refreshAvatars(sessions)
     const processed = this.processSessions(sessions)
     this.setData({
       sessions: processed,
       filteredSessions: this.filterBySearch(processed, this.data.searchText)
     })
+  },
+
+  // 从兰台人物列表 / 人物详情缓存中获取最新头像
+  refreshAvatars(sessions) {
+    const figuresList = storage.get(FIGURES_CACHE_KEY) || []
+    const figureMap = {}
+    figuresList.forEach(f => {
+      const id = f._id || f.id || f.figureId
+      if (id && f.avatar) figureMap[id] = f.avatar
+    })
+    let updated = false
+    const result = sessions.map(s => {
+      if (s.isSystem) return s // 青月由 initQingyueSession 保证
+      let avatar = figureMap[s.figureId]
+      if (!avatar) {
+        // 尝试从人物详情缓存获取
+        const detail = storage.get(FIGURE_DETAIL_PREFIX + s.figureId)
+        if (detail && detail.avatar) avatar = detail.avatar
+      }
+      if (avatar && avatar !== s.avatar) {
+        updated = true
+        return { ...s, avatar }
+      }
+      return s
+    })
+    if (updated) chatSession.saveSessions(result)
+    return result
   },
 
   processSessions(list) {

@@ -38,7 +38,7 @@
   <!-- 列表区 -->
   <view class="list">
     <block wx:if="{{loading}}">
-      <view class="loading-card" wx:for="{{[1,2,3]}}" wx:key="*this">
+      <view class="loading-card" wx:for="{{[1,2,3,4,5,6]}}" wx:key="*this">
         <view class="loading-thumb"></view>
         <view class="loading-info">
           <view class="loading-line loading-line-title"></view>

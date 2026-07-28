@@ -1,0 +1,62 @@
+<view class="collection-page">
+
+  <view class="nav-bar" style="padding-top: {{statusBarHeight}}px; height: {{navHeight}}px;">
+    <view class="nav-left" bindtap="goBack">
+      <view class="nav-back-arrow"></view>
+    </view>
+    <view class="nav-title">藏馆</view>
+    <view class="nav-placeholder"></view>
+  </view>
+
+  <scroll-view scroll-y class="view-area">
+
+    <view class="loading-state" wx:if="{{loading}}">
+      <view class="loading-text">加载中...</view>
+    </view>
+
+    <block wx:else>
+      <view class="collection-stats">
+        <view class="c-stat">
+          <view class="c-stat-value">{{collectionStats.collected}}</view>
+          <view class="c-stat-label">已收藏</view>
+        </view>
+        <view class="c-stat">
+          <view class="c-stat-value">{{collectionStats.total}}</view>
+          <view class="c-stat-label">总数</view>
+        </view>
+        <view class="c-stat">
+          <view class="c-stat-value">{{collectionStats.rare}}</view>
+          <view class="c-stat-label">稀有+</view>
+        </view>
+        <view class="c-stat">
+          <view class="c-stat-value">{{collectionStats.completion}}%</view>
+          <view class="c-stat-label">完成度</view>
+        </view>
+      </view>
+
+      <scroll-view scroll-x class="filter-bar" enhanced show-scrollbar="{{false}}">
+        <view class="filter-chip {{giftFilter === item.key ? 'active' : ''}}" wx:for="{{giftFilters}}" wx:key="key" bindtap="filterGifts" data-key="{{item.key}}">{{item.name}}</view>
+      </scroll-view>
+
+      <view class="collection-grid">
+        <view class="collection-item rarity-{{item.rarity}}" wx:for="{{collectedGifts}}" wx:key="giftId">
+          <view class="item-rarity-dot rarity-dot-{{item.rarity}}"></view>
+          <view class="item-icon">{{item.icon}}</view>
+          <view class="item-name">{{item.name}}</view>
+          <view class="item-count" wx:if="{{item.count > 1}}">x{{item.count}}</view>
+        </view>
+        <view class="collection-item locked" wx:for="{{lockedGifts}}" wx:key="giftId">
+          <view class="item-icon">?</view>
+          <view class="item-name">未解锁</view>
+        </view>
+      </view>
+
+      <view class="empty-state" wx:if="{{collectedGifts.length === 0 && lockedGifts.length === 0}}">
+        <view class="empty-text">藏馆空空如也</view>
+        <view class="empty-hint">收到回信后，风物将存入藏馆</view>
+      </view>
+    </block>
+
+  </scroll-view>
+
+</view>

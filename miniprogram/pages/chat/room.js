@@ -87,9 +87,29 @@ Page({
     return (app.globalData && app.globalData.userInfo) || storage.get('userInfo') || storage.get('user_info') || {}
   },
 
-  loadHistory() {
-    const messages = chatSession.getMessages(this.data.figureId)
-    this.setData({ messages })
+  async loadHistory() {
+    const localMessages = chatSession.getMessages(this.data.figureId)
+    if (localMessages.length || this.data.isSystem) {
+      this.setData({ messages: localMessages })
+      this.scrollToBottom()
+      return
+    }
+
+    const cloudMessages = await requestCloud('chat', 'history', {
+      figureId: this.data.figureId,
+      limit: 50
+    }, { throwError: false })
+    if (Array.isArray(cloudMessages) && cloudMessages.length) {
+      const messages = cloudMessages.map(message => ({
+        ...message,
+        role: message.role === 'assistant' ? 'figure' : message.role,
+        createdAt: message.createdAt ? new Date(message.createdAt).getTime() : Date.now()
+      }))
+      chatSession.saveMessages(this.data.figureId, messages)
+      this.setData({ messages })
+    } else {
+      this.setData({ messages: [] })
+    }
     this.scrollToBottom()
   },
 
@@ -157,6 +177,11 @@ Page({
       return
     }
 
+    this.sendText(text)
+  },
+
+  async sendText(text) {
+
     const now = Date.now()
     const userMsg = {
       _id: uid('u_'),
@@ -181,27 +206,62 @@ Page({
     try {
       let aiContent
       if (this.data.isSystem) {
-        await sleep(600)
+        await sleep(300)
         aiContent = this.generateQingyueReply(text)
       } else {
-        await sleep(800)
+        await sleep(300)
         const data = await requestCloud('chat', 'send', {
           figureId: this.data.figureId,
           figureName: this.data.figureName,
           figureTitle: this.data.figureTitle,
           content: text,
           userInput: text,
-          history: this.data.messages.slice(-AI_CONFIG.maxHistoryPairs * 2)
-        }, { throwError: false })
-        aiContent = (data && data.aiMsg && data.aiMsg.content) || (data && data.content) || this.generateMockReply(text, this.data.figureName)
+          history: this.data.messages
+            .filter(message => message.status !== 'failed')
+            .slice(-AI_CONFIG.maxHistoryPairs * 2)
+        }, { throwError: true })
+        aiContent = data && data.aiMsg && data.aiMsg.content
+        if (!aiContent) throw new Error('AI_EMPTY_RESPONSE')
       }
       this.addAiMessage(aiContent)
     } catch (e) {
-      const fallback = this.data.isSystem
-        ? this.generateQingyueReply(text)
-        : this.generateMockReply(text, this.data.figureName)
-      this.addAiMessage(fallback)
+      if (this.data.isSystem) {
+        this.addAiMessage(this.generateQingyueReply(text))
+      } else {
+        this.addFailedMessage(text)
+      }
     }
+  },
+
+  addFailedMessage(text) {
+    const failedMessage = {
+      _id: uid('a_'),
+      role: 'figure',
+      figureId: this.data.figureId,
+      content: '暂时无法回复，请稍后重试。',
+      status: 'failed',
+      retryText: text,
+      createdAt: Date.now()
+    }
+    const messages = this.data.messages.concat([failedMessage])
+    this.setData({ messages, sending: false, aiTyping: false, chatStatus: 0 })
+    this.persistMessages(messages)
+    this.scrollToBottom()
+  },
+
+  onRetry(e) {
+    if (this.data.sending) return
+    const id = e.currentTarget.dataset.id
+    const failed = this.data.messages.find(message => message._id === id)
+    if (!failed || failed.status !== 'failed') return
+    const index = this.data.messages.findIndex(message => message._id === id)
+    const previous = index > 0 ? this.data.messages[index - 1] : null
+    const nextMessages = this.data.messages.filter((message, messageIndex) =>
+      messageIndex !== index && !(messageIndex === index - 1 && previous && previous.role === 'user')
+    )
+    this.setData({ messages: nextMessages })
+    this.persistMessages(nextMessages)
+    this.sendText(failed.retryText)
   },
 
   addAiMessage(content) {
@@ -256,6 +316,10 @@ Page({
   },
 
   onAvatarTap() {
+    if (this.data.isSystem) {
+      wx.showToast({ title: '青月是系统向导，没有详情页哦', icon: 'none' })
+      return
+    }
     wx.navigateTo({
       url: `/pages/lantai/figure-detail?id=${this.data.figureId}&name=${encodeURIComponent(this.data.figureName)}`
     })
@@ -293,17 +357,6 @@ Page({
       return '你好呀～我是青月，穿越圈的向导。你可以问我「兰台是什么」「怎么飞鸽传书」「DNA 测试怎么玩」之类的问题，我会一一为你解答。'
     }
     return '这个问题我可能不太确定，不过穿越圈的功能你都可以试试看：\n· 去「兰台」找一位历史人物聊天\n· 在「发现」刷朋友圈、写信、做 DNA 测试\n\n如果想了解某项功能，直接告诉我名字就好～'
-  },
-
-  generateMockReply(text, name) {
-    const replies = [
-      '善哉斯言！君之所问，诚为知史之论。',
-      '此事说来话长，容某细细道来...',
-      '以史为镜，可以知兴替。君其勉之！',
-      '君不见当年之事，已作尘埃矣。',
-      '非也非也，君有所不知，其中另有隐情。'
-    ]
-    return replies[Math.floor(Math.random() * replies.length)]
   },
 
   onQuickReply(e) {
