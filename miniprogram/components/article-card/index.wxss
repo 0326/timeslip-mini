@@ -66,6 +66,7 @@
   color: #888;
   margin-top: 6rpx;
   line-height: 1.4;
+  min-height: 34rpx;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;

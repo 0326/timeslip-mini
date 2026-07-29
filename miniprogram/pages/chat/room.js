@@ -153,20 +153,23 @@ Page({
     wx.showModal({
       title: '提示',
       content: '确定要清除全部对话记录吗？',
-      success: (res) => {
+      success: async (res) => {
         if (res.confirm) {
           chatSession.clearMessages(this.data.figureId)
           chatSession.bumpSession(this.data.figureId, '', Date.now())
           this.setData({ messages: [], showTools: false })
+          // 青月：同步清云端消息 + 重置 Agent session
+          if (this.data.isSystem) {
+            await requestCloud('qingyue-agent', 'clearSession', {}, { throwError: false })
+          }
         }
       }
     })
   },
 
   onStopGen() {
-    this._qingyueRunSeq = ''
+    // P0：青月已改为云函数同步调用，停止按钮仅重置 UI 状态
     this.setChatProcessing(false)
-    chatSession.saveMessages(this.data.figureId, this.data.messages)
   },
 
   onScrollMsg(e) {
@@ -221,8 +224,10 @@ Page({
     try {
       let aiContent
       if (this.data.isSystem) {
-        await this.sendQingyueAgentMessage(text)
-        return
+        // 青月走 qingyue-agent 代理云函数（服务端管理 agentSessionId + ACP 调用 + SSE 解析 + 落库）
+        const data = await requestCloud('qingyue-agent', 'send', { text }, { throwError: true })
+        aiContent = data && data.aiMsg && data.aiMsg.content
+        if (!aiContent) throw new Error('AGENT_EMPTY_RESPONSE')
       } else {
         await sleep(300)
         const data = await requestCloud('chat', 'send', {
@@ -241,155 +246,8 @@ Page({
       this.addAiMessage(aiContent)
     } catch (e) {
       console.warn('[chat] send failed:', this.formatError(e))
-      if (this.data.isSystem) this.removeEmptyAgentMessage()
       this.addFailedMessage(text)
     }
-  },
-
-  removeEmptyAgentMessage() {
-    const messages = this.data.messages.filter(message =>
-      !(message.role === 'figure' && message.figureId === QINGYUE.figureId && !message.content && !message.status)
-    )
-    if (messages.length !== this.data.messages.length) {
-      this.setData({ messages })
-      this.persistMessages(messages)
-    }
-  },
-
-  async sendQingyueAgentMessage(text) {
-    const runSeq = uid('acp_')
-    this._qingyueRunSeq = runSeq
-
-    const payload = await this.requestQingyueAcp(text)
-    if (this.data.chatStatus === 0 || this._qingyueRunSeq !== runSeq) return
-
-    const finalContent = this.extractAcpText(payload).trim()
-    if (!finalContent) throw new Error('AGENT_EMPTY_RESPONSE')
-    this.addAiMessage(finalContent)
-  },
-
-  requestQingyueAcp(text) {
-    const url = `${QINGYUE.acpEndpoint || ''}`
-    if (!url) throw new Error('QINGYUE_ACP_ENDPOINT_MISSING')
-    return new Promise((resolve, reject) => {
-      wx.request({
-        url,
-        method: 'POST',
-        header: {
-          'content-type': 'application/json',
-          Authorization: `Bearer ${QINGYUE.publishableKey}`
-        },
-        data: {
-          jsonrpc: '2.0',
-          id: Date.now(),
-          method: 'session/prompt',
-          params: {
-            prompt: [
-              {
-                type: 'text',
-                text
-              }
-            ]
-          }
-        },
-        success: (res) => {
-          const data = res && res.data
-          if (!res || res.statusCode < 200 || res.statusCode >= 300) {
-            const message = (data && (data.message || data.error && data.error.message)) || `ACP_HTTP_${res && res.statusCode}`
-            reject(new Error(message))
-            return
-          }
-          if (data && data.error) {
-            reject(new Error(data.error.message || data.error.code || 'ACP_JSONRPC_ERROR'))
-            return
-          }
-          resolve(data)
-        },
-        fail: reject
-      })
-    })
-  },
-
-  extractAcpText(payload) {
-    const result = payload && payload.result !== undefined ? payload.result : payload
-    if (!result) return ''
-    if (typeof result === 'string') {
-      return result.indexOf('data:') >= 0 ? this.extractSseAcpText(result) : result
-    }
-    if (typeof result.text === 'string') return result.text
-    if (typeof result.answer === 'string') return result.answer
-    if (typeof result.reply === 'string') return result.reply
-    if (typeof result.content === 'string') return result.content
-    if (typeof result.output === 'string') return result.output
-    if (typeof result.output_text === 'string') return result.output_text
-    if (result.message) return this.extractAcpText(result.message)
-    if (Array.isArray(result.content)) {
-      return result.content.map(item => {
-        if (typeof item === 'string') return item
-        return item && (item.text || item.content || '')
-      }).filter(Boolean).join('')
-    }
-    if (Array.isArray(result)) {
-      return result.map(item => this.extractAcpText(item)).filter(Boolean).join('')
-    }
-    if (result.data) return this.extractAcpText(result.data)
-    return ''
-  },
-
-  extractSseAcpText(raw) {
-    const frames = String(raw || '')
-      .split(/\n\n+/)
-      .map(part => part.trim())
-      .filter(Boolean)
-
-    const visibleChunks = []
-
-    frames.forEach(frame => {
-      const lines = frame.split(/\n/).map(line => line.trim())
-      const dataLines = lines
-        .filter(line => line.indexOf('data:') === 0)
-        .map(line => line.slice(5).trim())
-        .filter(Boolean)
-      if (!dataLines.length) return
-      const dataText = dataLines.join('\n')
-      if (dataText === '[DONE]') return
-      let event
-      try {
-        event = JSON.parse(dataText)
-      } catch (e) {
-        return
-      }
-      const update = event && event.params && event.params.update
-      if (!update) return
-      const updateType = update.sessionUpdate || update.type || ''
-      const visibleUpdateTypes = [
-        'agent_message_chunk',
-        'assistant_message_chunk',
-        'message_chunk',
-        'text_message_chunk',
-        'message',
-        'text'
-      ]
-      if (visibleUpdateTypes.indexOf(updateType) < 0) return
-      const text = this.extractVisibleContentText(update.content || update.message || update.delta)
-      if (!text) return
-      visibleChunks.push(text)
-    })
-
-    return visibleChunks.join('')
-  },
-
-  extractVisibleContentText(content) {
-    if (!content) return ''
-    if (typeof content === 'string') return content
-    if (Array.isArray(content)) {
-      return content.map(item => this.extractVisibleContentText(item)).filter(Boolean).join('')
-    }
-    if (typeof content.text === 'string') return content.text
-    if (typeof content.content === 'string') return content.content
-    if (typeof content.delta === 'string') return content.delta
-    if (Array.isArray(content.content)) return this.extractVisibleContentText(content.content)
-    return ''
   },
 
   formatError(e) {

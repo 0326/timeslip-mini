@@ -73,21 +73,30 @@
 }
 
 .sk-title-line {
-  height: 28rpx;
+  height: 38rpx;
   background: #EEEAE0;
   border-radius: 6rpx;
-  margin-bottom: 12rpx;
+  margin-bottom: 10rpx;
 }
 
 .sk-title-line.w-70 {
   width: 70%;
+  margin-bottom: 8rpx;
+}
+
+.sk-sub-line {
+  height: 28rpx;
+  background: #F0EBE3;
+  border-radius: 4rpx;
+  width: 85%;
+  margin-bottom: 12rpx;
 }
 
 .sk-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 16rpx;
+  margin-top: 4rpx;
 }
 
 .sk-meta-line {

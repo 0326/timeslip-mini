@@ -12,7 +12,7 @@
   <!-- 卡片文字 -->
   <view class="ac-body">
     <view class="ac-title">{{article.title}}</view>
-    <view wx:if="{{article.subtitle}}" class="ac-subtitle">{{article.subtitle}}</view>
+    <view class="ac-subtitle">{{article.subtitle || ''}}</view>
     <view class="ac-footer">
       <view class="ac-author">
         <text class="ac-author-text">{{article.author || '穿越圈'}}</text>

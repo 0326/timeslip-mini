@@ -3,11 +3,11 @@ const loginGuard = require('../../utils/loginGuard')
 const { resolveAvatarUrl } = require('../../utils/helpers')
 
 var MENU_LIST = [
-  { key: 'bookmarks', iconClass: 'mail', name: '我的收藏', desc: '看一看收藏的文章', url: '/pages/discover/look/bookmarks', color: '#1890FF' },
-  { key: 'achievements', iconClass: 'cyc', name: '穿越成就', desc: '解锁历史成就', url: '/pages/profile/achievements', color: '#722ED1' },
+  { key: 'bookmarks', iconClass: 'collection', name: '我的收藏', desc: '看一看收藏的文章', url: '/pages/discover/look/bookmarks', color: '#1890FF' },
+  { key: 'achievements', iconClass: 'achievement', name: '穿越成就', desc: '解锁历史成就', url: '/pages/profile/achievements', color: '#722ED1' },
   { key: 'about', iconClass: 'details', name: '关于我们', desc: '版本信息与反馈', url: '/pages/profile/about', color: '#C9A24D' },
-  { key: 'privacy', iconClass: 'warn', name: '隐私与协议', desc: '隐私政策与用户协议', url: '/pages/profile/privacy', color: '#52C41A' },
-  { key: 'settings', iconClass: 'more', name: '设置', desc: '偏好与数据管理', url: '/pages/profile/settings', color: '#999999' }
+  { key: 'privacy', iconClass: 'argrement', name: '隐私与协议', desc: '隐私政策与用户协议', url: '/pages/profile/privacy', color: '#52C41A' },
+  { key: 'settings', iconClass: 'setting', name: '设置', desc: '偏好与数据管理', url: '/pages/profile/settings', color: '#999999' }
 ]
 
 Page({

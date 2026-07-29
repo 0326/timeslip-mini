@@ -1,0 +1,9 @@
+{
+  "name": "qingyue-agent",
+  "version": "1.0.0",
+  "description": "青月 Agent 代理云函数：ACP 代理调用 + 会话延续 + 消息落库",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "4.0.2"
+  }
+}

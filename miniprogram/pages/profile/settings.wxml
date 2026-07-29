@@ -5,14 +5,14 @@
     <view class="cell-group">
       <view class="cell">
         <view class="cell-left">
-          <view class="cell-icon iconfont icon-volume"></view>
+          <view class="cell-icon iconfont icon-notice"></view>
           <view class="cell-label">消息通知</view>
         </view>
         <switch class="cell-switch" checked="{{notifyEnabled}}" bindchange="onToggleNotify" color="#07C160" />
       </view>
       <view class="cell">
         <view class="cell-left">
-          <view class="cell-icon iconfont icon-close_volume"></view>
+          <view class="cell-icon iconfont icon-shaking"></view>
           <view class="cell-label">震动反馈</view>
         </view>
         <switch class="cell-switch" checked="{{vibrationEnabled}}" bindchange="onToggleVibration" color="#07C160" />
@@ -26,7 +26,7 @@
       </view>
       <view class="cell" bindtap="chooseTheme">
         <view class="cell-left">
-          <view class="cell-icon">🎨</view>
+          <view class="cell-icon iconfont icon-theme"></view>
           <view class="cell-label">主题</view>
         </view>
         <view class="cell-right">
