@@ -65,8 +65,7 @@ function normalizeHistory(history = []) {
 }
 
 async function callAI(systemPrompt, history, userInput) {
-  const ai = cloud.ai()
-  const model = ai.createModel('cloudbase')
+  const model = cloud.extend.AI.createModel('cloudbase')
   const result = await model.generateText({
     model: AI_MODEL,
     messages: [
@@ -75,7 +74,7 @@ async function callAI(systemPrompt, history, userInput) {
       { role: 'user', content: String(userInput).slice(0, 500) }
     ]
   })
-  const text = String(result && result.text || '').trim()
+  const text = String(result && result.choices && result.choices[0] && result.choices[0].message && result.choices[0].message.content || '').trim()
   if (!text) throw new Error('AI_EMPTY_RESPONSE')
   return { text, usage: result.usage || null }
 }
@@ -116,19 +115,20 @@ function buildMemorialPrompt(memorialId, decision, optionText) {
 
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext()
-  const { mode = 'chat', action, data = {} } = event
+  const { mode = 'chat', action, data, ...rest } = event || {}
+  const params = data && typeof data === 'object' ? { ...rest, ...data } : rest
 
   const runAction = action || mode
   try {
     switch (runAction) {
       case 'send':
-      case 'chat': return await modeChat(OPENID, data)
-      case 'listSessions': return await listSessions(OPENID, data)
-      case 'moment_comment': return await modeMomentComment(OPENID, data)
-      case 'pigeon_reply': return await modePigeonReply(OPENID, data)
-      case 'memorial_simulate': return await modeMemorialSimulate(OPENID, data)
-      case 'history': return await handleHistory(OPENID, data)
-      case 'clear': return await handleClear(OPENID, data)
+      case 'chat': return await modeChat(OPENID, params)
+      case 'listSessions': return await listSessions(OPENID, params)
+      case 'moment_comment': return await modeMomentComment(OPENID, params)
+      case 'pigeon_reply': return await modePigeonReply(OPENID, params)
+      case 'memorial_simulate': return await modeMemorialSimulate(OPENID, params)
+      case 'history': return await handleHistory(OPENID, params)
+      case 'clear': return await handleClear(OPENID, params)
       default: return { code: -1, message: '未知 chat action/mode: ' + runAction }
     }
   } catch (err) {
@@ -175,8 +175,8 @@ async function modeChat(OPENID, data) {
   try {
     aiResult = await callAI(prompt, history, content)
   } catch (e) {
-    console.error('chat AI call failed:', e.message)
-    return { code: 502, message: 'AI_UNAVAILABLE', data: { reason: 'AI_UNAVAILABLE' } }
+    console.error('chat AI call failed:', e && e.message, e && e.stack)
+    return { code: 502, message: 'AI_UNAVAILABLE', data: { reason: 'AI_UNAVAILABLE', detail: e && e.message } }
   }
   const reply = aiResult.text
   const outputSec = await checkText(reply, OPENID)

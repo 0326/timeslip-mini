@@ -11,3 +11,4 @@ ci-artifacts/
 test-artifacts/
 miniprogram_npm/
 project.private.config.json
+dist

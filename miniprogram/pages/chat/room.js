@@ -9,6 +9,7 @@ Page({
   data: {
     figureId: '',
     figureName: '',
+    navTitle: '',
     figureTitle: '',
     avatar: '',
     userAvatar: '/images/icons/avatar.png',
@@ -34,8 +35,7 @@ Page({
     const isSystem = figureId === QINGYUE.figureId
     let avatar = isSystem ? QINGYUE.avatar : ''
     if (!avatar) {
-      const fig = storage.get('figure_' + figureId)
-      if (fig && fig.avatar) avatar = fig.avatar
+      avatar = this.resolveFigureAvatar(figureId)
     }
 
     const userInfo = this.getUserInfo()
@@ -43,6 +43,7 @@ Page({
     this.setData({
       figureId,
       figureName: name,
+      navTitle: name,
       figureTitle: title || '',
       avatar,
       userName: userInfo.nickName || '',
@@ -50,7 +51,7 @@ Page({
     })
 
     this.loadUserAvatar(userInfo)
-    wx.setNavigationBarTitle({ title: figureName })
+    wx.setNavigationBarTitle({ title: name })
 
     // 确保青月会话与欢迎消息存在
     if (isSystem) chatSession.initQingyueSession()
@@ -85,6 +86,21 @@ Page({
   getUserInfo() {
     const app = getApp()
     return (app.globalData && app.globalData.userInfo) || storage.get('userInfo') || storage.get('user_info') || {}
+  },
+
+  // 从兰台人物列表 / 详情缓存中解析角色头像
+  resolveFigureAvatar(figureId) {
+    // 1. 人物列表缓存
+    const figuresList = storage.get('figures_star5_v4') || []
+    const fig = figuresList.find(f => (f._id || f.id || f.figureId) === figureId)
+    if (fig && fig.avatar) return fig.avatar
+    // 2. 人物详情缓存
+    const detail = storage.get('figure_v2_' + figureId)
+    if (detail && detail.avatar) return detail.avatar
+    // 3. 旧版缓存
+    const old = storage.get('figure_' + figureId)
+    if (old && old.avatar) return old.avatar
+    return ''
   },
 
   async loadHistory() {
@@ -148,11 +164,8 @@ Page({
   },
 
   onStopGen() {
-    this.setData({ chatStatus: 0, aiTyping: false, sending: false })
-    if (this._typeTimer) {
-      clearTimeout(this._typeTimer)
-      this._typeTimer = null
-    }
+    this._qingyueRunSeq = ''
+    this.setChatProcessing(false)
     chatSession.saveMessages(this.data.figureId, this.data.messages)
   },
 
@@ -197,8 +210,10 @@ Page({
       sending: true,
       aiTyping: true,
       chatStatus: 1,
+      navTitle: '对方正在输入中...',
       manualScroll: false
     })
+    wx.setNavigationBarTitle({ title: '对方正在输入中...' })
     this.scrollToBottom()
     this.persistMessages(messages)
     this.bumpSession(text, now)
@@ -206,8 +221,8 @@ Page({
     try {
       let aiContent
       if (this.data.isSystem) {
-        await sleep(300)
-        aiContent = this.generateQingyueReply(text)
+        await this.sendQingyueAgentMessage(text)
+        return
       } else {
         await sleep(300)
         const data = await requestCloud('chat', 'send', {
@@ -225,12 +240,165 @@ Page({
       }
       this.addAiMessage(aiContent)
     } catch (e) {
-      if (this.data.isSystem) {
-        this.addAiMessage(this.generateQingyueReply(text))
-      } else {
-        this.addFailedMessage(text)
-      }
+      console.warn('[chat] send failed:', this.formatError(e))
+      if (this.data.isSystem) this.removeEmptyAgentMessage()
+      this.addFailedMessage(text)
     }
+  },
+
+  removeEmptyAgentMessage() {
+    const messages = this.data.messages.filter(message =>
+      !(message.role === 'figure' && message.figureId === QINGYUE.figureId && !message.content && !message.status)
+    )
+    if (messages.length !== this.data.messages.length) {
+      this.setData({ messages })
+      this.persistMessages(messages)
+    }
+  },
+
+  async sendQingyueAgentMessage(text) {
+    const runSeq = uid('acp_')
+    this._qingyueRunSeq = runSeq
+
+    const payload = await this.requestQingyueAcp(text)
+    if (this.data.chatStatus === 0 || this._qingyueRunSeq !== runSeq) return
+
+    const finalContent = this.extractAcpText(payload).trim()
+    if (!finalContent) throw new Error('AGENT_EMPTY_RESPONSE')
+    this.addAiMessage(finalContent)
+  },
+
+  requestQingyueAcp(text) {
+    const url = `${QINGYUE.acpEndpoint || ''}`
+    if (!url) throw new Error('QINGYUE_ACP_ENDPOINT_MISSING')
+    return new Promise((resolve, reject) => {
+      wx.request({
+        url,
+        method: 'POST',
+        header: {
+          'content-type': 'application/json',
+          Authorization: `Bearer ${QINGYUE.publishableKey}`
+        },
+        data: {
+          jsonrpc: '2.0',
+          id: Date.now(),
+          method: 'session/prompt',
+          params: {
+            prompt: [
+              {
+                type: 'text',
+                text
+              }
+            ]
+          }
+        },
+        success: (res) => {
+          const data = res && res.data
+          if (!res || res.statusCode < 200 || res.statusCode >= 300) {
+            const message = (data && (data.message || data.error && data.error.message)) || `ACP_HTTP_${res && res.statusCode}`
+            reject(new Error(message))
+            return
+          }
+          if (data && data.error) {
+            reject(new Error(data.error.message || data.error.code || 'ACP_JSONRPC_ERROR'))
+            return
+          }
+          resolve(data)
+        },
+        fail: reject
+      })
+    })
+  },
+
+  extractAcpText(payload) {
+    const result = payload && payload.result !== undefined ? payload.result : payload
+    if (!result) return ''
+    if (typeof result === 'string') {
+      return result.indexOf('data:') >= 0 ? this.extractSseAcpText(result) : result
+    }
+    if (typeof result.text === 'string') return result.text
+    if (typeof result.answer === 'string') return result.answer
+    if (typeof result.reply === 'string') return result.reply
+    if (typeof result.content === 'string') return result.content
+    if (typeof result.output === 'string') return result.output
+    if (typeof result.output_text === 'string') return result.output_text
+    if (result.message) return this.extractAcpText(result.message)
+    if (Array.isArray(result.content)) {
+      return result.content.map(item => {
+        if (typeof item === 'string') return item
+        return item && (item.text || item.content || '')
+      }).filter(Boolean).join('')
+    }
+    if (Array.isArray(result)) {
+      return result.map(item => this.extractAcpText(item)).filter(Boolean).join('')
+    }
+    if (result.data) return this.extractAcpText(result.data)
+    return ''
+  },
+
+  extractSseAcpText(raw) {
+    const frames = String(raw || '')
+      .split(/\n\n+/)
+      .map(part => part.trim())
+      .filter(Boolean)
+
+    const visibleChunks = []
+
+    frames.forEach(frame => {
+      const lines = frame.split(/\n/).map(line => line.trim())
+      const dataLines = lines
+        .filter(line => line.indexOf('data:') === 0)
+        .map(line => line.slice(5).trim())
+        .filter(Boolean)
+      if (!dataLines.length) return
+      const dataText = dataLines.join('\n')
+      if (dataText === '[DONE]') return
+      let event
+      try {
+        event = JSON.parse(dataText)
+      } catch (e) {
+        return
+      }
+      const update = event && event.params && event.params.update
+      if (!update) return
+      const updateType = update.sessionUpdate || update.type || ''
+      const visibleUpdateTypes = [
+        'agent_message_chunk',
+        'assistant_message_chunk',
+        'message_chunk',
+        'text_message_chunk',
+        'message',
+        'text'
+      ]
+      if (visibleUpdateTypes.indexOf(updateType) < 0) return
+      const text = this.extractVisibleContentText(update.content || update.message || update.delta)
+      if (!text) return
+      visibleChunks.push(text)
+    })
+
+    return visibleChunks.join('')
+  },
+
+  extractVisibleContentText(content) {
+    if (!content) return ''
+    if (typeof content === 'string') return content
+    if (Array.isArray(content)) {
+      return content.map(item => this.extractVisibleContentText(item)).filter(Boolean).join('')
+    }
+    if (typeof content.text === 'string') return content.text
+    if (typeof content.content === 'string') return content.content
+    if (typeof content.delta === 'string') return content.delta
+    if (Array.isArray(content.content)) return this.extractVisibleContentText(content.content)
+    return ''
+  },
+
+  formatError(e) {
+    if (!e) return 'UNKNOWN_ERROR'
+    const parts = [
+      e.errCode || e.code || '',
+      e.errMsg || e.message || ''
+    ].filter(Boolean)
+    return parts.length ? parts.join(' ') : String(e)
   },
 
   addFailedMessage(text) {
@@ -244,7 +412,14 @@ Page({
       createdAt: Date.now()
     }
     const messages = this.data.messages.concat([failedMessage])
-    this.setData({ messages, sending: false, aiTyping: false, chatStatus: 0 })
+    this.setData({
+      messages,
+      sending: false,
+      aiTyping: false,
+      chatStatus: 0,
+      navTitle: this.data.figureName
+    })
+    wx.setNavigationBarTitle({ title: this.data.figureName })
     this.persistMessages(messages)
     this.scrollToBottom()
   },
@@ -270,30 +445,32 @@ Page({
       _id: uid('a_'),
       role: 'figure',
       figureId: this.data.figureId,
-      content: '',
+      content,
       createdAt: now
     }
     const messages = this.data.messages.concat([fullMsg])
-    this.setData({ messages, sending: false, chatStatus: 2 })
+    this.setData({
+      messages,
+      sending: false,
+      aiTyping: false,
+      chatStatus: 0,
+      navTitle: this.data.figureName
+    })
+    wx.setNavigationBarTitle({ title: this.data.figureName })
     this.scrollToBottom()
-    this.typeEffect(fullMsg._id, content, 0)
+    this.persistMessages(messages)
+    this.bumpSession(content, now)
   },
 
-  typeEffect(msgId, content, i) {
-    if (this.data.chatStatus === 0) return
-    const speed = AI_CONFIG.typingSpeedMs || 40
-    if (i >= content.length) {
-      this.setData({ aiTyping: false, chatStatus: 0 })
-      this.persistMessages(this.data.messages)
-      this.bumpSession(content, Date.now())
-      return
-    }
-    const messages = this.data.messages.map(m =>
-      m._id === msgId ? { ...m, content: content.slice(0, i + 1) } : m
-    )
-    this.setData({ messages })
-    if (i % 5 === 0 && !this.data.manualScroll) this.scrollToBottom()
-    this._typeTimer = setTimeout(() => this.typeEffect(msgId, content, i + 1), speed)
+  setChatProcessing(isProcessing) {
+    const title = isProcessing ? '对方正在输入中...' : this.data.figureName
+    this.setData({
+      sending: isProcessing,
+      aiTyping: isProcessing,
+      chatStatus: isProcessing ? 1 : 0,
+      navTitle: title
+    })
+    wx.setNavigationBarTitle({ title })
   },
 
   // 持久化消息到本地
@@ -325,38 +502,8 @@ Page({
     })
   },
 
-  // 青月引导回复：关键词匹配 + 功能介绍
-  generateQingyueReply(text) {
-    const t = (text || '').toLowerCase()
-    const has = kw => t.indexOf(kw) >= 0
-    if (has('兰台') || has('人物') || has('历史人物')) {
-      return '「兰台」是穿越圈的人物殿堂，你可以在这里结识孔子、司马迁、李白、苏轼等历代先贤。\n\n点击底部「兰台」Tab，选择一位人物进入详情页，即可开始对话。每位人物都有独特的性格与口吻哦～'
-    }
-    if (has('发现') || has('朋友圈') || has('动态')) {
-      return '「发现」页有穿越朋友圈，历史人物会在这里发布动态，你可以点赞、评论，与他们互动。\n\n还有「飞鸽传书」可以给古人写信，「奏折推演」体验朝堂决策。点击底部「发现」Tab 即可探索。'
-    }
-    if (has('飞鸽') || has('信') || has('写信')) {
-      return '「飞鸽传书」让你可以给历史人物写一封信，他们会以古人的口吻回信给你。\n\n在「发现」页找到飞鸽传书入口，选择收信人即可开始。信件会保存在「我的」-「书信集」中。'
-    }
-    if (has('dna') || has('测试') || has('灵魂') || has('匹配')) {
-      return '「DNA 测试」会通过几道趣味问题，找到与你灵魂最契合的历史人物。\n\n在「发现」页进入「DNA 殿堂」即可开始测试，测完还能直接与匹配的人物对话。'
-    }
-    if (has('视频') || has('视频号')) {
-      return '「视频号」里有历史人物的主题视频频道，可以观看、点赞、评论。\n\n在「发现」页找到「视频号」入口，或在人物详情页查看该人物的相关视频。'
-    }
-    if (has('奏折') || has('朝堂')) {
-      return '「奏折推演」让你化身决策者，批阅古人的奏折并做出选择，系统会推演你的决策对历史走向的影响。\n\n前往「发现」页即可体验。'
-    }
-    if (has('成就')) {
-      return '在「我的」-「成就」中，可以查看你的穿越足迹。每一次对话、每一封信、每一次互动都可能解锁新成就。'
-    }
-    if (has('怎么') || has('如何') || has('帮助') || has('功能') || has('能做')) {
-      return '穿越圈目前有这些核心功能：\n\n1. 「兰台」— 结识历史人物并与之对话\n2. 「发现」— 朋友圈、飞鸽传书、奏折推演、DNA 测试、视频号\n3. 「我的」— 个人资料、成就、书信集\n\n你可以直接告诉我感兴趣的方向，我来为你指路～'
-    }
-    if (has('你好') || has('hi') || has('哈喽') || has('在吗')) {
-      return '你好呀～我是青月，穿越圈的向导。你可以问我「兰台是什么」「怎么飞鸽传书」「DNA 测试怎么玩」之类的问题，我会一一为你解答。'
-    }
-    return '这个问题我可能不太确定，不过穿越圈的功能你都可以试试看：\n· 去「兰台」找一位历史人物聊天\n· 在「发现」刷朋友圈、写信、做 DNA 测试\n\n如果想了解某项功能，直接告诉我名字就好～'
+  onAvatarError() {
+    this.setData({ avatar: '/images/icons/avatar.png' })
   },
 
   onQuickReply(e) {

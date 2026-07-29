@@ -1,5 +1,5 @@
 <custom-nav-bar
-  title="{{figureName}}"
+  title="{{navTitle || figureName}}"
   bgColor="#fff"
   bind:back="onBack"
 ></custom-nav-bar>
@@ -26,20 +26,11 @@
         >
           <block wx:if="{{item.role !== 'user'}}">
             <view class="avatar-left" bindtap="onAvatarTap">
-              <image class="avatar-img" src="{{avatar}}" mode="aspectFill"></image>
+              <image class="avatar-img" src="{{avatar || '/images/icons/avatar.png'}}" mode="aspectFill" binderror="onAvatarError"></image>
             </view>
             <view class="system_bubble">
-              <block wx:if="{{(messages.length - 1) === index && aiTyping && chatStatus === 1}}">
-                <view class="thinking-row">
-                  <text class="thinking-icon">🤔</text>
-                  <text class="thinking-text">正在卖力思考中...</text>
-                </view>
-              </block>
-              <block wx:else>
-                <text class="bubble-text" user-select="{{true}}">{{item.content}}</text>
-                <text wx:if="{{aiTyping && index === messages.length - 1 && item.role === 'figure' && item.content.length > 0}}" class="typing-cursor">▊</text>
-                <button wx:if="{{item.status === 'failed'}}" class="retry-btn" data-id="{{item._id}}" bindtap="onRetry">重试</button>
-              </block>
+              <text class="bubble-text" user-select="{{true}}">{{item.content}}</text>
+              <button wx:if="{{item.status === 'failed'}}" class="retry-btn" data-id="{{item._id}}" bindtap="onRetry">重试</button>
             </view>
           </block>
 
@@ -55,15 +46,6 @@
           </block>
         </view>
       </block>
-
-      <view wx:if="{{aiTyping && messages.length && messages[messages.length - 1].role !== 'figure' && chatStatus !== 1}}" class="msg-row is-left system">
-        <view class="avatar-left" bindtap="onAvatarTap">
-          <image class="avatar-img" src="{{avatar}}" mode="aspectFill"></image>
-        </view>
-        <view class="system_bubble bubble-typing">
-          <text class="typing-dots"><text class="d">●</text><text class="d">●</text><text class="d">●</text></text>
-        </view>
-      </view>
 
       <view id="scroll-bottom" class="msg-bottom-sentry"></view>
     </view>
