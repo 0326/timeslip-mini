@@ -10,12 +10,12 @@
       class="tab-item {{tab === 'figures' ? 'is-active' : ''}}"
       data-tab="figures"
       bindtap="switchTab"
-    >{{tab === 'figures' && refreshing ? '人物·更新中' : '人物'}}</view>
+    >人物</view>
     <view
       class="tab-item {{tab === 'books' ? 'is-active' : ''}}"
       data-tab="books"
       bindtap="switchTab"
-    >{{tab === 'books' && refreshing ? '典籍·更新中' : '典籍'}}</view>
+    >典籍</view>
   </view>
 
   <block wx:if="{{tab === 'figures'}}">

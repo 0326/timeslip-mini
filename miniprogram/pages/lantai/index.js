@@ -79,6 +79,29 @@ function buildGroups(list) {
   return letters.map(letter => ({ letter, items: map[letter] }))
 }
 
+// 影响 UI 的关键字段
+const FIGURE_KEY_FIELDS = ['_id', 'figureId', 'name', 'avatar', 'title', 'dynasty', 'initial', 'bio']
+const BOOK_KEY_FIELDS = ['_id', 'id', 'title', 'author', 'dynasty', 'chapters', 'desc', 'cover_url']
+
+// O(n) 对比：用 _id 建 Map 索引，逐项字段对比，短路返回，不创建临时对象
+function listEqualByKey(a, b, fields) {
+  if (!Array.isArray(a) || !Array.isArray(b)) return false
+  if (a.length !== b.length) return false
+  const mapB = new Map()
+  for (let i = 0; i < b.length; i++) {
+    mapB.set(String(b[i]._id), b[i])
+  }
+  for (let i = 0; i < a.length; i++) {
+    const itemA = a[i]
+    const itemB = mapB.get(String(itemA._id))
+    if (!itemB) return false
+    for (let j = 0; j < fields.length; j++) {
+      if (itemA[fields[j]] !== itemB[fields[j]]) return false
+    }
+  }
+  return true
+}
+
 Page({
   data: {
     tab: 'figures',
@@ -142,11 +165,16 @@ Page({
           return (a.name || '').localeCompare(b.name || '', 'zh-Hans-CN')
         })
 
+      const cached = storage.get(FIGURES_CACHE_KEY) || []
+      const unchanged = listEqualByKey(newFigures, cached, FIGURE_KEY_FIELDS)
+
       if (newFigures.length) {
         storage.set(FIGURES_CACHE_KEY, newFigures, CACHE_TTL_SECONDS)
       }
-      // 直接用新数据更新界面
-      this.applyFilter(newFigures)
+      // 仅在数据有变化时刷新 UI，避免相同数据导致重渲染闪烁
+      if (!unchanged) {
+        this.applyFilter(newFigures)
+      }
     } catch (e) {
       if (!this.data.figures.length) {
         this.setData({ figures: [], groups: [], letters: [], loadError: true })
@@ -201,12 +229,17 @@ Page({
       )
       const newBooks = rows.map(normalizeBook)
 
+      const cached = storage.get(BOOKS_CACHE_KEY) || []
+      const unchanged = listEqualByKey(newBooks, cached, BOOK_KEY_FIELDS)
+
       if (newBooks.length) {
         storage.set(BOOKS_CACHE_KEY, newBooks, CACHE_TTL_SECONDS)
       }
-      // 直接用新数据更新界面
-      this.setData({ books: newBooks })
-      this.filterBooks(this.data.searchText)
+      // 仅在数据有变化时刷新 UI
+      if (!unchanged) {
+        this.setData({ books: newBooks })
+        this.filterBooks(this.data.searchText)
+      }
     } catch (e) {
       if (!this.data.books.length) {
         this.setData({ books: [] })

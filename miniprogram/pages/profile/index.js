@@ -48,7 +48,9 @@ Page({
     const cached = app.globalData && app.globalData.userInfo
     if (cached) {
       this.setData({ userInfo: cached })
-      if (cached.avatarUrl) {
+      // 仅在源 fileID 变化时才重新解析并替换头像，避免临时 URL 变化导致图片重载闪烁
+      if (cached.avatarUrl && this._lastAvatarFileId !== cached.avatarUrl) {
+        this._lastAvatarFileId = cached.avatarUrl
         resolveAvatarUrl(cached.avatarUrl).then(url => {
           self.setData({ avatarSrc: url })
         })
@@ -63,9 +65,17 @@ Page({
           isAdmin: userInfo.role === 'admin' || userInfo.role === 'superadmin'
         })
         if (userInfo.avatarUrl) {
-          const avatarUrl = await resolveAvatarUrl(userInfo.avatarUrl)
-          this.setData({ avatarSrc: avatarUrl })
+          // 源 fileID 未变化则跳过，避免重复 resolve 触发图片闪烁
+          if (this._lastAvatarFileId !== userInfo.avatarUrl) {
+            this._lastAvatarFileId = userInfo.avatarUrl
+            const avatarUrl = await resolveAvatarUrl(userInfo.avatarUrl)
+            // 解析期间用户可能已更换头像，二次校验
+            if (this._lastAvatarFileId === userInfo.avatarUrl) {
+              this.setData({ avatarSrc: avatarUrl })
+            }
+          }
         } else {
+          this._lastAvatarFileId = ''
           this.setData({ avatarSrc: '/images/icons/avatar.png' })
         }
         if (!app.globalData) app.globalData = {}
