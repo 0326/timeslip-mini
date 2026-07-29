@@ -127,6 +127,7 @@ Page({
     bookId: 'shiji',
     bookTitle: '史记',
     chapters: [],
+    chaptersLoading: true,
     currentChapter: null,
     currentChapterId: '',
     showTranslation: false,
@@ -158,16 +159,16 @@ Page({
   async loadChapters(id) {
     const cached = storage.get('chapters_' + id)
     if (cached) {
-      this.setData({ chapters: cached })
+      this.setData({ chapters: cached, chaptersLoading: false })
       return
     }
     try {
       const data = await requestCloud('shiji', 'chapters', { bookId: id }, { throwError: false })
       const list = (data && data.chapters) || MOCK_CHAPTERS
       storage.set('chapters_' + id, list, 86400)
-      this.setData({ chapters: list })
+      this.setData({ chapters: list, chaptersLoading: false })
     } catch (e) {
-      this.setData({ chapters: MOCK_CHAPTERS })
+      this.setData({ chapters: MOCK_CHAPTERS, chaptersLoading: false })
     }
   },
 

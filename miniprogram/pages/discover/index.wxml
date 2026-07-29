@@ -17,6 +17,7 @@
       class="entry"
       data-url="{{entry.url}}"
       data-name="{{entry.name}}"
+      data-locked="{{entry.locked}}"
       bindtap="onItemTap"
       hover-class="entry-hover"
     >

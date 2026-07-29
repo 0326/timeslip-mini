@@ -27,28 +27,43 @@
 
       <view class="catalog-list">
         <view class="cat-title">目 录</view>
-        <view
-          wx:for="{{chapters}}"
-          wx:key="id"
-          class="cat-item"
-          data-id="{{item.id}}"
-          bindtap="openChapter"
-          hover-class="cat-hover"
-        >
-          <view class="cat-body">
-            <view class="cat-row">
-              <text class="cat-t">{{item.title}}</text>
-              <view class="cat-progress">
-                <view class="p-bar"><view class="p-fill" style="width:{{item.progress}}%;"></view></view>
-                <text class="p-text">{{item.progress}}%</text>
+        <!-- 骨架屏：尺寸与真实 cat-item 完全一致，避免布局跳动 -->
+        <view wx:if="{{chaptersLoading && chapters.length === 0}}" class="cat-skeleton">
+          <view wx:for="{{[1,2,3,4,5,6,7,8]}}" wx:key="*this" class="sk-cat-item">
+            <view class="sk-cat-row">
+              <view class="sk-cat-title"></view>
+              <view class="sk-cat-progress">
+                <view class="sk-cat-bar"></view>
+                <view class="sk-cat-pct"></view>
               </view>
             </view>
-          </view>
-          <view class="cat-icon">
-            <text wx:if="{{item.read}}" class="ci-check iconfont icon-Selected"></text>
-            <text wx:else class="ci-arrow">›</text>
+            <view class="sk-cat-icon"></view>
           </view>
         </view>
+        <block wx:elif="{{chapters.length}}">
+          <view
+            wx:for="{{chapters}}"
+            wx:key="id"
+            class="cat-item"
+            data-id="{{item.id}}"
+            bindtap="openChapter"
+            hover-class="cat-hover"
+          >
+            <view class="cat-body">
+              <view class="cat-row">
+                <text class="cat-t">{{item.title}}</text>
+                <view class="cat-progress">
+                  <view class="p-bar"><view class="p-fill" style="width:{{item.progress}}%;"></view></view>
+                  <text class="p-text">{{item.progress}}%</text>
+                </view>
+              </view>
+            </view>
+            <view class="cat-icon">
+              <text wx:if="{{item.read}}" class="ci-check iconfont icon-Selected"></text>
+              <text wx:else class="ci-arrow">›</text>
+            </view>
+          </view>
+        </block>
       </view>
     </view>
   </block>

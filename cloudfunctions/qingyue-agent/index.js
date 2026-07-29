@@ -16,6 +16,7 @@ const FIGURE_AVATAR = '/images/qingyue.jpg'
 
 const MAX_TEXT = 500
 const MAX_HISTORY = 20
+const MAX_SEARCH_RESULTS = 5
 
 function getPublishableKey() {
   return (process.env.QINGYUE_PUBLISHABLE_KEY || DEFAULT_PUBLISHABLE_KEY).trim()
@@ -77,6 +78,219 @@ function buildPromptWithHistory(text, history) {
     .map(m => `${m.role === 'user' ? '用户' : '青月'}：${m.content}`)
     .join('\n')
   return `【最近对话】\n${historyText}\n\n【用户当前问题】\n${text}`
+}
+
+function shouldUseWebSearch(text) {
+  const t = String(text || '').toLowerCase()
+  const realtimeKeywords = [
+    '今天', '明天', '后天', '现在', '当前', '最近', '最新', '实时',
+    '天气', '气温', '下雨', '台风', '空气质量',
+    '新闻', '热搜', '上映', '开放', '闭馆', '门票', '价格', '股价',
+    '汇率', '赛事', '比分', '日程', '政策', '公告'
+  ]
+  return realtimeKeywords.some(keyword => t.indexOf(keyword) >= 0)
+}
+
+function buildSearchQuery(text) {
+  const raw = String(text || '').trim()
+  if (!raw) return ''
+  if (raw.indexOf('天气') >= 0 && !/[省市县区]|北京|上海|广州|深圳|杭州|南京|苏州|成都|重庆|武汉|西安|长沙|厦门|青岛|天津/.test(raw)) {
+    return raw + ' 上海'
+  }
+  return raw
+}
+
+function httpGet(url, headers = {}) {
+  return new Promise((resolve, reject) => {
+    const parsed = new URL(url)
+    const req = https.request({
+      hostname: parsed.hostname,
+      path: parsed.pathname + parsed.search,
+      method: 'GET',
+      headers: Object.assign({
+        'User-Agent': 'Mozilla/5.0 qingyue-agent web-search',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+      }, headers),
+      timeout: 12000
+    }, res => {
+      let body = ''
+      res.on('data', chunk => { body += chunk })
+      res.on('end', () => {
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          reject(new Error(`WEB_SEARCH_HTTP_${res.statusCode}`))
+          return
+        }
+        resolve(body)
+      })
+    })
+    req.on('timeout', () => req.destroy(new Error('WEB_SEARCH_TIMEOUT')))
+    req.on('error', reject)
+    req.end()
+  })
+}
+
+function decodeHtml(text) {
+  return String(text || '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+}
+
+function stripHtml(html) {
+  return decodeHtml(String(html || '')
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim())
+}
+
+function normalizeDuckDuckGoUrl(url) {
+  const raw = decodeHtml(url || '')
+  try {
+    const parsed = new URL(raw, 'https://duckduckgo.com')
+    const uddg = parsed.searchParams.get('uddg')
+    if (uddg) return decodeURIComponent(uddg)
+    return parsed.href
+  } catch (e) {
+    return raw
+  }
+}
+
+function normalizeSearchUrl(url, base) {
+  const raw = decodeHtml(url || '')
+  try {
+    return new URL(raw, base).href
+  } catch (e) {
+    return raw
+  }
+}
+
+function parseSoWeatherResult(html) {
+  const raw = String(html || '')
+  const weatherStart = raw.indexOf('id="mohe-weather"')
+  if (weatherStart < 0) return null
+
+  const weatherEndCandidates = [
+    raw.indexOf('mh-source-wrap', weatherStart),
+    raw.indexOf('</li>', weatherStart)
+  ].filter(i => i > weatherStart)
+  const weatherEnd = weatherEndCandidates.length ? Math.min(...weatherEndCandidates) : weatherStart + 30000
+  const snippet = stripHtml(raw.slice(weatherStart, weatherEnd)).slice(0, 1200)
+  if (!snippet) return null
+
+  return {
+    title: '360搜索天气卡片',
+    url: 'https://www.so.com/s',
+    snippet
+  }
+}
+
+function parseSoSearchResults(html) {
+  const results = []
+  const weather = parseSoWeatherResult(html)
+  if (weather) results.push(weather)
+
+  const blocks = String(html || '').split(/<li[^>]+class="[^"]*res-list[^"]*"[^>]*>/i).slice(1)
+  blocks.forEach(block => {
+    if (results.length >= MAX_SEARCH_RESULTS) return
+    if (block.indexOf('id="mohe-weather"') >= 0) return
+
+    const titleMatch = block.match(/<h3[^>]*>[\s\S]*?<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<\/h3>/i)
+      || block.match(/<a[^>]+href="([^"]+)"[^>]*>([\s\S]{0,300}?)<\/a>/i)
+    if (!titleMatch) return
+
+    const snippetMatch = block.match(/<p[^>]+class="[^"]*(?:res-desc|content|summary|g-card-desc)[^"]*"[^>]*>([\s\S]*?)<\/p>/i)
+      || block.match(/<div[^>]+class="[^"]*(?:res-rich|res-desc|content|summary)[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
+
+    const title = stripHtml(titleMatch[2])
+    const url = normalizeSearchUrl(titleMatch[1], 'https://www.so.com')
+    const snippet = stripHtml(snippetMatch && snippetMatch[1]) || stripHtml(block).slice(0, 260)
+    if (!title || !url || title.length > 120) return
+    results.push({ title, url, snippet })
+  })
+
+  if (!results.length) {
+    const fallback = stripHtml(html).slice(0, 1200)
+    if (fallback) {
+      results.push({
+        title: '360搜索页面摘要',
+        url: 'https://www.so.com/s',
+        snippet: fallback
+      })
+    }
+  }
+
+  return results.slice(0, MAX_SEARCH_RESULTS)
+}
+
+function parseDuckDuckGoResults(html) {
+  const results = []
+  const blocks = String(html || '').split(/<div class="result results_links[^"]*">/i).slice(1)
+  blocks.forEach(block => {
+    if (results.length >= MAX_SEARCH_RESULTS) return
+    const titleMatch = block.match(/<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i)
+    if (!titleMatch) return
+    const snippetMatch = block.match(/<a[^>]+class="result__snippet"[^>]*>([\s\S]*?)<\/a>/i)
+      || block.match(/<div[^>]+class="result__snippet"[^>]*>([\s\S]*?)<\/div>/i)
+    const title = stripHtml(titleMatch[2])
+    const url = normalizeDuckDuckGoUrl(titleMatch[1])
+    const snippet = stripHtml(snippetMatch && snippetMatch[1])
+    if (!title || !url) return
+    results.push({ title, url, snippet })
+  })
+  return results
+}
+
+async function webSearch(query) {
+  const q = buildSearchQuery(query)
+  if (!q) return []
+  const providers = [
+    {
+      name: 'so',
+      url: 'https://www.so.com/s?q=' + encodeURIComponent(q),
+      parse: parseSoSearchResults
+    },
+    {
+      name: 'duckduckgo',
+      url: 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(q),
+      parse: parseDuckDuckGoResults
+    }
+  ]
+  const errors = []
+  for (const provider of providers) {
+    try {
+      const html = await httpGet(provider.url)
+      const results = provider.parse(html)
+      if (results && results.length) {
+        return results.map(item => Object.assign({ source: provider.name }, item))
+      }
+      errors.push(`${provider.name}: EMPTY_RESULTS`)
+    } catch (e) {
+      errors.push(`${provider.name}: ${e && e.message ? e.message : e}`)
+    }
+  }
+  throw new Error(`WEB_SEARCH_FAILED: ${errors.join('; ')}`)
+}
+
+function buildPromptWithWeb(text, history, searchResults) {
+  const base = buildPromptWithHistory(text, history)
+  if (!searchResults || !searchResults.length) return base
+  const now = new Date().toISOString()
+  const webText = searchResults.map((r, i) => {
+    return `${i + 1}. ${r.title}\n摘要：${r.snippet || '无摘要'}\n链接：${r.url}`
+  }).join('\n\n')
+  return `${base}
+
+【联网搜索结果】
+检索时间：${now}
+以下搜索结果可能包含实时信息。回答时请优先基于这些结果，不要编造；如果搜索结果不足以确认，请明确说明。
+
+${webText}`
 }
 
 function extractAcpText(payload) {
@@ -259,11 +473,19 @@ async function handleSend(OPENID, data) {
   const startedAt = Date.now()
   let finalContent = ''
   try {
+    let searchResults = []
+    if (shouldUseWebSearch(text)) {
+      try {
+        searchResults = await webSearch(text)
+      } catch (searchErr) {
+        console.warn('[qingyue-agent] web search failed:', searchErr && searchErr.message)
+      }
+    }
     const payload = await acpRequest('session/prompt', {
       prompt: [
         {
           type: 'text',
-          text: buildPromptWithHistory(text, historyBefore)
+          text: buildPromptWithWeb(text, historyBefore, searchResults)
         }
       ]
     })
@@ -344,6 +566,7 @@ exports.main = async (event, context) => {
   try {
     switch (action) {
       case 'send': return await handleSend(OPENID, rest)
+      case 'webSearch': return { code: 0, message: 'ok', data: await webSearch(rest.query || rest.text || '') }
       case 'history': return await handleHistory(OPENID, rest)
       case 'clearSession': return await handleClearSession(OPENID)
       default: return { code: -1, message: '未知 qingyue-agent action: ' + action }

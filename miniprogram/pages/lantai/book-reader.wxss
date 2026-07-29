@@ -176,6 +176,92 @@
 .ci-check { color: var(--wechat-green); font-size: 28rpx; font-weight: 700; }
 .ci-arrow { color: var(--ancient-gold); font-size: 36rpx; }
 
+/* ===== 章节目录骨架屏（尺寸与真实布局完全一致，防跳动） ===== */
+.cat-skeleton {
+  display: flex;
+  flex-direction: column;
+}
+.sk-cat-item {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx dashed rgba(201, 162, 77, 0.15);
+}
+.sk-cat-item:last-child { border-bottom: none; }
+.sk-cat-row {
+  flex: 1;
+  min-width: 0;
+  padding: 0 16rpx;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+.sk-cat-title {
+  flex: 1;
+  height: 30rpx;
+  border-radius: 6rpx;
+  background: linear-gradient(
+    90deg,
+    rgba(201, 162, 77, 0.08) 25%,
+    rgba(201, 162, 77, 0.16) 37%,
+    rgba(201, 162, 77, 0.08) 63%
+  );
+  background-size: 400% 100%;
+  animation: sk-shine 1.4s ease infinite;
+}
+.sk-cat-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 12rpx;
+  flex-shrink: 0;
+}
+.sk-cat-bar {
+  width: 120rpx;
+  height: 8rpx;
+  border-radius: 4rpx;
+  background: linear-gradient(
+    90deg,
+    rgba(201, 162, 77, 0.08) 25%,
+    rgba(201, 162, 77, 0.16) 37%,
+    rgba(201, 162, 77, 0.08) 63%
+  );
+  background-size: 400% 100%;
+  animation: sk-shine 1.4s ease infinite;
+  flex-shrink: 0;
+}
+.sk-cat-pct {
+  width: 56rpx;
+  height: 20rpx;
+  border-radius: 4rpx;
+  background: linear-gradient(
+    90deg,
+    rgba(201, 162, 77, 0.08) 25%,
+    rgba(201, 162, 77, 0.16) 37%,
+    rgba(201, 162, 77, 0.08) 63%
+  );
+  background-size: 400% 100%;
+  animation: sk-shine 1.4s ease infinite;
+  flex-shrink: 0;
+}
+.sk-cat-icon {
+  width: 52rpx;
+  height: 52rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(201, 162, 77, 0.08) 25%,
+    rgba(201, 162, 77, 0.16) 37%,
+    rgba(201, 162, 77, 0.08) 63%
+  );
+  background-size: 400% 100%;
+  animation: sk-shine 1.4s ease infinite;
+}
+@keyframes sk-shine {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
 .content-wrap {
   padding: 32rpx;
 }
