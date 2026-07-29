@@ -4,11 +4,9 @@ const { URL } = require('url')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV, timeout: 60000 })
 const db = cloud.database()
 const _ = db.command
-
-// 青月 Agent 配置（P0：从迁移自前端 constants.js，建立安全边界）
 const AGENT_ID = 'agt-timeslip-2g9bj8k1d6e7cf65'
 const ACP_ENDPOINT = `https://cloud1-d0gunpzup215cfd87.api.tcloudbasegateway.com/v1/aibot/bots/${AGENT_ID}/acp`
-const PUBLISHABLE_KEY = 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjlkMWRjMzFlLWI0ZDAtNDQ4Yi1hNzZmLWIwY2M2M2Q4MTQ5OCJ9.eyJpc3MiOiJodHRwczovL2Nsb3VkMS1kMGd1bnB6dXAyMTVjZmQ4Ny5hcC1zaGFuZ2hhaS50Y2ItYXBpLnRlbmNlbnRjbG91ZGFwaS5jb20iLCJzdWIiOiJhbm9ueW1vdXMiLCJhdWQiOiJjbG91ZDEtZDBndW5wenVwMjE1Y2ZkODciLCJleHAiOjQwODkwMjIxODgsImlhdCI6MTc4NTMzODk4OCwibm9uY2UiOiJ6QzdaZlVSZVFLQ3ljMWhaMndNZ1hRIiwiYXRfaGFzaCI6InpDN1pmVVJFUUtDeWMxaFoyd01nWFEiLCJuYW1lIjoiQW5vbnltb3VzIiwic2NvcGUiOiJhbm9ueW1vdXMiLCJwcm9qZWN0X2lkIjoiY2xvdWQxLWQwZ3VucHp1cDIxNWNmZDg3IiwibWV0YSI6eyJwbGF0Zm9ybSI6IlB1Ymxpc2hhYmxlS2V5In0sInVzZXJfdHlwZSI6IiIsImNsaWVudF90eXBlIjoiY2xpZW50X3VzZXIiLCJpc19zeXN0ZW1fYWRtaW4iOmZhbHNlfQ.QeBz7kzMOwzUwUzYK1EBu3paT5wkFhOtHEmKB8_zRRcTtETV2JL400mjsPGNBzBi_STrjC61HdRdo__bIJ7EXhKCOZRhat4VDKMOjm6kkvLtXcljHKXo-pUn5ISnxRjI_SIMQo2jgE-eqFF4XlHGeiK3uUSeycZDS21XbPkYVCztZ4MowaPZq8eys9i7i8_WfghQ9gfH1eKiXyCyS5IsKxNuYtVNePFNGkpSPbbZ0jvISYS4JAQkjFLmHv-tI01899MQr0gRq930xEcZTIl5UocwPq_UsXuyltYr36G3WLEzx5tk1LBBvTAV9_KyqJV-5nrxnxHDerIVGwMNO2_ChA'
+const DEFAULT_PUBLISHABLE_KEY = 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjlkMWRjMzFlLWI0ZDAtNDQ4Yi1hNzZmLWIwY2M2M2Q4MTQ5OCJ9.eyJpc3MiOiJodHRwczovL2Nsb3VkMS1kMGd1bnB6dXAyMTVjZmQ4Ny5hcC1zaGFuZ2hhaS50Y2ItYXBpLnRlbmNlbnRjbG91ZGFwaS5jb20iLCJzdWIiOiJhbm9uIiwiYXVkIjoiY2xvdWQxLWQwZ3VucHp1cDIxNWNmZDg3IiwiZXhwIjo0MDg5MDIyMTg4LCJpYXQiOjE3ODUzMzg5ODgsIm5vbmNlIjoiekM3WmZVUmVRS0N5YzFoWjJ3TWdYUSIsImF0X2hhc2giOiJ6QzdaZlVSZVFLQ3ljMWhaMndNZ1hRIiwibmFtZSI6IkFub255bW91cyIsInNjb3BlIjoiYW5vbnltb3VzIiwicHJvamVjdF9pZCI6ImNsb3VkMS1kMGd1bnB6dXAyMTVjZmQ4NyIsIm1ldGEiOnsicGxhdGZvcm0iOiJQdWJsaXNoYWJsZUtleSJ9LCJ1c2VyX3R5cGUiOiIiLCJjbGllbnRfdHlwZSI6ImNsaWVudF91c2VyIiwiaXNfc3lzdGVtX2FkbWluIjpmYWxzZX0.QeBz7kzMOwzUwUzYK1EBu3paT5wkFhOtHEmKB8_zRRcTtETV2JL400mjsPGNBzBi_STrjC61HdRdo__bIJ7EXhKCOZRhat4VDKMOjm6kkvLtXcljHKXo-pUn5ISnxRjI_SIMQo2jgE-eqFF4XlHGeiK3uUSeycZDS21XbPkYVCztZ4MowaPZq8eys9i7i8_WfghQ9gfH1eKiXyCyS5IsKxNuYtVNePFNGkpSPbbZ0jvISYS4JAQkjFLmHv-tI01899MQr0gRq930xEcZTIl5UocwPq_UsXuyltYr36G3WLEzx5tk1LBBvTAV9_KyqJV-5nrxnxHDerIVGwMNO2_ChA'
 
 // 青月角色元数据（与前端 QINGYUE 对齐）
 const FIGURE_ID = 'sys_qingyue'
@@ -17,44 +15,40 @@ const FIGURE_TITLE = '系统'
 const FIGURE_AVATAR = '/images/qingyue.jpg'
 
 const MAX_TEXT = 500
+const MAX_HISTORY = 20
 
-// 生成 UUID
-function uuid() {
-  try {
-    const crypto = require('crypto')
-    if (typeof crypto.randomUUID === 'function') return crypto.randomUUID()
-  } catch (e) {}
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-    const r = Math.random() * 16 | 0
-    const v = c === 'x' ? r : (r & 0x3 | 0x8)
-    return v.toString(16)
-  })
+function getPublishableKey() {
+  return (process.env.QINGYUE_PUBLISHABLE_KEY || DEFAULT_PUBLISHABLE_KEY).trim()
 }
 
-// ACP JSON-RPC 请求（https，收集完整响应后解析）
 function acpRequest(method, params) {
   return new Promise((resolve, reject) => {
+    const token = getPublishableKey()
+    if (!token) {
+      reject(new Error('QINGYUE_PUBLISHABLE_KEY_MISSING'))
+      return
+    }
+
     const body = JSON.stringify({ jsonrpc: '2.0', id: Date.now(), method, params })
     const url = new URL(ACP_ENDPOINT)
-    const options = {
+    const req = https.request({
       hostname: url.hostname,
       path: url.pathname + url.search,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${PUBLISHABLE_KEY}`,
+        Authorization: `Bearer ${token}`,
         'Content-Length': Buffer.byteLength(body)
-      }
-    }
-    const req = https.request(options, res => {
+      },
+      timeout: 55000
+    }, res => {
       let chunks = ''
       res.on('data', c => { chunks += c })
       res.on('end', () => {
         if (res.statusCode < 200 || res.statusCode >= 300) {
-          reject(new Error(`ACP_HTTP_${res.statusCode}: ${chunks.slice(0, 200)}`))
+          reject(new Error(`ACP_HTTP_${res.statusCode}: ${chunks.slice(0, 500)}`))
           return
         }
-        // 优先尝试 JSON 解析（JSON-RPC 单帧）
         try {
           const parsed = JSON.parse(chunks)
           if (parsed && parsed.error) {
@@ -63,10 +57,12 @@ function acpRequest(method, params) {
           }
           resolve(parsed)
         } catch (e) {
-          // 非 JSON，按 SSE 流原样返回
           resolve(chunks)
         }
       })
+    })
+    req.on('timeout', () => {
+      req.destroy(new Error('ACP_REQUEST_TIMEOUT'))
     })
     req.on('error', reject)
     req.write(body)
@@ -74,52 +70,14 @@ function acpRequest(method, params) {
   })
 }
 
-// 从 session/new 响应中提取 sessionId
-function extractSessionId(payload) {
-  const result = payload && payload.result !== undefined ? payload.result : payload
-  if (!result) return ''
-  if (typeof result === 'string') return result
-  if (typeof result.sessionId === 'string') return result.sessionId
-  if (typeof result.id === 'string') return result.id
-  return ''
+function buildPromptWithHistory(text, history) {
+  const pairs = (history || []).slice(-8)
+  if (!pairs.length) return text
+  const historyText = pairs
+    .map(m => `${m.role === 'user' ? '用户' : '青月'}：${m.content}`)
+    .join('\n')
+  return `【最近对话】\n${historyText}\n\n【用户当前问题】\n${text}`
 }
-
-// 创建 Agent 会话，优先用返回的 sessionId
-async function createAgentSession() {
-  const localId = uuid()
-  try {
-    const res = await acpRequest('session/new', {})
-    const returned = extractSessionId(res)
-    return returned || localId
-  } catch (e) {
-    console.warn('[qingyue-agent] session/new failed, fallback to local uuid:', e && e.message)
-    return localId
-  }
-}
-
-// 获取或创建 agentSessionId（存云端 chat_sessions.agentSessionId）
-async function ensureAgentSession(OPENID) {
-  const r = await db.collection('chat_sessions').where({ _openid: OPENID, figureId: FIGURE_ID }).limit(1).get()
-  if (r.data.length && r.data[0].agentSessionId) {
-    return r.data[0].agentSessionId
-  }
-  const agentSessionId = await createAgentSession()
-  await upsertQingyueSession(OPENID, { agentSessionId })
-  return agentSessionId
-}
-
-// 判断是否为 session 过期/不存在类错误（用于一次重试）
-function isSessionError(e) {
-  const msg = String((e && e.message) || '').toLowerCase()
-  return msg.indexOf('session') >= 0 && (
-    msg.indexOf('not found') >= 0 ||
-    msg.indexOf('not exist') >= 0 ||
-    msg.indexOf('expired') >= 0 ||
-    msg.indexOf('invalid') >= 0
-  )
-}
-
-// ============ SSE / 文本提取（迁移自前端 room.js） ============
 
 function extractAcpText(payload) {
   const result = payload && payload.result !== undefined ? payload.result : payload
@@ -203,6 +161,23 @@ function extractVisibleContentText(content) {
   return ''
 }
 
+// 从 chat_messages 查历史，组装为 history 参数
+async function getHistoryForBot(OPENID) {
+  try {
+    const r = await db.collection('chat_messages')
+      .where({ _openid: OPENID, figureId: FIGURE_ID })
+      .orderBy('createdAt', 'desc')
+      .limit(MAX_HISTORY)
+      .get()
+    return r.data.reverse().map(m => ({
+      role: m.role === 'user' ? 'user' : 'assistant',
+      content: String(m.content || '').slice(0, 1000)
+    }))
+  } catch (e) {
+    return []
+  }
+}
+
 // ============ 内容安全 ============
 
 async function checkText(text, openid) {
@@ -227,46 +202,12 @@ async function saveMsg(doc) {
   await db.collection('chat_messages').add({ data: doc })
 }
 
-// 青月会话 upsert（patch 合并到现有记录，不存在则创建）
-async function upsertQingyueSession(OPENID, patch) {
-  const r = await db.collection('chat_sessions').where({ _openid: OPENID, figureId: FIGURE_ID }).limit(1).get()
-  const now = db.serverDate()
-  if (r.data.length) {
-    await db.collection('chat_sessions').doc(r.data[0]._id).update({
-      data: Object.assign({}, patch, { updatedAt: now })
-    })
-  } else {
-    await db.collection('chat_sessions').add({
-      data: Object.assign({
-        _openid: OPENID,
-        figureId: FIGURE_ID,
-        figureName: FIGURE_NAME,
-        figureTitle: FIGURE_TITLE,
-        dynasty: '',
-        avatar: FIGURE_AVATAR,
-        lastMessage: '',
-        lastTime: now,
-        unread: 0,
-        isSystem: true,
-        agentSessionId: '',
-        createdAt: now,
-        updatedAt: now
-      }, patch)
-    })
-  }
-}
-
-// 更新会话最后一条消息（P0 不累加 unread，用户在房间内）
 async function bumpSession(OPENID, lastMsg) {
   const r = await db.collection('chat_sessions').where({ _openid: OPENID, figureId: FIGURE_ID }).limit(1).get()
   const now = db.serverDate()
   if (r.data.length) {
     await db.collection('chat_sessions').doc(r.data[0]._id).update({
-      data: {
-        lastMessage: lastMsg,
-        lastTime: now,
-        updatedAt: now
-      }
+      data: { lastMessage: lastMsg, lastTime: now, updatedAt: now }
     })
   } else {
     await db.collection('chat_sessions').add({
@@ -281,7 +222,6 @@ async function bumpSession(OPENID, lastMsg) {
         lastTime: now,
         unread: 0,
         isSystem: true,
-        agentSessionId: '',
         createdAt: now,
         updatedAt: now
       }
@@ -300,44 +240,38 @@ async function handleSend(OPENID, data) {
   const sec = await checkText(text, OPENID)
   if (!sec.ok) return { code: 403, message: sec.reason }
 
-  // 获取或创建 agentSessionId
-  let agentSessionId = await ensureAgentSession(OPENID)
-
-  // 写 user message
+  // 写 user message（先落库，再调 Agent，保证历史完整）
   const now = db.serverDate()
   const userMsgId = 'u_' + Date.now() + Math.random().toString(36).slice(2, 6)
   await saveMsg({
     _id: userMsgId, _openid: OPENID,
-    sessionId: agentSessionId,
     figureId: FIGURE_ID, role: 'user', content: text, mode: 'agent',
     createdAt: now, updatedAt: now
   })
 
-  // 调 ACP session/prompt
+  // 取历史（含刚写的 user message 之前的记录）
+  const history = await getHistoryForBot(OPENID)
+  // sendMessage 的 history 应为本次 msg 之前的对话，不含当前 msg
+  // getHistoryForBot 已包含刚写入的 user message，需去掉最后一条
+  const historyBefore = history.slice(0, -1)
+
+  // 调用 Agent ACP（云函数运行时没有 cloud.extend.AI.bot，不能用 SDK 路径）
   const startedAt = Date.now()
   let finalContent = ''
   try {
     const payload = await acpRequest('session/prompt', {
-      sessionId: agentSessionId,
-      prompt: [{ type: 'text', text }]
+      prompt: [
+        {
+          type: 'text',
+          text: buildPromptWithHistory(text, historyBefore)
+        }
+      ]
     })
     finalContent = extractAcpText(payload).trim()
     if (!finalContent) throw new Error('AGENT_EMPTY_RESPONSE')
   } catch (e) {
-    // session 过期/不存在：重置一次后重试
-    if (isSessionError(e)) {
-      const newSessionId = await createAgentSession()
-      await upsertQingyueSession(OPENID, { agentSessionId: newSessionId })
-      const payload = await acpRequest('session/prompt', {
-        sessionId: newSessionId,
-        prompt: [{ type: 'text', text }]
-      })
-      finalContent = extractAcpText(payload).trim()
-      if (!finalContent) throw new Error('AGENT_EMPTY_RESPONSE')
-      agentSessionId = newSessionId
-    } else {
-      throw e
-    }
+    console.error('[qingyue-agent] ACP failed:', e && e.message, e && e.stack)
+    throw e
   }
 
   // 输出内容安全
@@ -348,7 +282,6 @@ async function handleSend(OPENID, data) {
   const aiMsgId = 'a_' + Date.now() + Math.random().toString(36).slice(2, 6)
   await saveMsg({
     _id: aiMsgId, _openid: OPENID,
-    sessionId: agentSessionId,
     figureId: FIGURE_ID, role: 'assistant', content: finalContent, mode: 'agent', type: 'text',
     model: 'agent', latencyMs: Date.now() - startedAt,
     status: 'success', createdAt: now, updatedAt: now
@@ -382,24 +315,16 @@ async function handleHistory(OPENID, data) {
 }
 
 async function handleClearSession(OPENID) {
-  // 1. 删青月云端消息
+  // 删青月云端消息（会话延续改为 history 传入，无需删 Agent 端 session）
   try {
     await db.collection('chat_messages').where({ _openid: OPENID, figureId: FIGURE_ID }).remove()
   } catch (e) {}
 
-  // 2. 删 ACP session（若有 agentSessionId）
-  const r = await db.collection('chat_sessions').where({ _openid: OPENID, figureId: FIGURE_ID }).limit(1).get()
-  const oldSessionId = r.data.length && r.data[0].agentSessionId
-  if (oldSessionId) {
-    try { await acpRequest('session/delete', { sessionId: oldSessionId }) } catch (e) {}
-  }
-
-  // 3. 重置 chat_sessions 的 agentSessionId
   try {
+    const r = await db.collection('chat_sessions').where({ _openid: OPENID, figureId: FIGURE_ID }).limit(1).get()
     if (r.data.length) {
       await db.collection('chat_sessions').doc(r.data[0]._id).update({
         data: {
-          agentSessionId: '',
           lastMessage: '',
           lastTime: db.serverDate(),
           updatedAt: db.serverDate()

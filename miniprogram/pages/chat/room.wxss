@@ -84,6 +84,9 @@ page {
   font-size: 30rpx;
   line-height: 1.55;
   min-height: 40rpx;
+  max-width: 520rpx;
+  display: inline-block;
+  box-sizing: border-box;
   box-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.04);
 }
 
@@ -130,6 +133,9 @@ page {
   font-size: 30rpx;
   line-height: 1.55;
   position: relative;
+  max-width: 520rpx;
+  display: inline-block;
+  box-sizing: border-box;
   box-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.04);
 }
 

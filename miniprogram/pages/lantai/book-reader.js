@@ -24,6 +24,104 @@ const MOCK_CONTENT = {
   ]
 }
 
+// 把各种可能结构的注释（按段分组 / 键名不一 / 纯对象）统一展平为 [{keyword, note}]
+function normalizeNotes(raw) {
+  if (!raw || !Array.isArray(raw)) return []
+  const out = []
+  function pushKV(keyword, note) {
+    if (!keyword && !note) return
+    out.push({ keyword: String(keyword || '').slice(0, 50), note: String(note || '').slice(0, 500) })
+  }
+  function collectFromObject(obj, fallbackKey) {
+    if (!obj || typeof obj !== 'object') return false
+    // 标准结构 1: {keyword/term/name: string, note/definition/meaning/desc/text: string}
+    const keyField = typeof obj.keyword === 'string' ? obj.keyword
+      : typeof obj.term === 'string' ? obj.term
+      : typeof obj.name === 'string' ? obj.name : ''
+    const valField = typeof obj.note === 'string' ? obj.note
+      : typeof obj.definition === 'string' ? obj.definition
+      : typeof obj.meaning === 'string' ? obj.meaning
+      : typeof obj.desc === 'string' ? obj.desc
+      : typeof obj.text === 'string' ? obj.text : ''
+    if ((keyField || fallbackKey) && valField) {
+      pushKV(keyField || fallbackKey || '', valField)
+      return true
+    }
+    // 按段分组: {keyword: "第N段", note: [{term,text}/...]} 或 {paragraph, items:[...]}
+    const sectionTitle = typeof obj.keyword === 'string' ? obj.keyword
+      : obj.paragraph !== undefined ? '第' + obj.paragraph + '段'
+      : typeof obj.section === 'string' ? obj.section
+      : typeof obj.title === 'string' ? obj.title : ''
+    const itemsArray = Array.isArray(obj.note) ? obj.note
+      : Array.isArray(obj.items) ? obj.items
+      : Array.isArray(obj.list) ? obj.list
+      : Array.isArray(obj.notes) ? obj.notes : null
+    if (itemsArray) {
+      itemsArray.forEach((item) => {
+        let termKey = ''
+        let termVal = ''
+        if (typeof item === 'string') {
+          termVal = item
+        } else if (item && typeof item === 'object') {
+          termKey = typeof item.term === 'string' ? item.term
+            : typeof item.keyword === 'string' ? item.keyword
+            : typeof item.name === 'string' ? item.name : ''
+          termVal = typeof item.text === 'string' ? item.text
+            : typeof item.note === 'string' ? item.note
+            : typeof item.definition === 'string' ? item.definition
+            : typeof item.meaning === 'string' ? item.meaning
+            : typeof item.desc === 'string' ? item.desc : ''
+          // 如果子项本身还有数组，回退 normalizeSingle
+          if (!termVal && (Array.isArray(item.note) || Array.isArray(item.items) || Array.isArray(item.notes))) {
+            normalizeSingle(item, sectionTitle ? (sectionTitle + '｜' + termKey) : fallbackKey)
+            return
+          }
+        }
+        const finalKey = sectionTitle
+          ? (termKey ? (sectionTitle + '·' + termKey) : sectionTitle)
+          : (termKey || fallbackKey || '')
+        if (finalKey || termVal) {
+          pushKV(finalKey, termVal)
+        }
+      })
+      return true
+    }
+    // { [keyword]: note } 纯对象字典
+    const keys = Object.keys(obj).filter(k => typeof obj[k] === 'string' && !['keyword','term','name','note','definition','meaning','desc','text','paragraph','section','items','list','notes','title'].includes(k))
+    if (keys.length >= 1) {
+      keys.forEach(k => pushKV(k, obj[k]))
+      return true
+    }
+    // 对象里有字符串字段但没命中以上任何模式，兜底拼接
+    const strs = Object.keys(obj).filter(k => typeof obj[k] === 'string').map(k => obj[k])
+    if (strs.length >= 1) {
+      pushKV(fallbackKey || obj.keyword || obj.term || obj.name || '注释', strs.join('；').slice(0, 300))
+      return true
+    }
+    return false
+  }
+  function normalizeSingle(item, fallbackKey) {
+    if (item === null || item === undefined) return
+    if (typeof item === 'string') {
+      pushKV(fallbackKey || '', item)
+      return
+    }
+    if (Array.isArray(item)) {
+      item.forEach((sub, i) => normalizeSingle(sub, fallbackKey ? (fallbackKey + '-' + (i + 1)) : ''))
+      return
+    }
+    if (typeof item === 'object') {
+      if (collectFromObject(item, fallbackKey)) return
+      // 兜底：把所有字符串值拼起来
+      const bits = Object.values(item).filter(v => typeof v === 'string')
+      if (bits.length) pushKV(fallbackKey || '注释', bits.join('；').slice(0, 300))
+      else pushKV(fallbackKey || '注释', JSON.stringify(item).slice(0, 200))
+    }
+  }
+  raw.forEach((item, i) => normalizeSingle(item, ''))
+  return out
+}
+
 Page({
   data: {
     bookId: 'shiji',
@@ -86,7 +184,11 @@ Page({
     this.setData({
       currentChapter: chapter,
       currentChapterId: id,
-      content
+      content: {
+        original: content.original || '',
+        translation: content.translation || '',
+        notes: normalizeNotes(content.notes)
+      }
     })
   },
 

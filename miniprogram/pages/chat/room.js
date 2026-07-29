@@ -246,7 +246,8 @@ Page({
       this.addAiMessage(aiContent)
     } catch (e) {
       console.warn('[chat] send failed:', this.formatError(e))
-      this.addFailedMessage(text)
+      // 所有角色报错不展示重试 UI，发一个😊表情
+      this.addAiMessage('😊')
     }
   },
 

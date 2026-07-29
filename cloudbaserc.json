@@ -7,6 +7,13 @@
       "memorySize": 256,
       "installDependency": true,
       "runtime": "Nodejs16.13"
+    },
+    {
+      "name": "qingyue-agent",
+      "timeout": 60,
+      "memorySize": 256,
+      "installDependency": true,
+      "runtime": "Nodejs16.13"
     }
   ]
 }
