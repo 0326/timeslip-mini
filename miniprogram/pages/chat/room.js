@@ -24,7 +24,6 @@ Page({
     aiTyping: false,
     chatStatus: 0,
     showTools: false,
-    manualScroll: false,
     scrollAnimated: false
   },
 
@@ -248,16 +247,7 @@ Page({
   },
 
   onScrollMsg(e) {
-    const { scrollTop } = e.detail
-    if (scrollTop < (this._lastScrollTop || 0) - 20) {
-      if (!this.data.manualScroll) this.setData({ manualScroll: true })
-    }
-    this._lastScrollTop = scrollTop
-  },
-
-  autoToBottom() {
-    this.setData({ manualScroll: false })
-    this.scrollToBottom()
+    this._lastScrollTop = e.detail.scrollTop
   },
 
   async onSend() {
@@ -288,8 +278,7 @@ Page({
       sending: true,
       aiTyping: true,
       chatStatus: 1,
-      navTitle: '对方正在输入中...',
-      manualScroll: false
+      navTitle: '对方正在输入中...'
     })
     wx.setNavigationBarTitle({ title: '对方正在输入中...' })
     this.scrollToBottom()

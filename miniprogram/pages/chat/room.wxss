@@ -171,21 +171,6 @@ page {
   height: 10rpx;
 }
 
-/* ============ 滚动到底按钮 ============ */
-.to-bottom-btn {
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: 50%;
-  position: fixed;
-  bottom: 280rpx;
-  right: 32rpx;
-  padding: 12rpx;
-  background-color: white;
-  box-shadow: rgba(0, 0, 0, 0.12) 0px 4rpx 16rpx 0px;
-  z-index: 50;
-  box-sizing: border-box;
-}
-
 /* ============ 底部输入区域 ============ */
 .chat-footer {
   width: 100%;
