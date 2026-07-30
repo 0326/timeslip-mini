@@ -36,6 +36,7 @@
           <view wx:if="{{item.unreadCount > 0}}" class="unread-badge">
             {{item.unreadCount > 99 ? '99+' : item.unreadCount}}
           </view>
+          <view wx:elif="{{item.status === 'processing'}}" class="typing-dot"></view>
         </view>
         <view class="session-info">
           <view class="session-top">
@@ -45,7 +46,7 @@
             </view>
             <text class="session-time">{{item.displayTime}}</text>
           </view>
-          <text class="session-preview ellipsis">{{item.lastMessage}}</text>
+          <text class="session-preview ellipsis {{item.status === 'processing' ? 'preview-typing' : ''}}">{{item.lastMessage}}</text>
         </view>
       </view>
 

@@ -12,8 +12,8 @@
   <!-- 双列骨架屏 -->
   <view wx:if="{{loading && articles.length === 0}}" class="sk-grid">
     <view class="sk-column">
-      <view class="sk-card" wx:for="{{[1,2,3]}}" wx:key="*this">
-        <view class="sk-cover sk-shimmer" style="height: {{item === 2 ? '400rpx' : item === 3 ? '300rpx' : '360rpx'}};"></view>
+      <view class="sk-card" wx:for="{{[360, 400, 320]}}" wx:key="*this">
+        <view class="sk-cover sk-shimmer" style="height: {{item}}rpx;"></view>
         <view class="sk-body">
           <view class="sk-title-line sk-shimmer"></view>
           <view class="sk-title-line sk-shimmer w-70"></view>
@@ -26,8 +26,8 @@
       </view>
     </view>
     <view class="sk-column">
-      <view class="sk-card" wx:for="{{[1,2,3]}}" wx:key="*this">
-        <view class="sk-cover sk-shimmer" style="height: {{item === 1 ? '300rpx' : item === 2 ? '380rpx' : '340rpx'}};"></view>
+      <view class="sk-card" wx:for="{{[360, 400, 320]}}" wx:key="*this">
+        <view class="sk-cover sk-shimmer" style="height: {{item}}rpx;"></view>
         <view class="sk-body">
           <view class="sk-title-line sk-shimmer"></view>
           <view class="sk-title-line sk-shimmer w-70"></view>

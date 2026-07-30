@@ -9,7 +9,7 @@
     class="msg-scroll main"
     scroll-y
     scroll-into-view="{{scrollTo}}"
-    scroll-with-animation
+    scroll-with-animation="{{scrollAnimated}}"
     enhanced
     show-scrollbar="{{false}}"
     bindscroll="onScrollMsg"

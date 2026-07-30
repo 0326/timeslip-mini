@@ -416,16 +416,16 @@ async function saveMsg(doc) {
   await db.collection('chat_messages').add({ data: doc })
 }
 
-async function bumpSession(OPENID, lastMsg) {
+async function bumpSession(OPENID, lastMsg, patch) {
   const r = await db.collection('chat_sessions').where({ _openid: OPENID, figureId: FIGURE_ID }).limit(1).get()
   const now = db.serverDate()
   if (r.data.length) {
     await db.collection('chat_sessions').doc(r.data[0]._id).update({
-      data: { lastMessage: lastMsg, lastTime: now, updatedAt: now }
+      data: Object.assign({ lastMessage: lastMsg, lastTime: now, updatedAt: now }, patch || {})
     })
   } else {
     await db.collection('chat_sessions').add({
-      data: {
+      data: Object.assign({
         _openid: OPENID,
         figureId: FIGURE_ID,
         figureName: FIGURE_NAME,
@@ -434,11 +434,13 @@ async function bumpSession(OPENID, lastMsg) {
         avatar: FIGURE_AVATAR,
         lastMessage: lastMsg,
         lastTime: now,
-        unread: 0,
+        unreadCount: 0,
         isSystem: true,
+        status: 'done',
+        agentSessionId: '',
         createdAt: now,
         updatedAt: now
-      }
+      }, patch || {})
     })
   }
 }
@@ -446,7 +448,7 @@ async function bumpSession(OPENID, lastMsg) {
 // ============ Actions ============
 
 async function handleSend(OPENID, data) {
-  const { text } = data
+  const { text, localMessageId } = data
   if (!text) return { code: -1, message: '缺少 text' }
   if (String(text).length > MAX_TEXT) return { code: -1, message: '消息不能超过500字' }
 
@@ -456,12 +458,20 @@ async function handleSend(OPENID, data) {
 
   // 写 user message（先落库，再调 Agent，保证历史完整）
   const now = db.serverDate()
-  const userMsgId = 'u_' + Date.now() + Math.random().toString(36).slice(2, 6)
+  const userMsgId = localMessageId || ('u_' + Date.now() + Math.random().toString(36).slice(2, 6))
   await saveMsg({
     _id: userMsgId, _openid: OPENID,
     figureId: FIGURE_ID, role: 'user', content: text, mode: 'agent',
     createdAt: now, updatedAt: now
   })
+
+  // 进入云函数即写 processing 状态（前端 onShow 时据此恢复 typing 标题）
+  try {
+    await bumpSession(OPENID, text, {
+      status: 'processing',
+      pendingMessageId: userMsgId
+    })
+  } catch (_) {}
 
   // 取历史（含刚写的 user message 之前的记录）
   const history = await getHistoryForBot(OPENID)
@@ -493,6 +503,13 @@ async function handleSend(OPENID, data) {
     if (!finalContent) throw new Error('AGENT_EMPTY_RESPONSE')
   } catch (e) {
     console.error('[qingyue-agent] ACP failed:', e && e.message, e && e.stack)
+    // 失败：写 failed 状态（前端 syncSessions 时显示）
+    try {
+      await bumpSession(OPENID, '暂时无法回复，请稍后重试。', {
+        status: 'failed',
+        pendingMessageId: ''
+      })
+    } catch (_) {}
     throw e
   }
 
@@ -509,8 +526,8 @@ async function handleSend(OPENID, data) {
     status: 'success', createdAt: now, updatedAt: now
   })
 
-  // 更新会话
-  try { await bumpSession(OPENID, finalContent) } catch (_) {}
+  // 更新会话：done 状态（unread 由前端 promise 回调判断是否累加）
+  try { await bumpSession(OPENID, finalContent, { status: 'done', pendingMessageId: '' }) } catch (_) {}
 
   return {
     code: 0, message: 'ok',
@@ -549,12 +566,73 @@ async function handleClearSession(OPENID) {
         data: {
           lastMessage: '',
           lastTime: db.serverDate(),
-          updatedAt: db.serverDate()
+          updatedAt: db.serverDate(),
+          status: 'done',
+          pendingMessageId: '',
+          unreadCount: 0
         }
       })
     }
   } catch (e) {}
 
+  return { code: 0, message: 'ok' }
+}
+
+// 拉取比 since 更新的云端消息（用于 onShow 同步）
+async function handleSyncMessages(OPENID, data) {
+  const { since = 0 } = data
+  try {
+    const r = await db.collection('chat_messages')
+      .where({
+        _openid: OPENID,
+        figureId: FIGURE_ID,
+        createdAt: _.gt(since)
+      })
+      .orderBy('createdAt', 'asc')
+      .limit(50)
+      .get()
+    return { code: 0, message: 'ok', data: r.data || [] }
+  } catch (e) {
+    return { code: 0, message: 'ok(fallback)', data: [] }
+  }
+}
+
+// 拉取青月会话状态（用于列表页 onShow 同步 processing/failed/unread）
+async function handleSyncSessions(OPENID) {
+  try {
+    const r = await db.collection('chat_sessions')
+      .where({ _openid: OPENID, figureId: FIGURE_ID })
+      .limit(1)
+      .get()
+    return { code: 0, message: 'ok', data: r.data[0] || null }
+  } catch (e) {
+    return { code: 0, message: 'ok(fallback)', data: null }
+  }
+}
+
+// 标记已读（清 unreadCount）
+async function handleMarkRead(OPENID) {
+  try {
+    const r = await db.collection('chat_sessions').where({ _openid: OPENID, figureId: FIGURE_ID }).limit(1).get()
+    if (r.data.length && r.data[0].unreadCount) {
+      await db.collection('chat_sessions').doc(r.data[0]._id).update({
+        data: { unreadCount: 0, updatedAt: db.serverDate() }
+      })
+    }
+  } catch (e) {}
+  return { code: 0, message: 'ok' }
+}
+
+// 累加未读（前端 promise 完成时，若用户不在房间页则调用）
+async function handleMarkUnread(OPENID) {
+  try {
+    const r = await db.collection('chat_sessions').where({ _openid: OPENID, figureId: FIGURE_ID }).limit(1).get()
+    if (r.data.length) {
+      await db.collection('chat_sessions').doc(r.data[0]._id).update({
+        data: { unreadCount: _.inc(1), updatedAt: db.serverDate() }
+      })
+    }
+  } catch (e) {}
   return { code: 0, message: 'ok' }
 }
 
@@ -569,6 +647,10 @@ exports.main = async (event, context) => {
       case 'webSearch': return { code: 0, message: 'ok', data: await webSearch(rest.query || rest.text || '') }
       case 'history': return await handleHistory(OPENID, rest)
       case 'clearSession': return await handleClearSession(OPENID)
+      case 'syncMessages': return await handleSyncMessages(OPENID, rest)
+      case 'syncSessions': return await handleSyncSessions(OPENID)
+      case 'markRead': return await handleMarkRead(OPENID)
+      case 'markUnread': return await handleMarkUnread(OPENID)
       default: return { code: -1, message: '未知 qingyue-agent action: ' + action }
     }
   } catch (err) {

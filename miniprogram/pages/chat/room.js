@@ -24,7 +24,8 @@ Page({
     aiTyping: false,
     chatStatus: 0,
     showTools: false,
-    manualScroll: false
+    manualScroll: false,
+    scrollAnimated: false
   },
 
   onLoad(options) {
@@ -63,6 +64,10 @@ Page({
     if (!this.data.isSystem && !loginGuard.checkLogin(this)) return
     const app = getApp()
     app.setCurrentTab(this, 0)
+    // P1：标记当前页面活跃（青月异步完成时判断是否累加 unread）
+    if (this.data.isSystem) {
+      app.setActivePage('chat/room', this.data.figureId)
+    }
     const userInfo = this.getUserInfo()
     this.setData({
       userName: userInfo.nickName || ''
@@ -70,6 +75,67 @@ Page({
     this.loadUserAvatar(userInfo)
     // 进入房间清除未读
     chatSession.clearUnread(this.data.figureId)
+    // P1：青月异步消息同步
+    if (this.data.isSystem) {
+      this.syncQingyueState()
+    }
+  },
+
+  onUnload() {
+    // P1：离开房间取消活跃标记
+    if (this.data.isSystem) {
+      const app = getApp()
+      app.clearActivePage('chat/room', this.data.figureId)
+    }
+  },
+
+  // P1：青月异步消息同步
+  // 1. 若有进行中的 promise，恢复 typing 标题
+  // 2. 拉取云端最近 50 条消息，与本地去重合并
+  // 3. 调 markRead 清云端 unread
+  async syncQingyueState() {
+    const app = getApp()
+    const figureId = this.data.figureId
+
+    // 恢复 typing 状态
+    const pendingPromise = app.getAgentPromise(figureId)
+    if (pendingPromise) {
+      this.setChatProcessing(true)
+    }
+
+    // 拉取云端最近 50 条消息，与本地去重合并（不用 since 时间过滤，避免时间不一致漏消息）
+    try {
+      const cloudMsgs = await requestCloud('qingyue-agent', 'history', { limit: 50 }, { throwError: false })
+      if (Array.isArray(cloudMsgs) && cloudMsgs.length) {
+        const localMsgs = chatSession.getMessages(figureId)
+        const localIds = new Set(localMsgs.map(m => m._id))
+        const toAdd = cloudMsgs
+          .filter(m => !localIds.has(m._id))
+          .map(m => ({
+            _id: m._id,
+            role: m.role === 'assistant' ? 'figure' : m.role,
+            figureId: m.figureId,
+            content: m.content,
+            createdAt: m.createdAt ? new Date(m.createdAt).getTime() : Date.now()
+          }))
+        if (toAdd.length) {
+          const messages = localMsgs.concat(toAdd)
+          chatSession.saveMessages(figureId, messages)
+          this.setData({ messages })
+          this.scrollToBottom(true)
+          // 最后一条是 AI 回复时，同步本地 session 状态
+          const last = toAdd[toAdd.length - 1]
+          if (last.role === 'figure') {
+            chatSession.markDone(figureId, last.content)
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[room] syncMessages failed:', e && e.message)
+    }
+
+    // 清云端 unread
+    requestCloud('qingyue-agent', 'markRead', {}, { throwError: false }).catch(() => {})
   },
 
   async loadUserAvatar(userInfo) {
@@ -107,7 +173,7 @@ Page({
     const localMessages = chatSession.getMessages(this.data.figureId)
     if (localMessages.length || this.data.isSystem) {
       this.setData({ messages: localMessages })
-      this.scrollToBottom()
+      this.scrollToBottom(true)
       return
     }
 
@@ -126,15 +192,24 @@ Page({
     } else {
       this.setData({ messages: [] })
     }
-    this.scrollToBottom()
+    this.scrollToBottom(true)
   },
 
-  scrollToBottom() {
+  // instant=true：瞬时定位（初次加载/同步历史），无动画无滚动效果
+  // instant=false：带动画滚动（发新消息）
+  scrollToBottom(instant) {
     const messages = this.data.messages
     if (!messages.length) return
-    setTimeout(() => {
-      this.setData({ scrollTo: 'msg-' + messages[messages.length - 1]._id })
-    }, 50)
+    const target = 'msg-' + messages[messages.length - 1]._id
+    if (instant) {
+      // 先关动画，确保 DOM 渲染后再定位，避免可见滚动
+      this.setData({ scrollAnimated: false, scrollTo: '' })
+      wx.nextTick(() => {
+        this.setData({ scrollTo: target })
+      })
+    } else {
+      this.setData({ scrollAnimated: true, scrollTo: target })
+    }
   },
 
   bindKeyInput(e) {
@@ -221,34 +296,75 @@ Page({
     this.persistMessages(messages)
     this.bumpSession(text, now)
 
+    if (this.data.isSystem) {
+      // P1：青月走异步消息，不阻塞 UI；用户可离开房间，完成后红点提示
+      this.sendQingyueAsync(text, userMsg._id)
+      return
+    }
+
     try {
-      let aiContent
-      if (this.data.isSystem) {
-        // 青月走 qingyue-agent 代理云函数（服务端管理 agentSessionId + ACP 调用 + SSE 解析 + 落库）
-        const data = await requestCloud('qingyue-agent', 'send', { text }, { throwError: true })
-        aiContent = data && data.aiMsg && data.aiMsg.content
-        if (!aiContent) throw new Error('AGENT_EMPTY_RESPONSE')
-      } else {
-        await sleep(300)
-        const data = await requestCloud('chat', 'send', {
-          figureId: this.data.figureId,
-          figureName: this.data.figureName,
-          figureTitle: this.data.figureTitle,
-          content: text,
-          userInput: text,
-          history: this.data.messages
-            .filter(message => message.status !== 'failed')
-            .slice(-AI_CONFIG.maxHistoryPairs * 2)
-        }, { throwError: true })
-        aiContent = data && data.aiMsg && data.aiMsg.content
-        if (!aiContent) throw new Error('AI_EMPTY_RESPONSE')
-      }
+      await sleep(300)
+      const data = await requestCloud('chat', 'send', {
+        figureId: this.data.figureId,
+        figureName: this.data.figureName,
+        figureTitle: this.data.figureTitle,
+        content: text,
+        userInput: text,
+        history: this.data.messages
+          .filter(message => message.status !== 'failed')
+          .slice(-AI_CONFIG.maxHistoryPairs * 2)
+      }, { throwError: true })
+      const aiContent = data && data.aiMsg && data.aiMsg.content
+      if (!aiContent) throw new Error('AI_EMPTY_RESPONSE')
       this.addAiMessage(aiContent)
     } catch (e) {
       console.warn('[chat] send failed:', this.formatError(e))
       // 所有角色报错不展示重试 UI，发一个😊表情
       this.addAiMessage('😊')
     }
+  },
+
+  // P1：青月异步发送（不 await，存 app.agentPromises）
+  sendQingyueAsync(text, localMessageId) {
+    const app = getApp()
+    const figureId = this.data.figureId
+
+    // 本地 session 标记 processing
+    chatSession.markProcessing(figureId, localMessageId)
+
+    const promise = requestCloud('qingyue-agent', 'send', {
+      text,
+      localMessageId
+    }, { throwError: true, timeout: 60000 })
+
+    app.setAgentPromise(figureId, promise)
+
+    promise
+      .then(data => {
+        const aiContent = data && data.aiMsg && data.aiMsg.content
+        if (!aiContent) throw new Error('AGENT_EMPTY_RESPONSE')
+        // 本地 session 标记 done
+        chatSession.markDone(figureId, aiContent)
+        // 用户还在房间页 → 直接追加 AI 消息
+        // 用户已离开 → 累加未读（本地 + 云端）
+        if (app.isPageActive('chat/room', figureId)) {
+          this.addAiMessage(aiContent)
+        } else {
+          chatSession.incUnread(figureId)
+          requestCloud('qingyue-agent', 'markUnread', {}, { throwError: false }).catch(() => {})
+        }
+      })
+      .catch(e => {
+        console.warn('[chat] qingyue async failed:', this.formatError(e))
+        // 本地 session 标记 failed
+        chatSession.markFailed(figureId)
+        if (app.isPageActive('chat/room', figureId)) {
+          this.addAiMessage('😊')
+        } else {
+          chatSession.incUnread(figureId)
+          requestCloud('qingyue-agent', 'markUnread', {}, { throwError: false }).catch(() => {})
+        }
+      })
   },
 
   formatError(e) {

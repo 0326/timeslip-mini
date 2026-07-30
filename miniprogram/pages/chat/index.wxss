@@ -177,6 +177,30 @@ page {
   box-sizing: border-box;
 }
 
+/* P1：青月异步消息 processing 状态指示器 */
+.typing-dot {
+  position: absolute;
+  bottom: -4rpx;
+  right: -4rpx;
+  width: 24rpx;
+  height: 24rpx;
+  border-radius: 50%;
+  background: #07c160;
+  border: 4rpx solid #ffffff;
+  box-sizing: border-box;
+  z-index: 10;
+  animation: typing-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes typing-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+.preview-typing {
+  color: #07c160;
+}
+
 .session-info {
   flex: 1;
   min-width: 0;

@@ -2,6 +2,7 @@ const { formatChatTime } = require('../../utils/date')
 const chatSession = require('../../utils/chatSession')
 const { QINGYUE } = require('../../utils/constants')
 const { storage } = require('../../utils/storage')
+const { requestCloud } = require('../../utils/cloudRequest')
 const loginGuard = require('../../utils/loginGuard')
 
 const FIGURES_CACHE_KEY = 'figures_star5_v4'
@@ -25,6 +26,44 @@ Page({
     const app = getApp()
     app.setCurrentTab(this, 0)
     this.refreshLoginState()
+    // P1：青月异步消息同步（处理用户离开房间后 Agent 完成场景）
+    this.syncQingyueSession()
+    // P1：监听进行中的青月 promise，完成时实时刷新列表（无需切页面再切回）
+    this.watchQingyuePromise()
+  },
+
+  // P1：监听进行中的青月 promise，完成时刷新列表
+  // Promise 支持多个 then，room.js 的 then 和这里的 then 都会执行
+  watchQingyuePromise() {
+    const app = getApp()
+    const promise = app.getAgentPromise(QINGYUE.figureId)
+    if (!promise) return
+    // 避免重复挂载
+    if (this._qingyueWatched === promise) return
+    this._qingyueWatched = promise
+    promise
+      .then(() => {
+        this._qingyueWatched = null
+        this.loadSessions()
+      })
+      .catch(() => {
+        this._qingyueWatched = null
+        this.loadSessions()
+      })
+  },
+
+  // P1：同步云端青月会话状态到本地（processing/failed/unread/lastMessage）
+  async syncQingyueSession() {
+    try {
+      const cloud = await requestCloud('qingyue-agent', 'syncSessions', {}, { throwError: false })
+      if (cloud) {
+        chatSession.applyCloudSession(QINGYUE.figureId, cloud)
+        // 本地列表立即刷新
+        this.loadSessions()
+      }
+    } catch (e) {
+      // 静默失败，本地列表照常显示
+    }
   },
 
   onPullDownRefresh() {
@@ -86,6 +125,10 @@ Page({
         lastMsg = lastMsg.split('\n')[0]
         if (lastMsg.length > 60) {
           lastMsg = lastMsg.slice(0, 60) + '...'
+        }
+        // P1：processing 状态显示"对方正在输入..."
+        if (s.status === 'processing') {
+          lastMsg = '对方正在输入...'
         }
         return {
           ...s,

@@ -18,7 +18,10 @@ App({
       themeName: '古纸原风',
       notifyEnabled: true,
       vibrationEnabled: true
-    }
+    },
+    // P1：青月异步消息跟踪
+    agentPromises: {},   // key: figureId → 进行中的 send promise
+    activePages: {}      // key: "chat/room:<figureId>" → true
   },
 
   tabList: [
@@ -149,5 +152,33 @@ App({
   setCurrentTab(pageInst, idx) {
     this.globalData.currentTab = idx
     setTabBar(pageInst, idx)
+  },
+
+  // P1：青月异步消息页面跟踪
+  setActivePage(page, figureId) {
+    this.globalData.activePages[`${page}:${figureId}`] = true
+  },
+
+  clearActivePage(page, figureId) {
+    delete this.globalData.activePages[`${page}:${figureId}`]
+  },
+
+  isPageActive(page, figureId) {
+    return !!this.globalData.activePages[`${page}:${figureId}`]
+  },
+
+  getAgentPromise(figureId) {
+    return this.globalData.agentPromises[figureId] || null
+  },
+
+  setAgentPromise(figureId, promise) {
+    this.globalData.agentPromises[figureId] = promise
+    if (promise && typeof promise.finally === 'function') {
+      promise.finally(() => {
+        if (this.globalData.agentPromises[figureId] === promise) {
+          delete this.globalData.agentPromises[figureId]
+        }
+      })
+    }
   }
 })

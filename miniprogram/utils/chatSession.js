@@ -97,6 +97,81 @@ function clearUnread(figureId) {
   }
 }
 
+// P1：累加未读（青月异步完成时，用户不在房间页则调用）
+function incUnread(figureId) {
+  const list = storage.get(SESSIONS_KEY) || []
+  const idx = list.findIndex(s => s.figureId === figureId)
+  if (idx >= 0) {
+    list[idx].unreadCount = (list[idx].unreadCount || 0) + 1
+    saveSessions(list)
+  }
+}
+
+// P1：青月异步消息本地状态同步
+function markProcessing(figureId, pendingMsg) {
+  const list = storage.get(SESSIONS_KEY) || []
+  const idx = list.findIndex(s => s.figureId === figureId)
+  if (idx >= 0) {
+    list[idx].status = 'processing'
+    list[idx].pendingMessageId = pendingMsg || ''
+    list[idx].lastMessage = pendingMsg ? '对方正在输入...' : list[idx].lastMessage
+    list[idx].lastTime = Date.now()
+    saveSessions(list)
+  }
+}
+
+function markDone(figureId, aiContent) {
+  const list = storage.get(SESSIONS_KEY) || []
+  const idx = list.findIndex(s => s.figureId === figureId)
+  if (idx >= 0) {
+    list[idx].status = 'done'
+    list[idx].pendingMessageId = ''
+    list[idx].lastMessage = aiContent
+    list[idx].lastTime = Date.now()
+    saveSessions(list)
+  }
+}
+
+function markFailed(figureId) {
+  const list = storage.get(SESSIONS_KEY) || []
+  const idx = list.findIndex(s => s.figureId === figureId)
+  if (idx >= 0) {
+    list[idx].status = 'failed'
+    list[idx].pendingMessageId = ''
+    list[idx].lastMessage = '暂时无法回复，请稍后重试。'
+    list[idx].lastTime = Date.now()
+    saveSessions(list)
+  }
+}
+
+// 获取本地某会话最后一条消息时间（用于 syncMessages 的 since）
+function getLocalLastTime(figureId) {
+  const msgs = getMessages(figureId)
+  if (!msgs.length) return 0
+  return msgs[msgs.length - 1].createdAt || 0
+}
+
+// 用云端 session 状态更新本地（同步 processing/failed/unread/lastMessage）
+function applyCloudSession(figureId, cloud) {
+  if (!cloud) return
+  const list = storage.get(SESSIONS_KEY) || []
+  const idx = list.findIndex(s => s.figureId === figureId)
+  if (idx < 0) return
+  if (cloud.status) list[idx].status = cloud.status
+  if (cloud.pendingMessageId !== undefined) list[idx].pendingMessageId = cloud.pendingMessageId
+  if (cloud.unreadCount !== undefined) list[idx].unreadCount = cloud.unreadCount || 0
+  // processing 时不覆盖 lastMessage（本地已写"对方正在输入..."）
+  if (cloud.status === 'done' && cloud.lastMessage) {
+    list[idx].lastMessage = cloud.lastMessage
+  }
+  // 时间统一转为毫秒数字，避免 Date 对象/字符串与数字混排导致排序错乱
+  if (cloud.lastTime) {
+    const t = new Date(cloud.lastTime).getTime()
+    if (!isNaN(t)) list[idx].lastTime = t
+  }
+  saveSessions(list)
+}
+
 // 删除会话及其消息
 function removeSession(figureId) {
   const list = storage.get(SESSIONS_KEY) || []
@@ -170,10 +245,16 @@ module.exports = {
   upsertSession,
   bumpSession,
   clearUnread,
+  incUnread,
   removeSession,
   getMessages,
   saveMessages,
   appendMessage,
   clearMessages,
-  initQingyueSession
+  initQingyueSession,
+  markProcessing,
+  markDone,
+  markFailed,
+  getLocalLastTime,
+  applyCloudSession
 }
