@@ -36,6 +36,7 @@ exports.main = async (event, context) => {
       case 'adminVideoList': return await adminVideoList(OPENID, data)
       case 'adminCommentAdd': return await adminCommentAdd(OPENID, data)
       case 'adminCommentRemove': return await adminCommentRemove(OPENID, data)
+      case 'debugInfo': return await debugInfo()
 
       default: return { code: -1, message: '未知 action: ' + action, data: null }
     }
@@ -564,4 +565,50 @@ async function adminCommentRemove(OPENID, data) {
 
   await db.collection('video_comments').doc(commentId).remove()
   return { code: 0, message: 'ok', data: { removed: true } }
+}
+
+// ==================== 诊断接口 ====================
+async function debugInfo() {
+  try {
+    const videoCount = await db.collection('videos').count()
+    const publishedCount = await db.collection('videos').where({ status: 'published' }).count()
+    const channelCount = await db.collection('video_channels').count()
+
+    // 统计 videoUrl 状态
+    const allVideos = await db.collection('videos').limit(100).get()
+    let emptyUrl = 0, httpUrl = 0, cloudUrl = 0
+    const samples = []
+
+    for (const v of allVideos.data) {
+      if (!v.videoUrl) emptyUrl++
+      else if (v.videoUrl.startsWith('cloud://')) cloudUrl++
+      else if (v.videoUrl.startsWith('http')) httpUrl++
+
+      if (samples.length < 3) {
+        samples.push({
+          _id: v._id,
+          title: v.title,
+          status: v.status,
+          videoUrl: v.videoUrl ? v.videoUrl.substring(0, 60) : '(空)',
+          coverUrl: v.coverUrl ? v.coverUrl.substring(0, 60) : '(空)',
+          figureId: v.figureId,
+          channelId: v.channelId ? v.channelId.substring(0, 20) : '(空)'
+        })
+      }
+    }
+
+    return {
+      code: 0,
+      message: 'ok',
+      data: {
+        totalVideos: videoCount.total,
+        publishedVideos: publishedCount.total,
+        totalChannels: channelCount.total,
+        urlStats: { emptyUrl, httpUrl, cloudUrl },
+        samples
+      }
+    }
+  } catch (e) {
+    return { code: -1, message: e.message, data: null }
+  }
 }

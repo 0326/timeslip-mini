@@ -48,6 +48,9 @@
           object-fit="cover"
           enable-progress-gesture="{{false}}"
           show-fullscreen-btn="{{false}}"
+          binderror="onVideoError"
+          data-id="{{video._id}}"
+          data-idx="{{idx}}"
         />
       </block>
       <block wx:else>

@@ -121,6 +121,16 @@ Page({
       if (this._targetVideoId && reset) {
         this._locateTargetVideo(newList)
       }
+
+      // 首次加载后显式播放第一个视频（autoplay 在 swiper 内不可靠）
+      if (reset && newList.length > 0) {
+        setTimeout(() => {
+          try {
+            const ctx = wx.createVideoContext('video-0')
+            if (ctx) ctx.play()
+          } catch (_) {}
+        }, 300)
+      }
     } catch (e) {
       console.warn('loadFeed error:', e)
       this.setData({ loading: false, refreshing: false })
@@ -294,5 +304,10 @@ Page({
     }
   },
 
-  stopPropagation() {}
+  stopPropagation() {},
+
+  onVideoError(e) {
+    const idx = e.currentTarget.dataset.idx
+    console.error('视频播放错误 idx=' + idx, e.detail)
+  }
 })

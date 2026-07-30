@@ -254,6 +254,7 @@ exports.main = async (event, context) => {
       case 'seedVideoComments': return await seedVideoComments()
       case 'fixVideoUrls': return await fixVideoUrls()
       case 'seedAndTransfer': return await seedAndTransfer(data)
+      case 'fixAndTransfer': return await fixAndTransfer(data)
       default: return { code: -1, message: '未知 action: ' + action }
     }
   } catch (e) {
@@ -591,13 +592,50 @@ async function seedAndTransfer(data) {
     log.push('评论失败: ' + e.message)
   }
 
-  // 4. 调用 transferVideos 转存到云存储
+  // 4. 调用 transferVideos 分批转存到云存储
   try {
-    const tRes = await cloud.callFunction({ name: 'transferVideos', data: { action: 'run' } })
+    const tRes = await cloud.callFunction({ name: 'transferVideos', data: { action: 'transferBatch', batchSize: 3 } })
     const tData = tRes.result || {}
     log.push('转存: ' + (tData.message || JSON.stringify(tData)))
+    if (tData.data && tData.data.remaining > 0) {
+      log.push(`仍有 ${tData.data.remaining} 条待转存，请再次调用 transferVideos`)
+    }
   } catch (e) {
     log.push('转存失败（需手动部署 transferVideos 云函数后重试）: ' + e.message)
+  }
+
+  return {
+    code: 0,
+    message: log.join('；'),
+    data: { log }
+  }
+}
+
+// ============================================================
+// 修复 + 转存：先修复空URL（回填外部URL），再转存到云存储
+// 适用于：已有视频数据但 videoUrl 为空或无效的场景
+// ============================================================
+async function fixAndTransfer(data) {
+  const log = []
+
+  // 1. 修复空 videoUrl
+  try {
+    const fRes = await fixVideoUrls()
+    log.push('修复URL: ' + fRes.message)
+  } catch (e) {
+    log.push('修复URL失败: ' + e.message)
+  }
+
+  // 2. 分批转存到云存储
+  try {
+    const tRes = await cloud.callFunction({ name: 'transferVideos', data: { action: 'transferBatch', batchSize: 3 } })
+    const tData = tRes.result || {}
+    log.push('转存: ' + (tData.message || JSON.stringify(tData)))
+    if (tData.data && tData.data.remaining > 0) {
+      log.push(`仍有 ${tData.data.remaining} 条待转存，请再次调用 transferVideos`)
+    }
+  } catch (e) {
+    log.push('转存失败（需部署 transferVideos 云函数）: ' + e.message)
   }
 
   return {

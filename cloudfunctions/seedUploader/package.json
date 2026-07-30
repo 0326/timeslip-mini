@@ -1,0 +1,9 @@
+{
+  "name": "seedUploader",
+  "version": "1.0.0",
+  "description": "批量上传本地种子视频到云存储",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}
