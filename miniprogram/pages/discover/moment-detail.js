@@ -30,7 +30,12 @@ Page({
   },
 
   onLoad(options) {
-    const id = options.id || 'm2'
+    const id = options.id
+    if (!id) {
+      wx.showToast({ title: '动态不存在', icon: 'none' })
+      setTimeout(() => wx.navigateBack({ fail: () => wx.reLaunch({ url: '/pages/discover/index' }) }), 800)
+      return
+    }
     this.setData({ id })
     this.loadDetail(id)
   },
@@ -115,7 +120,7 @@ Page({
       if (i >= 0) preview.splice(i, 1)
     }
 
-    const likeText = nextCount > 999 ? (nextCount / 1000).toFixed(1) + 'k' : nextCount
+    const likeText = nextCount > 999 ? (nextCount / 1000).toFixed(1) + 'k' : String(nextCount)
     this.setData({
       likePending: true,
       likeSnapshot: original,
@@ -126,7 +131,7 @@ Page({
           ...original,
           liked: nextLiked,
           likeCount: nextCount,
-          likePreview: preview.slice(0, 3)
+          likePreview: preview.slice(0, 10)
         }
       }
     })
@@ -139,7 +144,7 @@ Page({
     }
     if (!result) {
       const snap = this.data.likeSnapshot || original
-      const rollbackText = snap.likeCount > 999 ? (snap.likeCount / 1000).toFixed(1) + 'k' : snap.likeCount
+      const rollbackText = snap.likeCount > 999 ? (snap.likeCount / 1000).toFixed(1) + 'k' : String(snap.likeCount)
       this.setData({
         likePending: false,
         likeSnapshot: null,
@@ -156,7 +161,7 @@ Page({
     const finalLiked = typeof result.liked === 'boolean' ? result.liked : nextLiked
     const finalCount = typeof result.likeCount === 'number' ? result.likeCount : nextCount
     const finalPreview = Array.isArray(result.likePreview) ? result.likePreview : preview
-    const finalText = finalCount > 999 ? (finalCount / 1000).toFixed(1) + 'k' : finalCount
+    const finalText = finalCount > 999 ? (finalCount / 1000).toFixed(1) + 'k' : String(finalCount)
     this.setData({
       likePending: false,
       likeSnapshot: null,
@@ -167,8 +172,18 @@ Page({
           ...(this.data.moment.interaction || {}),
           liked: finalLiked,
           likeCount: finalCount,
-          likePreview: finalPreview.slice(0, 3)
+          likePreview: finalPreview.slice(0, 10)
         }
+      }
+    })
+    // 通知列表页同步
+    getApp().emitMomentUpdate({
+      momentId: this.data.id,
+      type: 'like',
+      interaction: {
+        liked: finalLiked,
+        likeCount: finalCount,
+        likePreview: finalPreview.slice(0, 10)
       }
     })
   },
@@ -310,6 +325,12 @@ Page({
       commentInput: ''
     })
     wx.showToast({ title: '已发布', icon: 'success' })
+    // 通知列表页同步评论数
+    getApp().emitMomentUpdate({
+      momentId: this.data.id,
+      type: 'comment',
+      interaction: { commentCount: finalCount }
+    })
   },
 
   async onDeleteComment(e) {
@@ -371,6 +392,12 @@ Page({
       deletingCommentIds: cleanedDel
     })
     wx.showToast({ title: '已删除', icon: 'success' })
+    // 通知列表页同步评论数
+    getApp().emitMomentUpdate({
+      momentId: this.data.id,
+      type: 'commentRemove',
+      interaction: { commentCount: finalCount }
+    })
   },
 
   onPreviewImage(e) {

@@ -28,6 +28,7 @@
         <view class="cover-name">{{userInfo.nickName || '穿越者'}}</view>
         <!-- 朝代下拉选择器 - 纯文字+箭头 -->
         <picker
+          wx:if="{{dynastyFilterEnabled}}"
           class="dynasty-picker-wrap"
           mode="selector"
           range="{{dynastyNames}}"

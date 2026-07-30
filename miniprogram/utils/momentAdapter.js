@@ -81,7 +81,7 @@ function computeHistoricalText(historical) {
   return '📍 ' + parts.join(' · ')
 }
 
-function buildLikePreview(likes, limit = 3) {
+function buildLikePreview(likes, limit = 10) {
   if (!likes || !likes.length) return []
   return likes.slice(0, limit).map(l => ({
     id: l.openid || l.id || '',

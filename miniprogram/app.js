@@ -59,6 +59,7 @@ App({
   pointsListeners: [],
   userListeners: [],
   settingsListeners: [],
+  momentListeners: [],
 
   restoreSettings() {
     try {
@@ -138,6 +139,21 @@ App({
     }
     this.userListeners.forEach(cb => {
       try { cb(this.globalData.userInfo) } catch (e) {}
+    })
+  },
+
+  // 朋友圈动态变更事件：详情页点赞/评论/删除评论后通知列表页同步
+  // payload: { momentId, type: 'like'|'comment'|'commentRemove', interaction }
+  subscribeMoment(cb) {
+    if (typeof cb === 'function') this.momentListeners.push(cb)
+    return () => {
+      this.momentListeners = this.momentListeners.filter(l => l !== cb)
+    }
+  },
+
+  emitMomentUpdate(payload) {
+    this.momentListeners.forEach(cb => {
+      try { cb(payload) } catch (e) {}
     })
   },
 

@@ -14,6 +14,7 @@ Page({
   data: {
     dynastyFilters: DYNASTY_FILTERS,
     dynastyNames: DYNASTY_FILTERS.map(d => d.name),
+    dynastyFilterEnabled: false,
     selectedDynasty: 'all',
     selectedDynastyName: '全部',
     selectedDynastyIndex: 0,
@@ -75,6 +76,38 @@ Page({
       }
     })
     this.loadMoments(true)
+    // 订阅动态变更事件（来自详情页的点赞/评论/删除评论）
+    this._unsubMoment = app.subscribeMoment(payload => {
+      this.applyMomentUpdate(payload)
+    })
+  },
+
+  onUnload() {
+    if (this._unsubMoment) {
+      this._unsubMoment()
+      this._unsubMoment = null
+    }
+  },
+
+  // 详情页操作后局部同步对应动态的 interaction 状态
+  applyMomentUpdate(payload) {
+    if (!payload || !payload.momentId) return
+    const idx = this.data.moments.findIndex(m => m._id === payload.momentId)
+    if (idx < 0) return
+    const moment = this.data.moments[idx]
+    const interaction = payload.interaction || {}
+    const nextMoments = this.data.moments.slice()
+    nextMoments[idx] = {
+      ...moment,
+      likeText: typeof interaction.likeCount === 'number'
+        ? (interaction.likeCount > 999 ? (interaction.likeCount / 1000).toFixed(1) + 'k' : String(interaction.likeCount))
+        : moment.likeText,
+      interaction: {
+        ...moment.interaction,
+        ...interaction
+      }
+    }
+    this.setData({ moments: nextMoments })
   },
 
   onShow() {
@@ -259,12 +292,12 @@ Page({
     const updatedMoments = this.data.moments.slice()
     updatedMoments[idx] = {
       ...moment,
-      likeText: nextCount > 999 ? (nextCount / 1000).toFixed(1) + 'k' : nextCount,
+      likeText: nextCount > 999 ? (nextCount / 1000).toFixed(1) + 'k' : String(nextCount),
       interaction: {
         ...originalInteraction,
         liked: nextLiked,
         likeCount: nextCount,
-        likePreview: previewNames.slice(0, 3)
+        likePreview: previewNames.slice(0, 10)
       }
     }
     this.setData({ moments: updatedMoments, pendingLikeIds, actionMenuId: '' })
@@ -286,7 +319,7 @@ Page({
         interaction: originalInteraction,
         likeText: originalInteraction.likeCount > 999
           ? (originalInteraction.likeCount / 1000).toFixed(1) + 'k'
-          : originalInteraction.likeCount
+          : String(originalInteraction.likeCount)
       }
       this.setData({ moments: rollbackMoments, pendingLikeIds: cleanedPending })
       wx.showToast({ title: '操作未成功', icon: 'none' })
@@ -299,12 +332,12 @@ Page({
     const finalPreview = Array.isArray(result.likePreview) ? result.likePreview : previewNames
     finalMoments[idx] = {
       ...finalMoments[idx],
-      likeText: finalCount > 999 ? (finalCount / 1000).toFixed(1) + 'k' : finalCount,
+      likeText: finalCount > 999 ? (finalCount / 1000).toFixed(1) + 'k' : String(finalCount),
       interaction: {
         ...(finalMoments[idx].interaction || {}),
         liked: finalLiked,
         likeCount: finalCount,
-        likePreview: finalPreview.slice(0, 3)
+        likePreview: finalPreview.slice(0, 10)
       }
     }
     this.setData({ moments: finalMoments, pendingLikeIds: cleanedPending })

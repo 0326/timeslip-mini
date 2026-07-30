@@ -62,8 +62,6 @@
 
 /* 朝代选择器 - 纯文字+下拉箭头，无标签框 */
 .dynasty-picker-wrap {
-  /* display: inline-block; */
-  visibility: hidden;
   position: relative;
   z-index: 100;
 }
