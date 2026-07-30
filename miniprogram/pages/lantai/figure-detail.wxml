@@ -7,9 +7,48 @@
   fixed
 ></custom-nav-bar>
 
-<view wx:if="{{loading}}" class="loading-wrap">
-  <view class="spinner"></view>
-  <text class="loading-text">加载中...</text>
+<view wx:if="{{loading}}" class="fd-skeleton">
+  <view class="sk-hero">
+    <view class="sk-hero-bg"></view>
+    <view class="sk-hero-inner">
+      <view class="sk-avatar"></view>
+      <view class="sk-hero-meta">
+        <view class="sk-name"></view>
+        <view class="sk-tags">
+          <view class="sk-tag"></view>
+          <view class="sk-tag sk-tag-plain"></view>
+        </view>
+        <view class="sk-lifespan"></view>
+      </view>
+    </view>
+  </view>
+
+  <view class="sk-action-bar">
+    <view class="sk-btn"></view>
+    <view class="sk-btn"></view>
+  </view>
+
+  <view class="sk-sub-tabs">
+    <view class="sk-tab"></view>
+    <view class="sk-tab"></view>
+    <view class="sk-tab"></view>
+  </view>
+
+  <view class="sk-tab-body">
+    <view class="sk-card">
+      <view class="sk-card-title"></view>
+      <view class="sk-line w-100"></view>
+      <view class="sk-line w-100"></view>
+      <view class="sk-line w-90 sk-last"></view>
+    </view>
+    <view class="sk-card">
+      <view class="sk-card-title"></view>
+      <view class="sk-rel-row" wx:for="{{[1,2,3]}}" wx:key="*this">
+        <view class="sk-rel-name"></view>
+        <view class="sk-rel-type"></view>
+      </view>
+    </view>
+  </view>
 </view>
 
 <view wx:else class="figure-detail ancient-paper">
@@ -36,11 +75,11 @@
   </view>
 
   <view class="action-bar">
-    <view class="a-btn a-primary {{figure.unlocked ? '' : 'is-disabled'}}" bindtap="startChat">
+    <view class="a-btn a-primary" bindtap="startChat">
       <text class="iconfont a-btn-icon icon-chat"></text>
       <text class="a-btn-text">开始聊天</text>
     </view>
-    <view class="a-btn a-ancient {{figure.unlocked ? '' : 'is-disabled'}}" bindtap="sendLetter">
+    <view class="a-btn a-ancient" bindtap="sendLetter">
       <text class="iconfont a-btn-icon icon-mail"></text>
       <text class="a-btn-text">飞鸽传书</text>
     </view>

@@ -53,8 +53,7 @@ const ACHIEVEMENT_KEYS = {
   FIRST_MEMORIAL: 'first_memorial',
   FIRST_MOMENT_LIKE: 'first_like',
   DNA_COMPLETED: 'dna_completed',
-  CHAT_10: 'chat_10',
-  COLLECT_10_FIGURES: 'collect_10'
+  CHAT_10: 'chat_10'
 }
 
 module.exports = {

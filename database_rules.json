@@ -83,11 +83,6 @@
     ".write": false,
     "_openid": false
   },
-  "user_figures": {
-    ".read": "auth.openid == resource.data._openid",
-    ".write": "auth.openid != null && auth.openid == newData._openid",
-    "_openid": false
-  },
   "user_points": {
     ".read": "auth.openid == resource.data._openid",
     ".write": false,

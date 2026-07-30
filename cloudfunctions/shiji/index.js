@@ -5,18 +5,6 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
-const DEFAULT_UNLOCKED = [
-  'simaqian',
-  'liubang',
-  'liuche',
-  'zhugeliang',
-  'libai',
-  'sushi',
-  'yuefei',
-  'qinshihuang',
-  'xiangyu'
-]
-
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext()
   const { action } = event
@@ -30,8 +18,6 @@ exports.main = async (event, context) => {
       case 'figure-detail':
       case 'figureDetail':
         return await figureDetail(OPENID, data)
-      case 'figure-unlock':
-        return await figureUnlock(OPENID, data)
       case 'book-list':
       case 'books':
         return await bookList(OPENID)
@@ -113,7 +99,7 @@ function normalizeChapter(c, volume) {
   }
 }
 
-function normalizeFigure(f, unlocked) {
+function normalizeFigure(f) {
   const life = formatLife(f)
   return {
     ...f,
@@ -127,8 +113,7 @@ function normalizeFigure(f, unlocked) {
     death: life.death,
     avatar: normalizeAvatar(f.avatar_url),
     tags: f.keyword_tags || [],
-    initial: (f.name || '#').slice(0, 1),
-    unlocked
+    initial: (f.name || '#').slice(0, 1)
   }
 }
 
@@ -154,20 +139,8 @@ function normalizeAvatar(url) {
   return ''
 }
 
-async function unlockedSet(OPENID) {
-  const unlocked = new Set(DEFAULT_UNLOCKED)
-  try {
-    const res = await db.collection('user_figures').where({ _openid: OPENID }).limit(100).get()
-    ;(res.data || []).forEach(item => {
-      if (item.figureId) unlocked.add(item.figureId)
-    })
-  } catch (_) {}
-  return unlocked
-}
-
 async function figureList(OPENID, data) {
-  const { unlockedOnly = false, keyword = '', limit = 200 } = data
-  const unlocked = await unlockedSet(OPENID)
+  const { keyword = '', limit = 200 } = data
   let query = db.collection('figures')
 
   if (keyword) {
@@ -180,8 +153,7 @@ async function figureList(OPENID, data) {
     .limit(Math.min(Number(limit) || 200, 200))
     .get()
 
-  const result = (res.data || []).map(f => normalizeFigure(f, unlocked.has(f.id || f._id)))
-  return ok(unlockedOnly ? result.filter(f => f.unlocked) : result)
+  return ok((res.data || []).map(normalizeFigure))
 }
 
 async function figureDetail(OPENID, data) {
@@ -191,8 +163,7 @@ async function figureDetail(OPENID, data) {
   const res = await db.collection('figures').where({ id: targetId }).limit(1).get()
   if (!res.data || !res.data.length) return fail('人物不存在')
 
-  const unlocked = await unlockedSet(OPENID)
-  const figure = normalizeFigure(res.data[0], unlocked.has(targetId))
+  const figure = normalizeFigure(res.data[0])
   const [relatedBooks, relatedPassages, relations] = await Promise.all([
     figureRelatedBooks(figure),
     figureRelatedPassages(targetId),
@@ -294,19 +265,6 @@ async function figureRelations(figureId) {
   } catch (_) {
     return []
   }
-}
-
-async function figureUnlock(OPENID, data) {
-  const { figureId, cost = 100 } = data
-  if (!figureId) return fail('缺少 figureId')
-
-  const check = await db.collection('user_figures').where({ _openid: OPENID, figureId }).limit(1).get()
-  if (check.data.length) return ok({ already: true })
-
-  await db.collection('user_figures').add({
-    data: { figureId, unlockedAt: db.serverDate(), cost }
-  })
-  return ok({ already: false })
 }
 
 async function bookList() {

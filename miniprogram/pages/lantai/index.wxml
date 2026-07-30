@@ -50,7 +50,7 @@
           wx:for="{{item.items}}"
           wx:for-item="f"
           wx:key="_id"
-          class="contact-item {{!f.unlocked ? 'is-locked' : ''}}"
+          class="contact-item"
           data-id="{{f._id}}"
           bindtap="onFigureTap"
           hover-class="contact-hover"

@@ -19,7 +19,6 @@ const COLLECTIONS = [
   'memorial_answers',
   'memorial_simulations',
   'achievements',
-  'user_figures',
   'user_points',
   'book_favorites',
   'system_config',
@@ -154,8 +153,6 @@ const ACHIEVEMENT_SEED = [
   { _id: 'ach_dna_done', name: '我是谁', desc: '完成古代人格测试', icon: '🧬', rarity: 'common', points: 20 },
   { _id: 'ach_emperor_1', name: '初批奏折', desc: '批阅 1 份奏折', icon: '📜', rarity: 'common', points: 15 },
   { _id: 'ach_emperor_10', name: '明君之道', desc: '批阅 10 份奏折', icon: '👑', rarity: 'epic', points: 120 },
-  { _id: 'ach_unlock_5', name: '广结好友', desc: '解锁 5 位古人', icon: '🧑‍🤝‍🧑', rarity: 'rare', points: 60 },
-  { _id: 'ach_unlock_all', name: '天下谁人不识君', desc: '解锁全部古人', icon: '🏆', rarity: 'legendary', points: 500 },
   { _id: 'ach_read_10', name: '博览群书', desc: '阅读 10 部典籍', icon: '📚', rarity: 'rare', points: 50 }
 ]
 

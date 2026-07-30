@@ -1,6 +1,14 @@
 {
   "envId": "cloud1-d0gunpzup215cfd87",
+  "functionRoot": "cloudfunctions",
   "functions": [
+    {
+      "name": "chat",
+      "timeout": 60,
+      "memorySize": 256,
+      "installDependency": true,
+      "runtime": "Nodejs20.19"
+    },
     {
       "name": "look",
       "timeout": 10,

@@ -27,8 +27,6 @@ const ALL_ACHIEVEMENTS = [
     unlockCondition: '完成第一份奏折决策并查看推演结果', reward: '+20 穿越点' },
   { key: 'memorial_5', icon: '👑', name: '勤政之君', desc: '累计批阅5份奏折', category: 'explore',
     unlockCondition: '共完成5份奏折的批阅', reward: '+80 穿越点' },
-  { key: 'figure_10', icon: '🧑‍🎨', name: '博物君子', desc: '解锁10位历史人物图鉴', category: 'explore',
-    unlockCondition: '人物图鉴中已解锁人物达10位', reward: '+60 穿越点' },
   { key: 'read_book', icon: '📖', name: '博览群书', desc: '第一次开启史书阅读', category: 'explore',
     unlockCondition: '进入兰台史书阅读页并阅读超过3分钟', reward: '+15 穿越点' },
 
@@ -43,7 +41,7 @@ const ALL_ACHIEVEMENTS = [
 const REWARDS = {
   first_chat: 10, first_letter: 10, first_like: 5, dna_done: 20,
   chat_10: 30, chat_50: 80, letter_5: 50, comment_10: 30,
-  first_memorial: 20, memorial_5: 80, figure_10: 60, read_book: 15,
+  first_memorial: 20, memorial_5: 80, read_book: 15,
   all_dynasties: 200, collector: 500, time_master: 1000
 }
 

@@ -145,10 +145,6 @@
   display: none;
 }
 
-.contact-item.is-locked {
-  opacity: 0.6;
-}
-
 .c-avatar {
   width: 88rpx;
   height: 88rpx;

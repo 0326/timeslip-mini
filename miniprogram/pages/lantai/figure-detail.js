@@ -163,10 +163,6 @@ Page({
 
   startChat() {
     const f = this.data.figure || {}
-    if (!f.unlocked) {
-      wx.showToast({ title: '此人物未解锁', icon: 'none' })
-      return
-    }
     const name = f.title ? `${f.name} · ${f.title}` : f.name
     wx.navigateTo({
       url: `/pages/chat/room?figureId=${f._id}&figureName=${encodeURIComponent(name)}`
@@ -175,10 +171,6 @@ Page({
 
   sendLetter() {
     const f = this.data.figure || {}
-    if (!f.unlocked) {
-      wx.showToast({ title: '此人物未解锁', icon: 'none' })
-      return
-    }
     wx.navigateTo({
       url: `/pages/discover/pigeon?figureId=${f._id}&figureName=${encodeURIComponent(f.name)}`
     })

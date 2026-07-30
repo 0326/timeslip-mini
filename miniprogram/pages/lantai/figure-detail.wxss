@@ -3,27 +3,197 @@
   padding-bottom: 40rpx;
 }
 
-.loading-wrap {
-  padding: 200rpx 0;
+/* ===== 骨架屏（精确匹配真实结构尺寸，暖色系 shimmer） ===== */
+.fd-skeleton {
+  min-height: 100vh;
+  background: #faf8f3;
+}
+
+.fd-skeleton .sk-hero,
+.fd-skeleton .sk-action-bar,
+.fd-skeleton .sk-sub-tabs,
+.fd-skeleton .sk-tab-body,
+.fd-skeleton .sk-card,
+.fd-skeleton .sk-line,
+.fd-skeleton .sk-avatar,
+.fd-skeleton .sk-name,
+.fd-skeleton .sk-tag,
+.fd-skeleton .sk-lifespan,
+.fd-skeleton .sk-btn,
+.fd-skeleton .sk-tab,
+.fd-skeleton .sk-card-title,
+.fd-skeleton .sk-rel-name,
+.fd-skeleton .sk-rel-type {
+  background: linear-gradient(
+    90deg,
+    rgba(201, 162, 77, 0.08) 25%,
+    rgba(201, 162, 77, 0.16) 37%,
+    rgba(201, 162, 77, 0.08) 63%
+  );
+  background-size: 400% 100%;
+  animation: fd-skeleton-shine 1.4s ease infinite;
+}
+
+@keyframes fd-skeleton-shine {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+/* hero 区：与 .detail-hero 结构一致 */
+.fd-skeleton .sk-hero {
+  position: relative;
+  padding: 160rpx 32rpx 32rpx;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 30% 10%, rgba(201, 162, 77, 0.18) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(240, 225, 190, 0.6) 0%, rgba(248, 246, 242, 0) 100%);
+}
+
+.fd-skeleton .sk-hero-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+}
+
+.fd-skeleton .sk-hero-inner {
+  position: relative;
+  display: flex;
+  gap: 24rpx;
+  align-items: flex-end;
+}
+
+/* 头像方块：与 .hero-avatar 一致 180×180 + 16rpx 圆角 */
+.fd-skeleton .sk-avatar {
+  width: 180rpx;
+  height: 180rpx;
+  flex-shrink: 0;
+  border-radius: 16rpx;
+  border: 2rpx solid rgba(201, 162, 77, 0.2);
+  box-sizing: border-box;
+}
+
+.fd-skeleton .sk-hero-meta {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: 10rpx;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  gap: 12rpx;
 }
 
-.spinner {
-  width: 60rpx;
-  height: 60rpx;
-  border: 6rpx solid rgba(201, 162, 77, 0.2);
-  border-top-color: var(--ancient-gold);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+/* 名字：与 .h-name 一致 52rpx 高 */
+.fd-skeleton .sk-name {
+  height: 52rpx;
+  width: 50%;
+  border-radius: 8rpx;
+}
+
+.fd-skeleton .sk-tags {
+  display: flex;
+  gap: 12rpx;
+  margin-bottom: 8rpx;
+}
+
+/* 标签：与 .h-tag 圆角胶囊一致 */
+.fd-skeleton .sk-tag {
+  width: 100rpx;
+  height: 36rpx;
+  border-radius: 999rpx;
+}
+
+.fd-skeleton .sk-tag-plain {
+  width: 80rpx;
+}
+
+.fd-skeleton .sk-lifespan {
+  height: 24rpx;
+  width: 140rpx;
+  border-radius: 4rpx;
+}
+
+/* action-bar：与 .action-bar 一致 padding */
+.fd-skeleton .sk-action-bar {
+  display: flex;
+  gap: 16rpx;
+  padding: 0 32rpx 24rpx;
+}
+
+/* 按钮：与 .a-btn 一致 84rpx 高 */
+.fd-skeleton .sk-btn {
+  flex: 1;
+  height: 84rpx;
+  border-radius: 16rpx;
+}
+
+/* sub-tabs：与 .sub-tabs 一致 */
+.fd-skeleton .sk-sub-tabs {
+  display: flex;
+  padding: 0 24rpx 16rpx;
+  gap: 8rpx;
+}
+
+.fd-skeleton .sk-tab {
+  flex: 1;
+  height: 64rpx;
+  border-radius: 8rpx;
+}
+
+/* tab-body：与 .tab-body 一致 padding */
+.fd-skeleton .sk-tab-body {
+  padding: 0 24rpx;
+}
+
+/* 卡片：与 .section-card 一致 */
+.fd-skeleton .sk-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 28rpx;
+  margin-bottom: 20rpx;
+  border: 1rpx solid rgba(201, 162, 77, 0.12);
+  box-shadow: 0 4rpx 16rpx rgba(45, 24, 16, 0.03);
+}
+
+.fd-skeleton .sk-card-title {
+  width: 160rpx;
+  height: 28rpx;
+  border-radius: 4rpx;
+  margin-bottom: 24rpx;
+}
+
+.fd-skeleton .sk-line {
+  height: 28rpx;
+  border-radius: 8rpx;
   margin-bottom: 16rpx;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
 
-.loading-text {
-  font-size: 26rpx;
-  color: var(--wechat-text2);
+.fd-skeleton .sk-line.w-100 { width: 100%; }
+.fd-skeleton .sk-line.w-90 { width: 90%; }
+.fd-skeleton .sk-line.sk-last { height: 16rpx; margin-bottom: 0; }
+
+.fd-skeleton .sk-rel-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f5f5f5;
+}
+
+.fd-skeleton .sk-rel-row:last-child {
+  border-bottom: none;
+}
+
+.fd-skeleton .sk-rel-name {
+  width: 120rpx;
+  height: 28rpx;
+  border-radius: 8rpx;
+}
+
+.fd-skeleton .sk-rel-type {
+  width: 80rpx;
+  height: 24rpx;
+  border-radius: 8rpx;
 }
 
 .detail-hero {
@@ -147,17 +317,6 @@
   font-weight: 600;
   letter-spacing: 2rpx;
   color: #fff !important;
-}
-
-.a-btn.is-disabled {
-  opacity: 0.45;
-  filter: grayscale(0.3);
-  pointer-events: auto;
-}
-
-.a-btn.is-disabled:active {
-  transform: none;
-  opacity: 0.45;
 }
 
 .sub-tabs {

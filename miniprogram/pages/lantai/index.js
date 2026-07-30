@@ -32,8 +32,7 @@ function normalizeFigure(f) {
     // 不用数据库存的 f.initial 字段做首选——历史版本用 localeCompare('zh-Hans-CN') 算，
     // 真机上会退化成 Unicode 码点比较，导致"刘(L)被判定成 J"等错误。
     // 强制用 pinyin.js 的 COMMON_CHAR_MAP 硬编码重新计算，保证真模 100% 一致。
-    initial: (getPinyinInitial(name) || (f.initial && f.initial.toUpperCase()) || '#').toUpperCase(),
-    unlocked: true
+    initial: (getPinyinInitial(name) || (f.initial && f.initial.toUpperCase()) || '#').toUpperCase()
   }
 }
 
@@ -83,7 +82,7 @@ function buildGroups(list) {
 }
 
 // 影响 UI 的关键字段
-const FIGURE_KEY_FIELDS = ['_id', 'figureId', 'name', 'avatar', 'title', 'dynasty', 'initial', 'bio', 'unlocked']
+const FIGURE_KEY_FIELDS = ['_id', 'figureId', 'name', 'avatar', 'title', 'dynasty', 'initial', 'bio']
 const BOOK_KEY_FIELDS = ['_id', 'id', 'title', 'author', 'dynasty', 'chapters', 'desc', 'cover_url']
 
 // O(n) 对比：用 _id 建 Map 索引，逐项字段对比，短路返回，不创建临时对象
@@ -395,14 +394,8 @@ Page({
 
   onFigureTap(e) {
     const id = e.currentTarget.dataset.id
-    const figure = this.data.figures.find(f => f._id === id) || {}
-    // 未解锁 / 未登录 都给提示，但未登录引导去登录
     if (!this.data.isLoggedIn) {
       wx.navigateTo({ url: '/pages/login/index' })
-      return
-    }
-    if (!figure.unlocked) {
-      wx.showToast({ title: '该人物尚未解锁', icon: 'none' })
       return
     }
     wx.navigateTo({
