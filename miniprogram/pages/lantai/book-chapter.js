@@ -212,32 +212,40 @@ Page({
     }, 400)
   },
 
-  async prevChapter() {
+  prevChapter() {
     if (!this.data.hasPrev) return
     this.saveCurrentScrollProgress()
     const newIdx = this.data.chapterIndex - 1
-    const nextChapter = this.data.chapters[newIdx]
-    if (!nextChapter) return
-    wx.redirectTo({
-      url: `/pages/lantai/book-chapter?bookId=${this.data.bookId}`
-        + `&bookTitle=${encodeURIComponent(this.data.bookTitle)}`
-        + `&chapters=${encodeURIComponent(JSON.stringify(this.data.chapters))}`
-        + `&chapterIndex=${newIdx}`
+    const chapter = this.data.chapters[newIdx]
+    if (!chapter) return
+    this.setData({
+      chapterIndex: newIdx,
+      currentChapterId: chapter.id,
+      currentChapter: chapter,
+      hasPrev: newIdx > 0,
+      hasNext: newIdx < this.data.chapters.length - 1,
+      scrollProgress: 0
     })
+    wx.setNavigationBarTitle({ title: chapter.title })
+    this.loadChapter(chapter)
   },
 
-  async nextChapter() {
+  nextChapter() {
     if (!this.data.hasNext) return
     this.saveCurrentScrollProgress()
     const newIdx = this.data.chapterIndex + 1
-    const nextChapter = this.data.chapters[newIdx]
-    if (!nextChapter) return
-    wx.redirectTo({
-      url: `/pages/lantai/book-chapter?bookId=${this.data.bookId}`
-        + `&bookTitle=${encodeURIComponent(this.data.bookTitle)}`
-        + `&chapters=${encodeURIComponent(JSON.stringify(this.data.chapters))}`
-        + `&chapterIndex=${newIdx}`
+    const chapter = this.data.chapters[newIdx]
+    if (!chapter) return
+    this.setData({
+      chapterIndex: newIdx,
+      currentChapterId: chapter.id,
+      currentChapter: chapter,
+      hasPrev: newIdx > 0,
+      hasNext: newIdx < this.data.chapters.length - 1,
+      scrollProgress: 0
     })
+    wx.setNavigationBarTitle({ title: chapter.title })
+    this.loadChapter(chapter)
   },
 
   saveCurrentScrollProgress() {
