@@ -1,114 +1,60 @@
 <custom-nav-bar
-  title="{{currentChapter ? currentChapter.title : bookTitle}}"
-  showBack="{{!currentChapter}}"
+  title="{{bookTitle}}"
   bgColor="#FFF9F0"
-  bind:back="onNavBack"
->
-  <block wx:if="{{currentChapter}}">
-    <view slot="left" class="reader-back" bindtap="backToCatalog">
-      <text class="iconfont nav-back-icon icon-left"></text>
-    </view>
-    <view slot="right" class="reader-actions">
-      <text class="r-btn" bindtap="toggleTranslation">{{showTranslation ? '原文' : '译文'}}</text>
-    </view>
-  </block>
-  <block wx:else>
-    <view slot="right" class="reader-actions">
-      <text class="r-btn" bindtap="toggleTranslation">{{showTranslation ? '原文' : '译文'}}</text>
-    </view>
-  </block>
-</custom-nav-bar>
+/>
 
 <view class="reader-page ancient-paper">
-  <block wx:if="{{!currentChapter}}">
-    <view class="catalog-wrap">
-      <view class="book-hero">
-        <view class="hero-cover">{{bookTitle}}</view>
-        <view class="hero-meta">
-          <text class="hm-title">《{{bookTitle}}》</text>
-          <text class="hm-desc">凡{{chapters.length}}篇，经典必读</text>
-          <view class="fav-btn {{isFavorite ? 'active' : ''}}" bindtap="toggleFavorite">
-            <text class="iconfont {{isFavorite ? 'icon-collection' : 'icon-collection'}}"></text>
-            <text class="fav-text">{{isFavorite ? '已收藏' : '收藏'}}</text>
-          </view>
+  <view class="catalog-wrap">
+    <view class="book-hero">
+      <view class="hero-cover">{{bookTitle}}</view>
+      <view class="hero-meta">
+        <text class="hm-title">《{{bookTitle}}》</text>
+        <text class="hm-desc">凡{{chapters.length}}篇，经典必读</text>
+        <view class="fav-btn {{isFavorite ? 'active' : ''}}" bindtap="toggleFavorite">
+          <text class="iconfont icon-collection"></text>
+          <text class="fav-text">{{isFavorite ? '已收藏' : '收藏'}}</text>
         </view>
       </view>
+    </view>
 
-      <view class="catalog-list">
-        <view class="cat-title">目 录</view>
-        <!-- 骨架屏：尺寸与真实 cat-item 完全一致，避免布局跳动 -->
-        <view wx:if="{{chaptersLoading && chapters.length === 0}}" class="cat-skeleton">
-          <view wx:for="{{[1,2,3,4,5,6,7,8]}}" wx:key="*this" class="sk-cat-item">
-            <view class="sk-cat-row">
-              <view class="sk-cat-title"></view>
-              <view class="sk-cat-progress">
-                <view class="sk-cat-bar"></view>
-                <view class="sk-cat-pct"></view>
+    <view class="catalog-list">
+      <view class="cat-title">目 录</view>
+      <view wx:if="{{chaptersLoading && chapters.length === 0}}" class="cat-skeleton">
+        <view wx:for="{{[1,2,3,4,5,6,7,8]}}" wx:key="*this" class="sk-cat-item">
+          <view class="sk-cat-row">
+            <view class="sk-cat-title"></view>
+            <view class="sk-cat-progress">
+              <view class="sk-cat-bar"></view>
+              <view class="sk-cat-pct"></view>
+            </view>
+          </view>
+          <view class="sk-cat-icon"></view>
+        </view>
+      </view>
+      <block wx:elif="{{chapters.length}}">
+        <view
+          wx:for="{{chapters}}"
+          wx:key="id"
+          class="cat-item"
+          data-id="{{item.id}}"
+          bindtap="openChapter"
+          hover-class="cat-hover"
+        >
+          <view class="cat-body">
+            <view class="cat-row">
+              <text class="cat-t">{{item.title}}</text>
+              <view class="cat-progress">
+                <view class="p-bar"><view class="p-fill" style="width:{{item.progress}}%;"></view></view>
+                <text class="p-text">{{item.progress}}%</text>
               </view>
             </view>
-            <view class="sk-cat-icon"></view>
+          </view>
+          <view class="cat-icon">
+            <text wx:if="{{item.read}}" class="ci-check iconfont icon-Selected"></text>
+            <text wx:else class="ci-arrow">›</text>
           </view>
         </view>
-        <block wx:elif="{{chapters.length}}">
-          <view
-            wx:for="{{chapters}}"
-            wx:key="id"
-            class="cat-item"
-            data-id="{{item.id}}"
-            bindtap="openChapter"
-            hover-class="cat-hover"
-          >
-            <view class="cat-body">
-              <view class="cat-row">
-                <text class="cat-t">{{item.title}}</text>
-                <view class="cat-progress">
-                  <view class="p-bar"><view class="p-fill" style="width:{{item.progress}}%;"></view></view>
-                  <text class="p-text">{{item.progress}}%</text>
-                </view>
-              </view>
-            </view>
-            <view class="cat-icon">
-              <text wx:if="{{item.read}}" class="ci-check iconfont icon-Selected"></text>
-              <text wx:else class="ci-arrow">›</text>
-            </view>
-          </view>
-        </block>
-      </view>
+      </block>
     </view>
-  </block>
-
-  <block wx:else>
-    <view class="content-wrap" style="padding-bottom: {{safeBottom + 120}}rpx;">
-      <view class="ch-head">
-        <text class="ch-sub">{{currentChapter.subtitle}}</text>
-        <text class="ch-title">{{currentChapter.title}}</text>
-      </view>
-
-      <view wx:if="{{showTranslation}}" class="content-block translation">
-        <view class="block-title">【白话译文】</view>
-        <text class="content-text" style="font-size:{{fontSize}}rpx;">{{content.translation}}</text>
-      </view>
-
-      <view class="content-block original">
-        <view wx:if="{{showTranslation}}" class="block-title">【史书记载】</view>
-        <text class="content-text" style="font-size:{{fontSize}}rpx;">{{content.original}}</text>
-      </view>
-
-      <view wx:if="{{content.notes && content.notes.length}}" class="notes-block">
-        <view class="block-title">【注释】</view>
-        <view wx:for="{{content.notes}}" wx:key="keyword" class="note-item">
-          <text class="n-key">· {{item.keyword}}：</text>
-          <text class="n-val">{{item.note}}</text>
-        </view>
-      </view>
-    </view>
-
-    <view class="reader-toolbar" style="padding-bottom: {{safeBottom + 16}}rpx;">
-      <view class="t-btn" bindtap="changeFontSize" data-type="minus">A-</view>
-      <view class="t-btn" bindtap="changeFontSize" data-type="plus">A+</view>
-      <view class="t-btn" bindtap="toggleTranslation">{{showTranslation ? '原文' : '译文'}}</view>
-      <view class="t-btn {{!hasPrev ? 't-disabled' : ''}}" bindtap="prevChapter">上一章</view>
-      <view class="t-btn {{!hasNext ? 't-disabled' : ''}}" bindtap="nextChapter">下一章</view>
-    </view>
-  </block>
+  </view>
 </view>

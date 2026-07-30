@@ -7,6 +7,7 @@
     "pages/lantai/index",
     "pages/lantai/figure-detail",
     "pages/lantai/book-reader",
+    "pages/lantai/book-chapter",
     "pages/discover/index",
     "pages/discover/moments",
     "pages/discover/moment-detail",

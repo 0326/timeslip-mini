@@ -1,0 +1,43 @@
+<custom-nav-bar
+  title="{{currentChapter ? currentChapter.title : ''}}"
+  bgColor="#FFF9F0"
+>
+  <view slot="right" class="reader-actions">
+    <text class="r-btn" bindtap="toggleTranslation">{{showTranslation ? '原文' : '译文'}}</text>
+  </view>
+</custom-nav-bar>
+
+<view class="reader-page ancient-paper">
+  <view class="content-wrap" style="padding-bottom: {{safeBottom + 120}}rpx;">
+    <view class="ch-head">
+      <text class="ch-sub">{{currentChapter.subtitle}}</text>
+      <text class="ch-title">{{currentChapter.title}}</text>
+    </view>
+
+    <view wx:if="{{showTranslation}}" class="content-block translation">
+      <view class="block-title">【白话译文】</view>
+      <text class="content-text" style="font-size:{{fontSize}}rpx;">{{content.translation}}</text>
+    </view>
+
+    <view class="content-block original">
+      <view wx:if="{{showTranslation}}" class="block-title">【史书记载】</view>
+      <text class="content-text" style="font-size:{{fontSize}}rpx;">{{content.original}}</text>
+    </view>
+
+    <view wx:if="{{content.notes && content.notes.length}}" class="notes-block">
+      <view class="block-title">【注释】</view>
+      <view wx:for="{{content.notes}}" wx:key="keyword" class="note-item">
+        <text class="n-key">· {{item.keyword}}：</text>
+        <text class="n-val">{{item.note}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="reader-toolbar" style="padding-bottom: {{safeBottom + 16}}rpx;">
+    <view class="t-btn" bindtap="changeFontSize" data-type="minus">A-</view>
+    <view class="t-btn" bindtap="changeFontSize" data-type="plus">A+</view>
+    <view class="t-btn" bindtap="toggleTranslation">{{showTranslation ? '原文' : '译文'}}</view>
+    <view class="t-btn {{!hasPrev ? 't-disabled' : ''}}" bindtap="prevChapter">上一章</view>
+    <view class="t-btn {{!hasNext ? 't-disabled' : ''}}" bindtap="nextChapter">下一章</view>
+  </view>
+</view>
