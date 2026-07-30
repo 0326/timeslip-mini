@@ -50,31 +50,6 @@ function normalizeFigureData(figure) {
   }
 }
 
-const MOCK_FIGURE = {
-  _id: 'simaqian',
-  name: '司马迁',
-  title: '太史公',
-  dynasty: 'han',
-  era: '西汉',
-  birth: '公元前145年',
-  death: '约公元前86年',
-  avatar: 'https://img.icons8.com/color/96/writer.png',
-  bio: '字子长，夏阳（今陕西韩城南）人。西汉史学家、散文家。司马谈之子，任太史令，因替李陵败降之事辩解而受宫刑，后任中书令。发奋继续完成所著史籍，被后世尊称为史迁、太史公、历史之父。',
-  masterpieces: ['史记（一百三十篇）', '报任安书'],
-  famousQuotes: [
-    '人固有一死，或重于泰山，或轻于鸿毛。',
-    '究天人之际，通古今之变，成一家之言。',
-    '网罗天下放失旧闻，考之行事，稽其成败兴坏之纪。'
-  ],
-  relatedMoments: [
-    { _id: 'm1', title: '鸿门宴', desc: '史记·项羽本纪详载此事', figureName: '刘邦', time: '前206年' }
-  ],
-  relatedBooks: [
-    { id: 'shiji', title: '史记', chapter: '全书130篇' }
-  ],
-  unlocked: true
-}
-
 Page({
   data: {
     id: '',
@@ -106,10 +81,15 @@ Page({
       if (cached) figure = cached
       if (!figure) {
         const data = await requestCloud('shiji', 'figureDetail', { id }, { throwError: false })
-        figure = normalizeFigureData((data && data.figure) || MOCK_FIGURE)
-        storage.set(cacheKey, figure, 86400)
+        figure = normalizeFigureData(data && data.figure)
+        if (figure) storage.set(cacheKey, figure, 86400)
       } else {
         figure = normalizeFigureData(figure)
+      }
+      if (!figure) {
+        this.setData({ loading: false })
+        wx.showToast({ title: '未找到人物信息', icon: 'none' })
+        return
       }
       this.setData({
         figure,
@@ -119,7 +99,8 @@ Page({
       this.loadChannel(id)
       this.loadRelatedArticles(id)
     } catch (e) {
-      this.setData({ figure: MOCK_FIGURE, dynastyInfo: getDynastyInfo(MOCK_FIGURE.dynasty), loading: false })
+      this.setData({ loading: false })
+      wx.showToast({ title: '加载失败', icon: 'none' })
     }
   },
 

@@ -5,7 +5,7 @@ const { storage } = require('../../utils/storage')
 const { requestCloud } = require('../../utils/cloudRequest')
 const loginGuard = require('../../utils/loginGuard')
 
-const FIGURES_CACHE_KEY = 'figures_star5_v4'
+const FIGURES_CACHE_KEY = 'figures_star5_v5'
 const FIGURE_DETAIL_PREFIX = 'figure_v2_'
 
 Page({

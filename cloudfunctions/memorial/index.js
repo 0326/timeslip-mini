@@ -105,11 +105,13 @@ async function decide(OPENID, data) {
     score: opt.score,
     createdAt: db.serverDate()
   }
-  let _id = 'mock_' + Date.now()
+  let _id = ''
   try {
     const r = await db.collection('memorial_answers').add({ data: doc })
     _id = r._id
-  } catch (e) {}
+  } catch (e) {
+    console.warn('save memorial answer failed:', e.message)
+  }
 
   tryUnlock(OPENID, 'first_memorial')
   ;(async () => {

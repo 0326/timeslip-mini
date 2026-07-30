@@ -11,6 +11,19 @@
   height: 100%;
 }
 
+.reader-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60rpx;
+  height: 60rpx;
+}
+
+.reader-back .iconfont {
+  font-size: 36rpx;
+  color: #2D1810;
+}
+
 .r-btn {
   padding: 6rpx 18rpx;
   border-radius: 999rpx;
@@ -370,6 +383,11 @@
 .t-btn:active {
   background: var(--ancient-paper);
   transform: scale(0.97);
+}
+
+.t-disabled {
+  opacity: 0.35;
+  pointer-events: none;
 }
 
 .fav-btn {

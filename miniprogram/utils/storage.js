@@ -14,16 +14,20 @@ const storage = {
     try {
       const val = wx.getStorageSync(PREFIX + key)
       const parsed = safeParse(val, null)
-      if (parsed && Object.prototype.hasOwnProperty.call(parsed, '_v')) {
-        // 带 ttl 的封装数据
-        if (parsed._ttl && parsed._t + parsed._ttl * 1000 < Date.now()) {
-          wx.removeStorageSync(PREFIX + key)
-          return defaultValue
+      // 只认 storage.set 写入的 _v 封装格式；其他格式一律视为历史脏数据直接清理
+      // 历史上裸写入的旧缓存没有 _ttl，永不过期，会导致用户永远看到旧列表
+      if (!parsed || typeof parsed !== 'object' || !Object.prototype.hasOwnProperty.call(parsed, '_v')) {
+        // 如果有值但不是标准格式，顺手清掉，防止下次再命中
+        if (val !== '' && val !== null && val !== undefined) {
+          try { wx.removeStorageSync(PREFIX + key) } catch (_) {}
         }
-        return parsed._v
+        return defaultValue
       }
-      // 兼容直接存储的原始值
-      return parsed === null ? (val !== '' && val !== undefined && val !== null ? val : defaultValue) : parsed
+      if (parsed._ttl && parsed._t + parsed._ttl * 1000 < Date.now()) {
+        wx.removeStorageSync(PREFIX + key)
+        return defaultValue
+      }
+      return parsed._v
     } catch (e) {
       return defaultValue
     }

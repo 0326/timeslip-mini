@@ -70,7 +70,7 @@ Page({
   },
 
   onLoad() {
-    const cached = storage.get('figures')
+    const cached = storage.get('figures_common_v1')
     if (cached && cached.length) this.setData({ figureList: cached })
   },
 

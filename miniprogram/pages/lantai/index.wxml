@@ -35,7 +35,10 @@
       scroll-into-view="{{toLetter}}"
       enhanced
       show-scrollbar="{{false}}"
-      bindscrolltoupper="onPullDownRefresh"
+      refresher-enabled="{{true}}"
+      refresher-triggered="{{figureRefresherTriggered}}"
+      refresher-background="#f8f6f2"
+      bindrefresherrefresh="onFigureRefresherRefresh"
     >
       <view
         wx:for="{{groups}}"
@@ -80,11 +83,24 @@
   </block>
 
   <block wx:else>
-    <view wx:if="{{filteredBooks.length === 0}}" class="empty">
+    <view wx:if="{{loading}}" class="loading-wrap">
+      <text class="loading-text">加载典籍中...</text>
+    </view>
+    <view wx:elif="{{filteredBooks.length === 0}}" class="empty">
       <text class="iconfont e-icon {{searchText ? 'icon-search' : 'icon-content'}}"></text>
       <text class="e-text">{{searchText ? '未找到相关典籍' : '暂无典籍数据'}}</text>
     </view>
-    <scroll-view wx:else class="book-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+    <scroll-view
+      wx:else
+      class="book-scroll"
+      scroll-y
+      enhanced
+      show-scrollbar="{{false}}"
+      refresher-enabled="{{true}}"
+      refresher-triggered="{{bookRefresherTriggered}}"
+      refresher-background="#f8f6f2"
+      bindrefresherrefresh="onBookRefresherRefresh"
+    >
       <view class="books-list">
         <view
           wx:for="{{filteredBooks}}"

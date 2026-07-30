@@ -157,7 +157,7 @@ Page({
   // 从兰台人物列表 / 详情缓存中解析角色头像
   resolveFigureAvatar(figureId) {
     // 1. 人物列表缓存
-    const figuresList = storage.get('figures_star5_v4') || []
+    const figuresList = storage.get('figures_star5_v5') || []
     const fig = figuresList.find(f => (f._id || f.id || f.figureId) === figureId)
     if (fig && fig.avatar) return fig.avatar
     // 2. 人物详情缓存

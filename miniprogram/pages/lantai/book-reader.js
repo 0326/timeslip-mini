@@ -2,28 +2,6 @@ const { requestCloud } = require('../../utils/cloudRequest')
 const { storage } = require('../../utils/storage')
 const loginGuard = require('../../utils/loginGuard')
 
-const MOCK_CHAPTERS = [
-  { id: 'c1', title: '五帝本纪第一', subtitle: '史记卷一', read: true, progress: 100 },
-  { id: 'c2', title: '夏本纪第二', subtitle: '史记卷二', read: false, progress: 0 },
-  { id: 'c3', title: '殷本纪第三', subtitle: '史记卷三', read: false, progress: 0 },
-  { id: 'c4', title: '周本纪第四', subtitle: '史记卷四', read: true, progress: 60 },
-  { id: 'c5', title: '秦本纪第五', subtitle: '史记卷五', read: false, progress: 0 },
-  { id: 'c6', title: '秦始皇本纪第六', subtitle: '史记卷六', read: false, progress: 0 },
-  { id: 'c7', title: '项羽本纪第七', subtitle: '史记卷七', read: true, progress: 100 },
-  { id: 'c8', title: '高祖本纪第八', subtitle: '史记卷八', read: false, progress: 0 }
-]
-
-const MOCK_CONTENT = {
-  original:
-    '太史公曰：学者多称五帝，尚矣。然尚书独载尧以来；而百家言黄帝，其文不雅驯，荐绅先生难言之。\n\n孔子所传宰予问五帝德及帝系姓，儒者或不传。余尝西至空桐，北过涿鹿，东渐于海，南浮江淮矣，至长老皆各往往称黄帝、尧、舜之处，风教固殊焉，总之不离古文者近是。\n\n予观春秋、国语，其发明五帝德、帝系姓章矣，顾弟弗深考，其所表见皆不虚。书缺有间矣，其轶乃时时见于他说。非好学深思，心知其意，固难为浅见寡闻道也。余并论次，择其言尤雅者，故著为本纪书首。',
-  translation:
-    '太史公说：学者多称赞五帝，由来已久了。但是《尚书》只记载了唐尧以来的事；可是诸子百家谈论黄帝，他们的文字不够典雅纯正，士大夫们也难以明辨。\n\n孔子传下来的宰予问《五帝德》及《帝系姓》，儒生们有的不传习。我曾经西到空桐，北过涿鹿，东到大海，南渡长江、淮河，所到之处，老年长辈们每每谈到黄帝、唐尧、虞舜活动过的地方，风俗教化本来就不相同，总的来说，不背离古文记载的说法比较接近正确。\n\n我读《春秋》《国语》，它们对《五帝德》《帝系姓》的阐述是很清楚的，只是人们没有深入考察，其实这些记载都不是虚妄的。《尚书》残缺已久，它所散佚的内容，常常在其他著作中可以看到。不是好学深思、明了其中深意的人，本来就很难同见识浅陋、孤陋寡闻的人说明白。我综合研究，加以编排，选择那些言辞特别典雅纯正的，写成《五帝本纪》，作为全书的第一篇。',
-  notes: [
-    { keyword: '五帝', note: '通常指黄帝、颛顼、帝喾、唐尧、虞舜' },
-    { keyword: '荐绅', note: '缙绅，指古代官吏的装束，引申为官员、士大夫' }
-  ]
-}
-
 // 把各种可能结构的注释（按段分组 / 键名不一 / 纯对象）统一展平为 [{keyword, note}]
 function normalizeNotes(raw) {
   if (!raw || !Array.isArray(raw)) return []
@@ -134,7 +112,10 @@ Page({
     content: { original: '', translation: '', notes: [] },
     fontSize: 30,
     isFavorite: false,
-    safeBottom: 0
+    safeBottom: 0,
+    scrollProgress: 0,
+    hasPrev: false,
+    hasNext: false
   },
 
   onLoad(options) {
@@ -143,6 +124,7 @@ Page({
     try {
       const sys = wx.getSystemInfoSync()
       this.setData({ safeBottom: sys.safeAreaInsets ? sys.safeAreaInsets.bottom : 0 })
+      this._windowHeight = sys.windowHeight
     } catch (e) {}
     wx.setNavigationBarTitle({ title })
     this.setData({ bookId: id, bookTitle: title })
@@ -156,45 +138,156 @@ Page({
     if (!loginGuard.checkLogin(this)) return
   },
 
+  onPageScroll(e) {
+    this._scrollTop = e.scrollTop
+    if (this.data.currentChapter && this._maxScroll > 0) {
+      const pct = Math.min(100, Math.round(e.scrollTop / this._maxScroll * 100))
+      if (pct > this.data.scrollProgress) {
+        this.setData({ scrollProgress: pct })
+      }
+    }
+  },
+
+  onBackPress() {
+    if (this.data.currentChapter) {
+      this.backToCatalog()
+      return true
+    }
+    return false
+  },
+
+  onNavBack() {
+    if (this.data.currentChapter) {
+      this.backToCatalog()
+    }
+  },
+
   async loadChapters(id) {
+    const progressKey = 'chapters_progress_' + id
+    const savedProgress = storage.get(progressKey) || {}
     const cached = storage.get('chapters_' + id)
     if (cached) {
-      this.setData({ chapters: cached, chaptersLoading: false })
+      const merged = cached.map(c => ({
+        ...c,
+        progress: savedProgress[c.id] !== undefined ? savedProgress[c.id] : 0,
+        read: (savedProgress[c.id] || 0) >= 80
+      }))
+      this.setData({ chapters: merged, chaptersLoading: false })
       return
     }
     try {
       const data = await requestCloud('shiji', 'chapters', { bookId: id }, { throwError: false })
-      const list = (data && data.chapters) || MOCK_CHAPTERS
+      const list = ((data && data.chapters) || []).map(c => ({
+        ...c,
+        progress: savedProgress[c.id] !== undefined ? savedProgress[c.id] : 0,
+        read: (savedProgress[c.id] || 0) >= 80
+      }))
       storage.set('chapters_' + id, list, 86400)
       this.setData({ chapters: list, chaptersLoading: false })
     } catch (e) {
-      this.setData({ chapters: MOCK_CHAPTERS, chaptersLoading: false })
+      this.setData({ chapters: [], chaptersLoading: false })
     }
   },
 
   async openChapter(e) {
     const id = e.currentTarget.dataset.id
+    await this.loadChapter(id)
+    this._catalogScrollTop = this._scrollTop || 0
+  },
+
+  async loadChapter(id) {
     const chapter = this.data.chapters.find(c => c.id === id)
     if (!chapter) return
+
     let content = storage.get('content_' + id)
     if (!content) {
       const data = await requestCloud('shiji', 'chapter-content', { chapterId: id }, { showLoading: true, loadingText: '加载正文...', throwError: false })
-      content = (data && data.content) || MOCK_CONTENT
+      content = (data && data.content) || { original: '', translation: '', notes: [] }
       if (data && data.content) storage.set('content_' + id, content, 86400)
     }
+
+    const idx = this.data.chapters.findIndex(c => c.id === id)
+    const progressKey = 'chapters_progress_' + this.data.bookId
+    const savedProgress = storage.get(progressKey) || {}
+    const savedScroll = savedProgress[id + '_scroll'] || 0
+
     this.setData({
       currentChapter: chapter,
       currentChapterId: id,
+      scrollProgress: chapter.progress || 0,
+      hasPrev: idx > 0,
+      hasNext: idx < this.data.chapters.length - 1,
       content: {
         original: content.original || '',
         translation: content.translation || '',
         notes: normalizeNotes(content.notes)
       }
     })
+
+    wx.pageScrollTo({ scrollTop: 0, duration: 0 })
+
+    setTimeout(() => {
+      wx.createSelectorQuery()
+        .select('.content-wrap')
+        .boundingClientRect(rect => {
+          if (rect && rect.height > 0) {
+            const navOffset = rect.top
+            this._maxScroll = rect.height + navOffset - this._windowHeight
+            if (this._maxScroll < 0) this._maxScroll = 0
+
+            if (savedScroll > 0 && this._maxScroll > 0) {
+              const restoreTop = Math.min(savedScroll, this._maxScroll)
+              wx.pageScrollTo({ scrollTop: restoreTop, duration: 300 })
+            }
+          }
+        })
+        .exec()
+    }, 400)
+  },
+
+  async prevChapter() {
+    if (!this.data.hasPrev) return
+    const idx = this.data.chapters.findIndex(c => c.id === this.data.currentChapterId)
+    if (idx <= 0) return
+    this.saveCurrentScrollProgress()
+    await this.loadChapter(this.data.chapters[idx - 1].id)
+  },
+
+  async nextChapter() {
+    if (!this.data.hasNext) return
+    const idx = this.data.chapters.findIndex(c => c.id === this.data.currentChapterId)
+    if (idx < 0 || idx >= this.data.chapters.length - 1) return
+    this.saveCurrentScrollProgress()
+    await this.loadChapter(this.data.chapters[idx + 1].id)
+  },
+
+  saveCurrentScrollProgress() {
+    const chapterId = this.data.currentChapterId
+    if (!chapterId) return
+    const progressKey = 'chapters_progress_' + this.data.bookId
+    const savedProgress = storage.get(progressKey) || {}
+    const chapter = this.data.chapters.find(c => c.id === chapterId)
+    const currentProgress = chapter ? chapter.progress : 0
+    const scrollPct = this.data.scrollProgress
+    const finalProgress = Math.max(currentProgress, scrollPct)
+    savedProgress[chapterId] = finalProgress
+    savedProgress[chapterId + '_scroll'] = this._scrollTop || 0
+    storage.set(progressKey, savedProgress, 86400 * 30)
+    this.updateChapterProgress(chapterId, finalProgress)
   },
 
   backToCatalog() {
-    this.setData({ currentChapter: null, currentChapterId: '' })
+    this.saveCurrentScrollProgress()
+
+    this._maxScroll = 0
+    this.setData({ currentChapter: null, currentChapterId: '', scrollProgress: 0 })
+
+    setTimeout(() => {
+      wx.pageScrollTo({
+        scrollTop: this._catalogScrollTop || 0,
+        duration: 0
+      })
+    }, 100)
   },
 
   toggleTranslation() {
@@ -209,17 +302,19 @@ Page({
     storage.set('reader_fontSize', next)
   },
 
-  addProgress() {
-    if (!this.data.currentChapterId) return
+  updateChapterProgress(chapterId, progress) {
     const chapters = this.data.chapters.map(c => {
-      if (c.id === this.data.currentChapterId) {
-        return { ...c, progress: Math.min(100, c.progress + 20), read: c.progress + 20 >= 80 }
+      if (c.id === chapterId) {
+        return { ...c, progress, read: progress >= 80 }
       }
       return c
     })
+    const progressKey = 'chapters_progress_' + this.data.bookId
+    const savedProgress = storage.get(progressKey) || {}
+    savedProgress[chapterId] = progress
+    storage.set(progressKey, savedProgress, 86400 * 30)
     storage.set('chapters_' + this.data.bookId, chapters, 86400)
     this.setData({ chapters })
-    wx.showToast({ title: '进度已更新', icon: 'none' })
   },
 
   async loadFavoriteStatus(bookId) {

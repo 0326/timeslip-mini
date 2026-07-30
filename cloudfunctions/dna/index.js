@@ -1418,7 +1418,6 @@ async function submit(OPENID, data) {
     recordId = saved._id
   } catch (e) {
     console.warn('save record failed:', e.message)
-    recordId = 'mock_' + Date.now()
   }
 
   tryUnlock(OPENID, 'dna_done')

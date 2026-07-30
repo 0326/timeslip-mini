@@ -143,8 +143,9 @@ App({
 
   preloadCommonData() {
     const { storage } = require('./utils/storage')
-    const cachedFigures = storage.get('figures')
-    const cachedDna = storage.get('dna_questions')
+    // 统一使用带版本的缓存键，避免裸键被历史脏数据污染
+    const cachedFigures = storage.get('figures_common_v1')
+    const cachedDna = storage.get('dna_questions_v1')
     if (cachedFigures) this.globalData.cache.figures = cachedFigures
     if (cachedDna) this.globalData.cache.dnaQuestions = cachedDna
   },

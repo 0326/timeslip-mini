@@ -8,6 +8,11 @@
     #f8f6f2;
 }
 
+/* 页面级覆盖全局 .ancient-paper::before，防止背景纹理盖在 tabs 和内容上 */
+.lantai-page.ancient-paper::before {
+  z-index: -1;
+}
+
 .top-search {
   padding: 16rpx 32rpx;
   background: rgba(248, 246, 242, 0.9);
@@ -42,6 +47,8 @@
   display: flex;
   padding: 16rpx 32rpx 0;
   flex-shrink: 0;
+  position: relative;
+  z-index: 2;
 }
 
 .tab-item {
@@ -60,9 +67,11 @@
 }
 
 .loading-wrap {
+  flex: 1;
   padding: 120rpx 0;
   display: flex;
   justify-content: center;
+  align-items: flex-start;
 }
 
 .loading-text {
@@ -71,10 +80,12 @@
 }
 
 .empty {
+  flex: 1;
   padding: 120rpx 0;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
 }
 
 .e-icon {

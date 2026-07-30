@@ -81,94 +81,6 @@ function computeHistoricalText(historical) {
   return '📍 ' + parts.join(' · ')
 }
 
-const MOCK_MOMENTS = [
-  {
-    _id: 'm1',
-    figureId: 'liubang',
-    figureName: '刘邦',
-    figureTitle: '汉高祖',
-    dynasty: 'han',
-    content: '今日鸿门，气氛有点微妙。项庄舞剑，意在沛公啊！幸好项伯出来解围，不然今日要交代在这里了...😅',
-    images: [],
-    historicalEvent: '鸿门宴',
-    historicalDate: '公元前206年',
-    likes: [
-      { openid: 'fan_kuai', name: '樊哙' },
-      { openid: 'zhang_liang', name: '张良' },
-      { openid: 'xiao_he', name: '萧何' }
-    ],
-    likeCount: 3,
-    comments: [
-      { _id: 'mc1', openid: 'fan_zeng', name: '范增', content: '竖子不足与谋！唉，错失良机啊！' },
-      { _id: 'mc2', openid: 'xiang_yu', name: '项羽', content: '大哥别走啊，再来喝两杯🤔' },
-      { _id: 'mc3', openid: 'zhang_liang', name: '张良', content: '主公吉人天相，此一劫过，后必有大福。' }
-    ],
-    commentCount: 3,
-    createdAt: Date.now() - 3600000 * 2
-  },
-  {
-    _id: 'm2',
-    figureId: 'zhugeliang',
-    figureName: '诸葛亮',
-    figureTitle: '武乡侯',
-    dynasty: 'sanguo',
-    content: '臣本布衣，躬耕于南阳，苟全性命于乱世，不求闻达于诸侯。先帝不以臣卑鄙，猥自枉屈，三顾臣于草庐之中，咨臣以当世之事，由是感激，遂许先帝以驱驰。\n\n后值倾覆，受任于败军之际，奉命于危难之间，尔来二十有一年矣。',
-    images: [],
-    historicalEvent: '三顾茅庐',
-    historicalDate: '公元207年',
-    likes: [
-      { openid: 'liubei', name: '刘备' },
-      { openid: 'guanyu', name: '关羽' }
-    ],
-    likeCount: 88,
-    comments: [
-      { _id: 'mc4', openid: 'liubei', name: '刘备', content: '孔明先生，备得先生，如鱼得水也！' },
-      { _id: 'mc5', openid: 'guanyu', name: '关羽', content: '嗯......确实有几分本事。' },
-      { _id: 'mc6', openid: 'zhangfei', name: '张飞', content: '俺也觉得军师说的对！' }
-    ],
-    commentCount: 3,
-    createdAt: Date.now() - 86400000
-  },
-  {
-    _id: 'm3',
-    figureId: 'libai',
-    figureName: '李白',
-    figureTitle: '诗仙',
-    dynasty: 'tang',
-    content: '桃花潭水深千尺，不及汪伦送我情。\n今日一别，不知何日再聚，唯有诗酒相赠！🍶',
-    images: [],
-    historicalEvent: '赠汪伦',
-    historicalDate: '天宝年间',
-    likes: [],
-    likeCount: 1024,
-    comments: [
-      { _id: 'mc7', openid: 'dufu', name: '杜甫', content: '白也诗无敌，飘然思不群！' },
-      { _id: 'mc8', openid: 'wanglun', name: '汪伦', content: '先生下次一定要再来啊！我这里还有万家酒店！' }
-    ],
-    commentCount: 2,
-    createdAt: Date.now() - 86400000 * 2
-  },
-  {
-    _id: 'm4',
-    figureId: 'sushi',
-    figureName: '苏轼',
-    figureTitle: '东坡居士',
-    dynasty: 'song',
-    content: '黄州好猪肉，价贱如泥土。贵者不肯吃，贫者不解煮，早晨起来打两碗，饱得自家君莫管。🥩',
-    images: [],
-    historicalEvent: '东坡肉',
-    historicalDate: '元丰年间',
-    likes: [],
-    likeCount: 520,
-    comments: [
-      { _id: 'mc9', openid: 'fo_yin', name: '佛印', content: '居士又在研究吃了？哈哈哈！' },
-      { _id: 'mc10', openid: 'huangtingjian', name: '黄庭坚', content: '老师！求秘方！' }
-    ],
-    commentCount: 2,
-    createdAt: Date.now() - 86400000 * 3
-  }
-]
-
 function buildLikePreview(likes, limit = 3) {
   if (!likes || !likes.length) return []
   return likes.slice(0, limit).map(l => ({
@@ -218,55 +130,6 @@ function buildHistoricalView(row) {
     articleId: row.historicalArticleId || h.articleId || '',
     chapterId: row.historicalChapterId || h.chapterId || ''
   }
-}
-
-function adaptMockMoment(row, openid = 'local_user') {
-  const likes = row.likes || []
-  const liked = likes.some(l => (l.openid || l) === openid)
-  const likeCount = typeof row.likeCount === 'number' ? row.likeCount : likes.length
-  const likePreview = buildLikePreview(likes)
-  const comments = row.comments || []
-  const commentCount = typeof row.commentCount === 'number' ? row.commentCount : comments.length
-  const commentPreview = buildCommentPreview(comments, 2)
-  const createdAtMs = typeof row.createdAt === 'number' ? row.createdAt : Date.now() - 86400000
-
-  return {
-    _id: row._id,
-    figure: buildFigureView(row),
-    content: row.content || '',
-    images: normalizeImageList(row.images),
-    historical: buildHistoricalView(row),
-    location: row.location || '',
-    createdAt: createdAtMs,
-    interaction: {
-      liked,
-      likeCount,
-      likePreview,
-      commentCount,
-      commentPreview
-    }
-  }
-}
-
-function adaptMockComments(comments) {
-  if (!comments || !comments.length) return []
-  return comments.map(c => ({
-    _id: c._id || 'mc_' + Math.random().toString(36).slice(2, 8),
-    momentId: c.momentId || '',
-    figure: {
-      id: c.figureId || c.openid || 'anon',
-      name: c.name || '匿名',
-      title: c.figureTitle || '',
-      avatar: normalizeAssetUrl(c.mini_avatar_url || c.miniAvatarUrl || c.avatar_url || c.avatarUrl || c.avatar),
-      dynasty: c.dynasty || ''
-    },
-    content: c.content || '',
-    replyTo: c.replyTo || '',
-    replyName: c.replyName || '',
-    likeCount: (c.likes || []).length,
-    createdAt: typeof c.createdAt === 'number' ? c.createdAt : Date.now() - 3600000,
-    canDelete: false
-  }))
 }
 
 function enrichMomentView(m) {
@@ -330,9 +193,6 @@ function enrichCommentView(c) {
 }
 
 module.exports = {
-  MOCK_MOMENTS,
-  adaptMockMoment,
-  adaptMockComments,
   enrichMomentView,
   enrichCommentView,
   normalizeRemoteAssetUrl,
