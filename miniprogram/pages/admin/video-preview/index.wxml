@@ -1,0 +1,73 @@
+<custom-nav-bar
+  title="视频预览"
+  showBack="{{true}}"
+></custom-nav-bar>
+
+<view class="page">
+  <view wx:if="{{loading}}" class="loading-wrap">
+    <view class="spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <view wx:elif="{{error}}" class="empty-wrap">
+    <text class="empty-text">{{error}}</text>
+    <view class="empty-btn" bindtap="loadVideo" data-video-id="{{videoId}}">重试</view>
+  </view>
+
+  <block wx:elif="{{video}}">
+    <view class="video-wrap">
+      <video
+        wx:if="{{video.videoUrl}}"
+        class="video-player"
+        src="{{video.videoUrl}}"
+        poster="{{video.coverUrl}}"
+        autoplay="{{true}}"
+        loop="{{false}}"
+        show-center-play-btn="{{true}}"
+        show-play-btn="{{true}}"
+        controls="{{true}}"
+        object-fit="contain"
+        enable-progress-gesture="{{true}}"
+        show-fullscreen-btn="{{true}}"
+      />
+      <view wx:else class="video-placeholder">
+        <image wx:if="{{video.coverUrl}}" class="cover-img" src="{{video.coverUrl}}" mode="aspectFill"></image>
+        <view wx:else class="placeholder-bg">
+          <text class="placeholder-title">{{video.title}}</text>
+          <text class="placeholder-desc">视频内容准备中...</text>
+        </view>
+      </view>
+    </view>
+
+    <scroll-view class="info-scroll" scroll-y="{{true}}">
+      <view class="meta-row">
+        <image
+          class="author-avatar"
+          src="{{video.avatar || '/images/icons/avatar.png'}}"
+          mode="aspectFill"
+        ></image>
+        <view class="author-meta">
+          <view class="author-name">
+            {{video.figureName}}
+            <text wx:if="{{video.figureTitle}}" class="author-title">· {{video.figureTitle}}</text>
+          </view>
+          <view wx:if="{{video.historicalEvent}}" class="author-event">历史事件：{{video.historicalEvent}}</view>
+        </view>
+      </view>
+
+      <view class="title-row">{{video.title}}</view>
+      <view wx:if="{{video.description}}" class="desc-row">{{video.description}}</view>
+
+      <view wx:if="{{video.tags && video.tags.length > 0}}" class="tags-row">
+        <text class="tag" wx:for="{{video.tags}}" wx:key="*this" wx:for-item="tag">#{{tag}}</text>
+      </view>
+
+      <view class="stats-row">
+        <text class="stat-item"><text class="iconfont icon-good"></text> {{video.likeCount || 0}}</text>
+        <text class="stat-item"><text class="iconfont icon-chat"></text> {{video.commentCount || 0}}</text>
+        <text class="stat-item"><text class="iconfont icon-eye"></text> {{video.viewCount || 0}}</text>
+        <text wx:if="{{video.duration}}" class="stat-item">时长 {{video.duration}}"</text>
+      </view>
+    </scroll-view>
+  </block>
+</view>

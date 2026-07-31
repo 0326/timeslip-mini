@@ -81,10 +81,23 @@ async function feedList(OPENID, data) {
   const hasMore = list.length === Math.min(limit, 20)
   const newLast = list.length > 0 ? list[list.length - 1] : null
 
-  // 批量查询用户点赞/关注状态和评论计数
+  // 批量查询用户点赞/关注状态、评论计数、视频号最新资料
   if (list.length > 0) {
     const videoIds = list.map(v => v._id)
     const channelIds = [...new Set(list.map(v => v.channelId).filter(Boolean))]
+
+    // 从 video_channels 取最新头像/昵称/头衔（覆盖 videos 表中的冗余字段）
+    const channelMap = {}
+    try {
+      if (channelIds.length > 0) {
+        const chRes = await db.collection('video_channels')
+          .where({ _id: _.in(channelIds) })
+          .get()
+        for (const ch of chRes.data) {
+          channelMap[ch._id] = ch
+        }
+      }
+    } catch (_) {}
 
     // 评论计数（所有用户都需要）
     const commentCountMap = {}
@@ -120,6 +133,12 @@ async function feedList(OPENID, data) {
       v.liked = likedSet.has(v._id)
       v.followed = followedSet.has(v.channelId)
       v.commentCount = commentCountMap[v._id] || 0
+      const ch = v.channelId ? channelMap[v.channelId] : null
+      if (ch) {
+        if (ch.avatar) v.avatar = ch.avatar
+        if (ch.figureName) v.figureName = ch.figureName
+        if (ch.figureTitle) v.figureTitle = ch.figureTitle
+      }
     })
   }
 
@@ -144,6 +163,21 @@ async function videoDetail(OPENID, data) {
     return { code: -1, message: '视频不存在', data: null }
   }
 
+  const video = { ...res.data }
+
+  // 关联查视频号主表，取最新头像/昵称/头衔
+  try {
+    if (video.channelId) {
+      const chRes = await db.collection('video_channels').doc(video.channelId).get()
+      const ch = chRes.data
+      if (ch) {
+        if (ch.avatar) video.avatar = ch.avatar
+        if (ch.figureName) video.figureName = ch.figureName
+        if (ch.figureTitle) video.figureTitle = ch.figureTitle
+      }
+    }
+  } catch (_) {}
+
   let liked = false
   if (OPENID) {
     const likeRes = await db.collection('video_likes')
@@ -151,11 +185,12 @@ async function videoDetail(OPENID, data) {
       .count()
     liked = likeRes.total > 0
   }
+  video.liked = liked
 
   return {
     code: 0,
     message: 'ok',
-    data: { ...res.data, liked }
+    data: video
   }
 }
 

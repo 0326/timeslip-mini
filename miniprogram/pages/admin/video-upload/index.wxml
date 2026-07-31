@@ -1,135 +1,143 @@
 <custom-nav-bar
   title="{{editId ? '编辑视频' : '上传视频'}}"
   showBack="{{true}}"
-  rightText="{{editId ? '保存' : '发布'}}"
-  bindRightTap="onSubmit"
 ></custom-nav-bar>
 
-<scroll-view class="page" scroll-y="{{true}}">
-  <view class="section">
-    <view class="section-title">视频</view>
-    <view class="video-preview" bindtap="chooseVideo">
-      <block wx:if="{{videoTempPath}}">
-        <video class="preview-video" src="{{videoTempPath}}" controls="{{true}}" object-fit="cover"></video>
-        <view class="duration-tag" wx:if="{{duration}}">{{duration}}秒</view>
-      </block>
-      <block wx:elif="{{videoFileID}}">
-        <video class="preview-video" src="{{videoFileID}}" controls="{{true}}" object-fit="cover"></video>
-        <view class="duration-tag" wx:if="{{duration}}">{{duration}}秒</view>
-      </block>
-      <view wx:else class="upload-placeholder">
-        <text class="iconfont icon-upload"></text>
-        <text class="upload-text">点击选择视频</text>
-        <text class="upload-hint">最长180秒，建议竖屏</text>
-      </view>
-    </view>
-  </view>
-
-  <view class="section">
-    <view class="section-title">封面图</view>
-    <view class="cover-row">
-      <view class="cover-box" bindtap="chooseCover">
-        <image wx:if="{{coverTempPath}}" class="cover-img" src="{{coverTempPath}}" mode="aspectFill"></image>
-        <image wx:elif="{{coverFileID}}" class="cover-img" src="{{coverFileID}}" mode="aspectFill"></image>
-        <view wx:else class="cover-placeholder">
-          <text class="iconfont icon-picture"></text>
-          <text class="cover-hint">选择封面</text>
+<view class="page-wrapper">
+  <scroll-view class="page" scroll-y="{{true}}">
+    <view class="section">
+      <view class="section-title">视频</view>
+      <view class="video-preview" bindtap="chooseVideo">
+        <block wx:if="{{videoTempPath}}">
+          <video class="preview-video" src="{{videoTempPath}}" controls="{{true}}" object-fit="contain"></video>
+          <view class="duration-tag" wx:if="{{duration}}">{{duration}}秒</view>
+        </block>
+        <block wx:elif="{{videoFileID}}">
+          <video class="preview-video" src="{{videoFileID}}" controls="{{true}}" object-fit="contain"></video>
+          <view class="duration-tag" wx:if="{{duration}}">{{duration}}秒</view>
+        </block>
+        <view wx:else class="upload-placeholder">
+          <text class="iconfont icon-upload"></text>
+          <text class="upload-text">点击选择视频</text>
+          <text class="upload-hint">最长180秒，建议竖屏</text>
         </view>
       </view>
-      <view class="cover-info">
-        <text class="cover-desc">建议上传 9:16 竖屏封面图，效果更好</text>
+    </view>
+
+    <view class="section">
+      <view class="section-title">封面图</view>
+      <view class="cover-row">
+        <view class="cover-box" bindtap="chooseCover">
+          <image wx:if="{{coverTempPath}}" class="cover-img" src="{{coverTempPath}}" mode="aspectFill"></image>
+          <image wx:elif="{{coverFileID}}" class="cover-img" src="{{coverFileID}}" mode="aspectFill"></image>
+          <view wx:else class="cover-placeholder">
+            <text class="iconfont icon-picture"></text>
+            <text class="cover-hint">选择封面</text>
+          </view>
+        </view>
+        <view class="cover-info">
+          <text class="cover-desc">建议上传 9:16 竖屏封面图，效果更好</text>
+        </view>
       </view>
     </view>
-  </view>
 
-  <view class="section">
-    <view class="section-title">视频号</view>
-    <view class="form-item" bindtap="onChooseChannel">
-      <text class="form-label">选择账号</text>
-      <view class="form-value">
-        <text wx:if="{{selectedChannel}}" class="channel-name">
-          {{selectedChannel.figureName}} · {{selectedChannel.figureTitle}}
-        </text>
-        <text wx:else class="form-placeholder">请选择视频号</text>
-        <text class="iconfont icon-right"></text>
+    <view class="section">
+      <view class="section-title">视频号</view>
+      <view class="form-item" bindtap="onChooseChannel">
+        <text class="form-label">选择账号</text>
+        <view class="form-value">
+          <text wx:if="{{selectedChannel}}" class="channel-name">
+            {{selectedChannel.figureName}} · {{selectedChannel.figureTitle}}
+          </text>
+          <text wx:else class="form-placeholder">请选择视频号</text>
+          <text class="iconfont icon-right"></text>
+        </view>
       </view>
     </view>
-  </view>
 
-  <view class="section">
-    <view class="section-title">基本信息</view>
-    <view class="form-item">
-      <text class="form-label">标题 *</text>
-      <input
-        class="form-input"
-        placeholder="请输入视频标题"
-        value="{{title}}"
-        bindinput="onTitleInput"
-        maxlength="50"
-      />
-    </view>
-    <view class="form-item">
-      <text class="form-label">描述</text>
-      <textarea
-        class="form-textarea"
-        placeholder="视频描述（选填）"
-        value="{{description}}"
-        bindinput="onDescInput"
-        maxlength="300"
-        auto-height="{{true}}"
-      />
-    </view>
-    <view class="form-item">
-      <text class="form-label">历史事件</text>
-      <input
-        class="form-input"
-        placeholder="如：鸿门宴、赤壁之战（选填）"
-        value="{{historicalEvent}}"
-        bindinput="onEventInput"
-        maxlength="30"
-      />
-    </view>
-    <view class="form-item">
-      <text class="form-label">标签</text>
-      <view class="tag-input-row">
+    <view class="section">
+      <view class="section-title">基本信息</view>
+      <view class="form-item">
+        <text class="form-label">标题 *</text>
         <input
-          class="tag-input"
-          placeholder="添加标签"
-          value="{{tagInput}}"
-          bindinput="onTagInput"
-          bindconfirm="onTagConfirm"
-          confirm-type="done"
+          class="form-input"
+          placeholder="请输入视频标题"
+          value="{{title}}"
+          bindinput="onTitleInput"
+          maxlength="50"
         />
-        <view class="tag-add-btn" bindtap="onTagConfirm">添加</view>
       </view>
-      <view class="tag-list" wx:if="{{tags.length > 0}}">
-        <view class="tag-item" wx:for="{{tags}}" wx:key="*this" wx:for-item="tag" wx:for-index="idx">
-          <text class="tag-text">#{{tag}}</text>
-          <text class="tag-remove" data-idx="{{idx}}" bindtap="removeTag">×</text>
+      <view class="form-item">
+        <text class="form-label">描述</text>
+        <textarea
+          class="form-textarea"
+          placeholder="视频描述（选填）"
+          value="{{description}}"
+          bindinput="onDescInput"
+          maxlength="300"
+          auto-height="{{true}}"
+        />
+      </view>
+      <view class="form-item">
+        <text class="form-label">历史事件</text>
+        <input
+          class="form-input"
+          placeholder="如：鸿门宴、赤壁之战（选填）"
+          value="{{historicalEvent}}"
+          bindinput="onEventInput"
+          maxlength="30"
+        />
+      </view>
+      <view class="form-item tag-form-item">
+        <text class="form-label">标签</text>
+        <view class="tag-content">
+          <view class="tag-input-row">
+            <input
+              class="tag-input"
+              placeholder="添加标签后点击添加"
+              value="{{tagInput}}"
+              bindinput="onTagInput"
+              bindconfirm="onTagConfirm"
+              confirm-type="done"
+            />
+            <view class="tag-add-btn" bindtap="onTagConfirm">添加</view>
+          </view>
+          <view class="tag-list" wx:if="{{tags.length > 0}}">
+            <view class="tag-item" wx:for="{{tags}}" wx:key="*this" wx:for-item="tag" wx:for-index="idx">
+              <text class="tag-text">#{{tag}}</text>
+              <text class="tag-remove" data-idx="{{idx}}" bindtap="removeTag">×</text>
+            </view>
+          </view>
         </view>
       </view>
     </view>
-  </view>
 
-  <view class="section" wx:if="{{!editId}}">
-    <view class="section-title">
-      AI评论
-      <text class="section-sub">（可选，发布后自动生成）</text>
-    </view>
-    <view class="add-comment-btn" bindtap="addAiComment">+ 添加AI评论</view>
-    <view class="ai-comment-list" wx:if="{{aiComments.length > 0}}">
-      <view class="ai-comment-item" wx:for="{{aiComments}}" wx:key="idx" wx:for-index="idx">
-        <view class="ai-comment-header">
-          <text class="ai-comment-name">{{item.fromFigureName}} · {{item.fromFigureTitle}}</text>
-          <text class="ai-comment-remove" data-idx="{{idx}}" bindtap="removeAiComment">删除</text>
+    <view class="section" wx:if="{{!editId}}">
+      <view class="section-title">
+        AI评论
+        <text class="section-sub">（可选，发布后自动生成）</text>
+      </view>
+      <view class="add-comment-btn" bindtap="addAiComment">+ 添加AI评论</view>
+      <view class="ai-comment-list" wx:if="{{aiComments.length > 0}}">
+        <view class="ai-comment-item" wx:for="{{aiComments}}" wx:key="idx" wx:for-index="idx">
+          <view class="ai-comment-header">
+            <text class="ai-comment-name">{{item.fromFigureName}} · {{item.fromFigureTitle}}</text>
+            <text class="ai-comment-remove" data-idx="{{idx}}" bindtap="removeAiComment">删除</text>
+          </view>
+          <view class="ai-comment-content">{{item.content}}</view>
         </view>
-        <view class="ai-comment-content">{{item.content}}</view>
       </view>
     </view>
-  </view>
 
-  <view class="bottom-space"></view>
-</scroll-view>
+    <view class="bottom-space"></view>
+  </scroll-view>
+
+  <view class="footer-bar">
+    <view class="submit-btn" bindtap="onSubmit">
+      {{editId ? '保存修改' : '立即发布'}}
+    </view>
+  </view>
+</view>
 
 <view wx:if="{{uploading}}" class="upload-mask">
   <view class="upload-dialog">

@@ -52,8 +52,27 @@ const ACHIEVEMENT_KEYS = {
   FIRST_LETTER: 'first_letter',
   FIRST_MEMORIAL: 'first_memorial',
   FIRST_MOMENT_LIKE: 'first_like',
+  FIRST_VISIT: 'first_visit',
+  FIRST_PROFILE: 'first_profile',
   DNA_COMPLETED: 'dna_completed',
-  CHAT_10: 'chat_10'
+  DNA_DONE: 'dna_done',
+  DNA_SHARE: 'dna_share',
+  CHAT_10: 'chat_10',
+  CHAT_50: 'chat_50',
+  CHAT_100: 'chat_100',
+  LETTER_5: 'letter_5',
+  LETTER_10: 'letter_10',
+  COMMENT_10: 'comment_10',
+  MEMORIAL_5: 'memorial_5',
+  MEMORIAL_20: 'memorial_20',
+  MEMORIAL_MASTER: 'memorial_master',
+  READ_BOOK: 'read_book',
+  READ_5: 'read_5',
+  ALL_DYNASTIES: 'all_dynasties',
+  ALL_FIGURES: 'all_figures',
+  COLLECTOR: 'collector',
+  TIME_MASTER: 'time_master',
+  MOMENT_POPULAR: 'moment_popular'
 }
 
 module.exports = {

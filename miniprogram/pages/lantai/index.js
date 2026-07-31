@@ -3,6 +3,7 @@ const { getDynastyInfo } = require('../../utils/date')
 const { storage } = require('../../utils/storage')
 const loginGuard = require('../../utils/loginGuard')
 const { getPinyinInitial } = require('../../utils/pinyin')
+const { requestCloud } = require('../../utils/cloudRequest')
 
 const PAGE_SIZE = 20
 const FIGURES_CACHE_KEY = 'figures_star5_v5'
@@ -131,6 +132,12 @@ Page({
     this.cleanupLegacyCacheOnce()
     this.loadFigures()
     this.loadBooks()
+    this.unlockFirstVisit()
+  },
+
+  unlockFirstVisit() {
+    requestCloud('getUser', 'unlockAchievement', { key: 'first_visit' }, { throwError: false })
+      .catch(() => {})
   },
 
   // 一次性清理历史遗留缓存（解决手机端永远显示旧人物列表的问题）

@@ -33,6 +33,7 @@
     "pages/profile/privacy",
     "pages/admin/video-upload/index",
     "pages/admin/video-manage/index",
+    "pages/admin/video-preview/index",
     "pages/admin/channel-manage/index",
     "pages/admin/quiz-covers/index"
   ],

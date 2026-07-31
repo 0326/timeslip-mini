@@ -50,7 +50,7 @@ Page({
   contactUs: function () {
     wx.showModal({
       title: '联系我们',
-      content: '穿越圈 · 穿越兰台团队\n\n微信公众号：穿越兰台\n邮箱：hello@timeslip.work\n官网：https://shiji.timeslip.work\n\n欢迎反馈问题与建议！',
+      content: '穿越圈 · 穿越兰台团队\n\n邮箱：1833559609@qq.com\n\n官网：https://timeslip.work\n\n欢迎反馈问题与建议！',
       showCancel: false,
       confirmText: '好的'
     })

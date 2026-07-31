@@ -1,8 +1,6 @@
 <custom-nav-bar
   title="视频管理"
   showBack="{{true}}"
-  rightText="上传"
-  bindRightTap="goUpload"
 ></custom-nav-bar>
 
 <view class="page">
@@ -18,11 +16,11 @@
     <view class="empty-btn" bindtap="goUpload">去上传</view>
   </view>
 
-  <view class="video-list" wx:if="{{videoList.length > 0}}">
+  <view class="video-grid" wx:if="{{videoList.length > 0}}">
     <view
       wx:for="{{videoList}}"
       wx:key="_id"
-      class="video-item"
+      class="grid-item"
       data-id="{{item._id}}"
       bindtap="onVideoTap"
     >
@@ -37,15 +35,19 @@
         <view class="item-title">{{item.title}}</view>
         <view class="item-meta">
           <text class="meta-author">{{item.figureName}}</text>
+        </view>
+        <view class="item-stats">
           <text class="meta-stats"><text class="iconfont icon-good"></text> {{item.likeCount || 0}}</text>
         </view>
       </view>
       <view class="item-actions">
         <view class="item-edit" catchtap="onEdit" data-id="{{item._id}}">
           <text class="iconfont icon-edit"></text>
+          <text class="action-text">编辑</text>
         </view>
         <view class="item-delete" catchtap="onDelete" data-id="{{item._id}}">
           <text class="iconfont icon-delete"></text>
+          <text class="action-text">删除</text>
         </view>
       </view>
     </view>

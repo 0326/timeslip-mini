@@ -9,7 +9,7 @@ async function tryUnlock(OPENID, key) {
     const user = userRes.data[0]
     const achievements = user.achievements || []
     if (achievements.some(a => a.key === key)) return
-    const REWARDS = { first_chat: 10, first_letter: 10, first_like: 5, dna_done: 20, chat_10: 30, chat_50: 80, letter_5: 50, comment_10: 30, first_memorial: 20, memorial_5: 80, read_book: 15, all_dynasties: 200, collector: 500, time_master: 1000 }
+    const REWARDS = { first_chat: 10, first_letter: 10, first_like: 5, dna_done: 20, first_visit: 10, first_profile: 10, chat_10: 30, chat_50: 80, letter_5: 50, comment_10: 30, chat_100: 150, letter_10: 100, first_memorial: 20, memorial_5: 80, read_book: 15, memorial_20: 200, read_5: 100, dna_share: 30, all_dynasties: 200, collector: 500, time_master: 1000, all_figures: 300, moment_popular: 200, memorial_master: 500 }
     const reward = REWARDS[key] || 0
     achievements.push({ key, unlockedAt: new Date() })
     await db.collection('users').doc(user._id).update({
@@ -118,6 +118,8 @@ async function decide(OPENID, data) {
     try {
       const cnt = await db.collection('memorial_answers').where({ _openid: OPENID }).count()
       if ((cnt.total || 0) >= 5) await tryUnlock(OPENID, 'memorial_5')
+      if ((cnt.total || 0) >= 20) await tryUnlock(OPENID, 'memorial_20')
+      if ((cnt.total || 0) >= 50) await tryUnlock(OPENID, 'memorial_master')
     } catch (e) {}
   })()
 

@@ -1,148 +1,267 @@
 .page {
   min-height: 100vh;
-  background: var(--wechat-bg);
+  background: #F5F0E8;
 }
 
+/* ==================== 骨架屏 ==================== */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.sk-num, .sk-label, .sk-progress-bar, .sk-cat-title, .sk-cat-progress,
+.sk-icon, .sk-name, .sk-desc {
+  background: linear-gradient(90deg, #E8E0D5 25%, #DFD5C8 50%, #E8E0D5 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 8rpx;
+}
+.sk-num { width: 200rpx; height: 96rpx; margin: 16rpx auto 0; border-radius: 12rpx; }
+.sk-label { width: 160rpx; height: 26rpx; margin: 20rpx auto 28rpx; }
+.sk-progress { max-width: 560rpx; margin: 0 auto; }
+.sk-progress-bar { height: 12rpx; border-radius: 999rpx; }
+.sk-cat-title { width: 160rpx; height: 28rpx; }
+.sk-cat-progress { width: 60rpx; height: 22rpx; }
+.sk-card { background: #F0EBE3; border: 2rpx solid transparent; }
+.sk-icon { width: 72rpx; height: 72rpx; margin: 0 auto 12rpx; border-radius: 50%; }
+.sk-name { width: 90rpx; height: 22rpx; margin: 0 auto 6rpx; }
+.sk-desc { width: 70rpx; height: 18rpx; margin: 0 auto; }
+
+/* ==================== Hero Banner (CSS) ==================== */
 .hero {
   position: relative;
-  padding: 40rpx 32rpx 60rpx;
+  padding: 48rpx 32rpx 56rpx;
   color: #fff;
   overflow: hidden;
 }
-.hero-bg {
+.hero-bg-css {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, #2D1810 0%, #C9A24D 100%);
+  background: linear-gradient(135deg, #1A0F08 0%, #3D2818 30%, #8B6914 70%, #C9A24D 100%);
 }
+.hero-bg-css::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(201,162,77,0.15) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(255,215,0,0.08) 0%, transparent 35%);
+}
+.hero-bg-css::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(ellipse 60rpx 30rpx at 15% 20%, rgba(255,255,255,0.06), transparent),
+    radial-gradient(ellipse 80rpx 40rpx at 85% 60%, rgba(255,255,255,0.04), transparent),
+    radial-gradient(ellipse 50rpx 25rpx at 50% 85%, rgba(255,255,255,0.05), transparent);
+}
+.hero-deco-left, .hero-deco-right {
+  position: absolute;
+  top: 50%;
+  width: 64rpx;
+  height: 64rpx;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  border: 3rpx solid rgba(201,162,77,0.3);
+}
+.hero-deco-left { left: 24rpx; }
+.hero-deco-right { right: 24rpx; }
 .hero-content {
   position: relative;
   z-index: 1;
   text-align: center;
 }
-.unlock-count {
-  margin-top: 16rpx;
+.hero-title {
+  font-size: 24rpx;
+  letter-spacing: 12rpx;
+  opacity: 0.6;
+  margin-bottom: 8rpx;
 }
+.unlock-count { margin-top: 8rpx; }
 .unlock-count .num {
-  font-size: 96rpx;
-  font-weight: 700;
-  color: #fff;
+  font-size: 112rpx;
+  font-weight: 800;
+  color: #FFD700;
+  text-shadow: 0 4rpx 16rpx rgba(255,215,0,0.3);
 }
 .unlock-count .sep {
-  font-size: 48rpx;
-  opacity: 0.5;
-  margin: 0 12rpx;
+  font-size: 56rpx;
+  opacity: 0.4;
+  margin: 0 8rpx;
 }
 .unlock-count .total {
-  font-size: 48rpx;
-  opacity: 0.7;
+  font-size: 56rpx;
+  opacity: 0.6;
 }
 .hero-label {
-  font-size: 26rpx;
-  opacity: 0.85;
-  margin-bottom: 28rpx;
-  letter-spacing: 4rpx;
+  font-size: 24rpx;
+  opacity: 0.75;
+  margin-bottom: 32rpx;
+  letter-spacing: 6rpx;
 }
 .progress-wrap {
-  max-width: 560rpx;
+  max-width: 520rpx;
   margin: 0 auto;
 }
 .progress-bar {
-  height: 12rpx;
-  background: rgba(255,255,255,0.2);
+  height: 16rpx;
+  background: rgba(255,255,255,0.12);
   border-radius: 999rpx;
   overflow: hidden;
+  border: 1rpx solid rgba(255,255,255,0.08);
 }
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #FFD700, #FFB700);
+  background: linear-gradient(90deg, #FFD700, #FFB700, #FFD700);
+  background-size: 200% 100%;
   border-radius: 999rpx;
-  transition: width 0.5s ease;
+  animation: progress-glow 2s linear infinite;
+  box-shadow: 0 0 12rpx rgba(255,215,0,0.4);
+}
+@keyframes progress-glow {
+  0% { background-position: 0% 0; }
+  100% { background-position: -200% 0; }
 }
 .progress-text {
-  margin-top: 12rpx;
+  margin-top: 14rpx;
   font-size: 22rpx;
-  opacity: 0.8;
+  opacity: 0.7;
 }
 
-.container { padding: 32rpx; margin-top: -24rpx; position: relative; z-index: 2; }
+/* ==================== Container ==================== */
+.container {
+  padding: 0 24rpx 48rpx;
+  margin-top: -28rpx;
+  position: relative;
+  z-index: 2;
+}
 
+/* ==================== Category ==================== */
 .category {
-  background: var(--wechat-white);
-  border-radius: var(--radius-lg);
-  padding: 24rpx;
-  margin-bottom: 24rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.04);
+  background: #FFFCF7;
+  border-radius: 24rpx;
+  padding: 28rpx 24rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 20rpx rgba(45,24,16,0.05);
 }
 .cat-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20rpx;
+  margin-bottom: 24rpx;
+  padding-bottom: 20rpx;
+  border-bottom: 2rpx solid #F0E8DC;
 }
-.cat-title {
+.cat-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+.cat-badge {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 12rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 28rpx;
-  font-weight: 600;
-  color: var(--ancient-ink);
+}
+.cat-badge-beginner { background: #E8F5E9; }
+.cat-badge-communicate { background: #E3F2FD; }
+.cat-badge-explore { background: #FFF3E0; }
+.cat-badge-legend { background: #F3E5F5; }
+.cat-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #2D1810;
+  letter-spacing: 2rpx;
 }
 .cat-progress {
-  font-size: 22rpx;
-  color: var(--ancient-gold);
-  font-weight: 500;
+  font-size: 24rpx;
+  color: #C9A24D;
+  font-weight: 600;
+  background: rgba(201,162,77,0.08);
+  padding: 4rpx 16rpx;
+  border-radius: 999rpx;
 }
 
+/* ==================== Card Grid (3 columns) ==================== */
 .card-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 16rpx;
+  justify-content: space-between;
 }
 .ach-card {
-  width: calc(50% - 8rpx);
-  padding: 24rpx 16rpx;
-  border-radius: var(--radius-md);
+  width: 32%;
+  padding: 24rpx 8rpx 20rpx;
+  border-radius: 20rpx;
   text-align: center;
   position: relative;
   box-sizing: border-box;
+  margin-bottom: 16rpx;
+  transition: transform 0.15s ease;
 }
+.ach-card:active { transform: scale(0.94); }
+
+/* ── 卡片背景统一白色，稀有度用左边色条区分 ── */
 .ach-card.unlocked {
-  background: linear-gradient(135deg, #FFF9F0 0%, #FFFBF5 100%);
-  border: 2rpx solid rgba(201,162,77,0.4);
+  background: #FFFFFF;
+  border: 2rpx solid #EEE;
 }
+.ach-card.rarity-rare.unlocked   { border-color: #C5CAE9; }
+.ach-card.rarity-epic.unlocked   { border-color: #CE93D8; }
+.ach-card.rarity-legend.unlocked { border-color: #FFD700; box-shadow: 0 2rpx 12rpx rgba(255,215,0,0.1); }
 .ach-card.locked {
-  background: #f7f7f7;
-  border: 2rpx solid transparent;
-  filter: grayscale(0.5);
-  opacity: 0.7;
-}
-.ach-icon {
-  font-size: 56rpx;
-  margin-bottom: 12rpx;
-}
-.ach-name {
-  font-size: 26rpx;
-  font-weight: 600;
-  color: var(--wechat-text);
-  margin-bottom: 6rpx;
-}
-.ach-desc {
-  font-size: 20rpx;
-  color: var(--wechat-text2);
-  line-height: 1.4;
-  min-height: 56rpx;
-}
-.ach-tag {
-  margin-top: 12rpx;
-  display: inline-block;
-  font-size: 18rpx;
-  color: var(--ancient-gold);
-  padding: 2rpx 12rpx;
-  border-radius: 999rpx;
-  background: rgba(201,162,77,0.1);
+  background: #FFFFFF;
+  border: 2rpx solid #F0F0F0;
+  opacity: 0.5;
 }
 
+/* ── 图标：直接展示图片，无外框 ── */
+.ach-icon-box {
+  width: 80rpx;
+  height: 80rpx;
+  margin: 0 auto 14rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ach-icon-box.icon-locked { filter: grayscale(1) opacity(0.3); }
+.ach-icon-img {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 12rpx;
+}
+
+/* ── 文字 ── */
+.ach-name {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: #2D1810;
+  margin-bottom: 4rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ach-rarity { font-size: 18rpx; color: #999; }
+.rarity-text-rare   { color: #5C6BC0; }
+.rarity-text-epic   { color: #8E24AA; }
+.rarity-text-legend { color: #F57F17; }
+
+/* ── 锁定标记 ── */
+.ach-lock {
+  position: absolute;
+  top: 8rpx;
+  right: 8rpx;
+  font-size: 20rpx;
+  opacity: 0.5;
+}
+
+/* ==================== Detail Modal ==================== */
 .detail-mask {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.6);
   z-index: 999;
   display: flex;
   align-items: center;
@@ -151,64 +270,98 @@
 }
 .detail-modal {
   width: 100%;
-  background: var(--wechat-white);
-  border-radius: 24rpx;
+  background: #FFFFFF;
+  border-radius: 28rpx;
   overflow: hidden;
   transform: scale(0.9);
   opacity: 0;
   transition: all 0.25s ease;
 }
-.detail-modal.show {
-  transform: scale(1);
-  opacity: 1;
-}
-.dm-hero {
-  padding: 48rpx 32rpx 40rpx;
+.detail-modal.show { transform: scale(1); opacity: 1; }
+
+/* ── 解锁时间：顶部居中灰字 ── */
+.dm-unlock-time {
   text-align: center;
-  color: #fff;
-}
-.dm-hero.unlocked {
-  background: linear-gradient(135deg, #C9A24D 0%, #FFD700 100%);
-}
-.dm-hero.locked {
-  background: linear-gradient(135deg, #888 0%, #aaa 100%);
-}
-.dm-icon { font-size: 96rpx; margin-bottom: 16rpx; }
-.dm-name {
-  font-size: 36rpx;
-  font-weight: 700;
-  margin-bottom: 8rpx;
-}
-.dm-status {
-  font-size: 24rpx;
-  opacity: 0.9;
+  font-size: 22rpx;
+  color: #BBB;
+  padding: 24rpx 32rpx 0;
 }
 
-.dm-body { padding: 32rpx; }
-.dm-section { margin-bottom: 24rpx; }
-.dm-label {
+/* ── 顶部标签栏：稀有度左 / 状态右 ── */
+.dm-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx 32rpx 0;
+}
+.dm-tag {
   font-size: 22rpx;
-  color: var(--wechat-text2);
-  margin-bottom: 8rpx;
+  padding: 8rpx 24rpx;
+  border-radius: 999rpx;
+  font-weight: 500;
 }
-.dm-desc {
-  font-size: 28rpx;
-  color: var(--wechat-text);
-  line-height: 1.7;
+.dm-tag-rarity { color: #999; background: #F5F5F5; }
+.dm-tag-rarity.rarity-rare   { color: #5C6BC0; background: #E8EAF6; }
+.dm-tag-rarity.rarity-epic   { color: #8E24AA; background: #F3E5F5; }
+.dm-tag-rarity.rarity-legend { color: #F57F17; background: #FFF8E1; }
+.dm-tag-status.status-unlocked { color: #2E7D32; background: #E8F5E9; }
+.dm-tag-status.status-locked   { color: #999; background: #F5F5F5; }
+
+/* ── 图标 + 名称区：纯白背景 ── */
+.dm-hero {
+  padding: 24rpx 32rpx 28rpx;
+  text-align: center;
 }
-.dm-reward {
-  font-size: 28rpx;
-  color: var(--ancient-seal);
+.dm-icon-wrap {
+  position: relative;
+  display: inline-block;
+  margin: 0 auto 20rpx;
+}
+.dm-icon-img {
+  width: 340rpx;
+  height: 340rpx;
+  border-radius: 24rpx;
+  display: block;
+}
+.dm-reward-overlay {
+  position: absolute;
+  right: 16rpx;
+  bottom: 16rpx;
+  font-size: 22rpx;
+  color: #fff;
+  background: rgba(183,28,28,0.85);
+  padding: 6rpx 20rpx;
+  border-radius: 999rpx;
   font-weight: 600;
+  white-space: nowrap;
 }
+.dm-name {
+  font-size: 38rpx;
+  font-weight: 700;
+  color: #2D1810;
+}
+
+.dm-body { padding: 28rpx 32rpx 36rpx; display: flex; flex-direction: column; align-items: center; border-top: 2rpx solid #F5F0E8; }
+.dm-text {
+  font-size: 26rpx;
+  color: #666;
+  line-height: 1.7;
+  text-align: center;
+  margin-bottom: 16rpx;
+}
+.dm-text:last-of-type { margin-bottom: 0; }
 .dm-close {
-  margin-top: 16rpx;
+  margin-top: 32rpx;
   width: 100%;
-  height: 88rpx;
-  line-height: 88rpx;
-  background: var(--ancient-ink);
+  height: 92rpx;
+  line-height: 92rpx;
+  background: #2D1810;
   color: #fff;
   border: none;
-  border-radius: var(--radius-lg);
+  border-radius: 999rpx;
   font-size: 30rpx;
+  font-weight: 500;
+  text-align: center;
+  padding: 0;
 }
+.dm-close::after { border: none; }

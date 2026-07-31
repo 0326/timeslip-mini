@@ -45,7 +45,7 @@
           show-center-play-btn="{{false}}"
           show-play-btn="{{false}}"
           controls="{{false}}"
-          object-fit="cover"
+          object-fit="contain"
           enable-progress-gesture="{{false}}"
           show-fullscreen-btn="{{false}}"
           binderror="onVideoError"

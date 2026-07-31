@@ -4,45 +4,72 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
+const ICON_BASE = 'cloud://cloud1-d0gunpzup215cfd87.636c-cloud1-d0gunpzup215cfd87-1457646459/mini-assets/achievements/icons'
+const iconUrl = (key) => `${ICON_BASE}/${key}.jpg`
+
 const ALL_ACHIEVEMENTS = [
-  { key: 'first_chat', icon: '💬', name: '初遇古人', desc: '第一次与历史人物聊天', category: 'beginner',
+  // ── 初入穿越 (6) ──
+  { key: 'first_chat', name: '初遇古人', desc: '第一次与历史人物聊天', category: 'beginner', iconUrl: iconUrl('first_chat'),
     unlockCondition: '与任意历史人物发送第一条消息', reward: '+10 穿越点' },
-  { key: 'first_letter', icon: '🕊️', name: '飞鸽初试', desc: '第一次通过飞鸽传书', category: 'beginner',
+  { key: 'first_letter', name: '飞鸽初试', desc: '第一次通过飞鸽传书', category: 'beginner', iconUrl: iconUrl('first_letter'),
     unlockCondition: '成功发送并收到第一封回信', reward: '+10 穿越点' },
-  { key: 'first_like', icon: '👍', name: '点赞之交', desc: '第一次点赞朋友圈动态', category: 'beginner',
+  { key: 'first_like', name: '点赞之交', desc: '第一次点赞朋友圈动态', category: 'beginner', iconUrl: iconUrl('first_like'),
     unlockCondition: '在朋友圈点赞任意一条动态', reward: '+5 穿越点' },
-  { key: 'dna_done', icon: '🧬', name: '身世之谜', desc: '完成历史人格DNA测试', category: 'beginner',
+  { key: 'dna_done', name: '身世之谜', desc: '完成历史人格DNA测试', category: 'beginner', iconUrl: iconUrl('dna_done'),
     unlockCondition: '答完全部DNA测试题并生成结果', reward: '+20 穿越点' },
+  { key: 'first_visit', name: '初探兰台', desc: '第一次进入兰台史书', category: 'beginner', iconUrl: iconUrl('first_visit'),
+    unlockCondition: '首次进入兰台史书阅读页', reward: '+10 穿越点' },
+  { key: 'first_profile', name: '身份认证', desc: '完成个人资料设置', category: 'beginner', iconUrl: iconUrl('first_profile'),
+    unlockCondition: '设置昵称和头像完成个人资料', reward: '+10 穿越点' },
 
-  { key: 'chat_10', icon: '📚', name: '话痨之友', desc: '累计发送10条聊天消息', category: 'communicate',
+  // ── 交流互动 (6) ──
+  { key: 'chat_10', name: '话痨之友', desc: '累计发送10条聊天消息', category: 'communicate', iconUrl: iconUrl('chat_10'),
     unlockCondition: '聊天消息发送总数达到10条', reward: '+30 穿越点' },
-  { key: 'chat_50', icon: '🎭', name: '忘年之交', desc: '累计发送50条聊天消息', category: 'communicate',
+  { key: 'chat_50', name: '忘年之交', desc: '累计发送50条聊天消息', category: 'communicate', iconUrl: iconUrl('chat_50'),
     unlockCondition: '聊天消息发送总数达到50条', reward: '+80 穿越点' },
-  { key: 'letter_5', icon: '✉️', name: '鸿雁传情', desc: '累计收到5封回信', category: 'communicate',
+  { key: 'letter_5', name: '鸿雁传情', desc: '累计收到5封回信', category: 'communicate', iconUrl: iconUrl('letter_5'),
     unlockCondition: '共收到5封历史人物的回信', reward: '+50 穿越点' },
-  { key: 'comment_10', icon: '✍️', name: '说古道今', desc: '累计在朋友圈发布10条评论', category: 'communicate',
+  { key: 'comment_10', name: '说古道今', desc: '累计在朋友圈发布10条评论', category: 'communicate', iconUrl: iconUrl('comment_10'),
     unlockCondition: '朋友圈评论数达到10条', reward: '+30 穿越点' },
+  { key: 'chat_100', name: '知音难觅', desc: '累计发送100条聊天消息', category: 'communicate', iconUrl: iconUrl('chat_100'),
+    unlockCondition: '聊天消息发送总数达到100条', reward: '+150 穿越点' },
+  { key: 'letter_10', name: '尺素往来', desc: '累计收到10封回信', category: 'communicate', iconUrl: iconUrl('letter_10'),
+    unlockCondition: '共收到10封历史人物的回信', reward: '+100 穿越点' },
 
-  { key: 'first_memorial', icon: '📋', name: '初批奏折', desc: '第一次批阅奏折', category: 'explore',
+  // ── 历史探索 (6) ──
+  { key: 'first_memorial', name: '初批奏折', desc: '第一次批阅奏折', category: 'explore', iconUrl: iconUrl('first_memorial'),
     unlockCondition: '完成第一份奏折决策并查看推演结果', reward: '+20 穿越点' },
-  { key: 'memorial_5', icon: '👑', name: '勤政之君', desc: '累计批阅5份奏折', category: 'explore',
+  { key: 'memorial_5', name: '勤政之君', desc: '累计批阅5份奏折', category: 'explore', iconUrl: iconUrl('memorial_5'),
     unlockCondition: '共完成5份奏折的批阅', reward: '+80 穿越点' },
-  { key: 'read_book', icon: '📖', name: '博览群书', desc: '第一次开启史书阅读', category: 'explore',
+  { key: 'read_book', name: '博览群书', desc: '第一次开启史书阅读', category: 'explore', iconUrl: iconUrl('read_book'),
     unlockCondition: '进入兰台史书阅读页并阅读超过3分钟', reward: '+15 穿越点' },
+  { key: 'memorial_20', name: '日理万机', desc: '累计批阅20份奏折', category: 'explore', iconUrl: iconUrl('memorial_20'),
+    unlockCondition: '共完成20份奏折的批阅', reward: '+200 穿越点' },
+  { key: 'read_5', name: '学富五车', desc: '累计阅读5本史书', category: 'explore', iconUrl: iconUrl('read_5'),
+    unlockCondition: '在兰台阅读5本不同的史书', reward: '+100 穿越点' },
+  { key: 'dna_share', name: '身世分享', desc: '分享DNA测试结果', category: 'explore', iconUrl: iconUrl('dna_share'),
+    unlockCondition: '将历史人格DNA测试结果分享到朋友圈', reward: '+30 穿越点' },
 
-  { key: 'all_dynasties', icon: '🏯', name: '千古一帝', desc: '与各朝代至少一位人物聊过天', category: 'legend',
+  // ── 稀世传奇 (6) ──
+  { key: 'all_dynasties', name: '千古一帝', desc: '与各朝代至少一位人物聊过天', category: 'legend', iconUrl: iconUrl('all_dynasties'),
     unlockCondition: '秦汉、三国、唐、宋、明、清各朝至少一人都有过聊天记录', reward: '+200 穿越点 + 专属古风称号' },
-  { key: 'collector', icon: '🏅', name: '金石收藏家', desc: '解锁80%的成就', category: 'legend',
+  { key: 'collector', name: '金石收藏家', desc: '解锁80%的成就', category: 'legend', iconUrl: iconUrl('collector'),
     unlockCondition: '成就解锁进度达到80%', reward: '+500 穿越点 + 金色个人主页边框' },
-  { key: 'time_master', icon: '⏳', name: '时空主宰', desc: '累计穿越积分达到1000', category: 'legend',
-    unlockCondition: '总穿越点数累积达到1000点', reward: '+1000 穿越点 + 专属稀有头像框' }
+  { key: 'time_master', name: '时空主宰', desc: '累计穿越积分达到1000', category: 'legend', iconUrl: iconUrl('time_master'),
+    unlockCondition: '总穿越点数累积达到1000点', reward: '+1000 穿越点 + 专属稀有头像框' },
+  { key: 'all_figures', name: '交友满天下', desc: '与所有历史人物聊过天', category: 'legend', iconUrl: iconUrl('all_figures'),
+    unlockCondition: '与全部历史人物至少有过一次聊天记录', reward: '+300 穿越点 + 限定称号' },
+  { key: 'moment_popular', name: '名动天下', desc: '朋友圈动态获得50个赞', category: 'legend', iconUrl: iconUrl('moment_popular'),
+    unlockCondition: '单条朋友圈动态累计获得50个赞', reward: '+200 穿越点 + 热门标识' },
+  { key: 'memorial_master', name: '批阅狂人', desc: '累计批阅50份奏折', category: 'legend', iconUrl: iconUrl('memorial_master'),
+    unlockCondition: '共完成50份奏折的批阅', reward: '+500 穿越点 + 帝师称号' }
 ]
 
 const REWARDS = {
-  first_chat: 10, first_letter: 10, first_like: 5, dna_done: 20,
-  chat_10: 30, chat_50: 80, letter_5: 50, comment_10: 30,
-  first_memorial: 20, memorial_5: 80, read_book: 15,
-  all_dynasties: 200, collector: 500, time_master: 1000
+  first_chat: 10, first_letter: 10, first_like: 5, dna_done: 20, first_visit: 10, first_profile: 10,
+  chat_10: 30, chat_50: 80, letter_5: 50, comment_10: 30, chat_100: 150, letter_10: 100,
+  first_memorial: 20, memorial_5: 80, read_book: 15, memorial_20: 200, read_5: 100, dna_share: 30,
+  all_dynasties: 200, collector: 500, time_master: 1000, all_figures: 300, moment_popular: 200, memorial_master: 500
 }
 
 function generateCrossNo() {
@@ -68,14 +95,20 @@ exports.main = async (event, context) => {
       const existing = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
       if (existing.data && existing.data.length > 0) {
         const user = existing.data[0]
-        await db.collection('users').doc(user._id).update({
-          data: {
-            nickName,
-            avatarUrl,
-            lastActiveAt: db.serverDate(),
-            updatedAt: db.serverDate()
-          }
-        })
+        const achievements = user.achievements || []
+        let updateData = {
+          nickName,
+          avatarUrl,
+          lastActiveAt: db.serverDate(),
+          updatedAt: db.serverDate()
+        }
+        // Unlock first_profile if not already unlocked
+        if (!achievements.some(a => a.key === 'first_profile')) {
+          achievements.push({ key: 'first_profile', unlockedAt: db.serverDate() })
+          updateData.achievements = achievements
+          updateData.points = _.inc(10)
+        }
+        await db.collection('users').doc(user._id).update({ data: updateData })
         user.nickName = nickName
         user.avatarUrl = avatarUrl
         user._openid = OPENID
@@ -88,10 +121,10 @@ exports.main = async (event, context) => {
         avatarUrl,
         role: 'user',
         crossNo: generateCrossNo(),
-        points: 10,
+        points: 20,
         memberLevel: '布衣',
         dnaResult: null,
-        achievements: [],
+        achievements: [{ key: 'first_profile', unlockedAt: new Date() }],
         stats: {
           chatCount: 0,
           letterCount: 0,

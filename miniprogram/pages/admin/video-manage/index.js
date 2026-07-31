@@ -58,7 +58,7 @@ Page({
   onVideoTap(e) {
     const id = e.currentTarget.dataset.id
     wx.navigateTo({
-      url: `/pages/discover/channels/index?videoId=${id}`
+      url: `/pages/admin/video-preview/index?videoId=${id}`
     })
   },
 
