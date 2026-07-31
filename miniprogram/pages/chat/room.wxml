@@ -76,6 +76,7 @@
       </view>
       <view class="input_inner_box">
         <textarea
+          wx:if="{{!dailyLimited}}"
           class="input"
           value="{{inputValue}}"
           maxlength="1024"
@@ -90,9 +91,10 @@
           auto-height="{{true}}"
           show-confirm-bar="{{false}}"
         />
+        <view wx:else class="daily-limit-tip">已达到今日聊天次数上限，明天再来</view>
       </view>
       <button
-        wx:if="{{!!inputValue && chatStatus === 0}}"
+        wx:if="{{!dailyLimited && !!inputValue && chatStatus === 0}}"
         class="send-btn"
         bindtap="onSend"
       >发送</button>

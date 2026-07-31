@@ -1,4 +1,6 @@
 {
   "permissions": {},
-  "timeout": 20
+  "timeout": 20,
+  "runtime": "Nodejs16.13",
+  "memorySize": 256
 }

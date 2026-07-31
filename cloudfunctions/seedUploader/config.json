@@ -2,5 +2,7 @@
   "permissions": {
     "openapi": []
   },
-  "timeout": 60
+  "timeout": 60,
+  "runtime": "Nodejs16.13",
+  "memorySize": 256
 }

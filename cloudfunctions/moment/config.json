@@ -1,4 +1,6 @@
 {
+  "runtime": "Nodejs16.13",
+  "memorySize": 256,
   "permissions": {
     "openapi": [
       "security.msgSecCheck"

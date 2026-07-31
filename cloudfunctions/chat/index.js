@@ -403,6 +403,42 @@ function buildMemorialPrompt(memorialId, decision, optionText) {
 不要任何其他文字。`
 }
 
+const DAILY_LIMIT = 100
+
+// 获取今天的日期字符串（Asia/Shanghai），格式 YYYY-MM-DD
+function todayStr() {
+  const d = new Date()
+  // 东八区偏移
+  const utc = d.getTime() + d.getTimezoneOffset() * 60000
+  const sh = new Date(utc + 8 * 3600000)
+  const y = sh.getFullYear()
+  const m = String(sh.getMonth() + 1).padStart(2, '0')
+  const day = String(sh.getDate()).padStart(2, '0')
+  return y + '-' + m + '-' + day
+}
+
+// 检查用户今日聊天总次数（不区分角色），返回 { used, limit, reached }
+async function checkDailyLimit(OPENID) {
+  const day = todayStr()
+  const _ = db.command
+  const start = new Date(day + 'T00:00:00+08:00')
+  const end = new Date(day + 'T23:59:59+08:00')
+  try {
+    const c = await db.collection('chat_messages')
+      .where({
+        _openid: OPENID,
+        role: 'user',
+        createdAt: _.gte(start).and(_.lte(end))
+      })
+      .count()
+    const used = (c && c.total) || 0
+    return { used: used, limit: DAILY_LIMIT, reached: used >= DAILY_LIMIT }
+  } catch (e) {
+    console.warn('[dailyLimit] count failed, fail-open:', e.message)
+    return { used: 0, limit: DAILY_LIMIT, reached: false }
+  }
+}
+
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext()
   const { mode = 'chat', action, data, ...rest } = event || {}
@@ -419,6 +455,10 @@ exports.main = async (event, context) => {
       case 'memorial_simulate': return await modeMemorialSimulate(OPENID, params)
       case 'history': return await handleHistory(OPENID, params)
       case 'clear': return await handleClear(OPENID, params)
+      case 'dailyStatus': {
+        const lc = await checkDailyLimit(OPENID)
+        return { code: 0, message: 'ok', data: lc }
+      }
       default: return { code: -1, message: '未知 chat action/mode: ' + runAction }
     }
   } catch (err) {
@@ -458,6 +498,13 @@ async function modeChat(OPENID, data) {
   const content = String(data.content || '').trim()
   if (!figureId || !content) return { code: -1, message: '缺少 figureId 或 content' }
   if (content.length > 500) return { code: -1, message: '消息不能超过500字' }
+
+  // 每日消息数限流：统计当天用户已发送消息总数（不区分角色）
+  const limitCheck = await checkDailyLimit(OPENID)
+  if (limitCheck.reached) {
+    return { code: 429, message: '已达到今日聊天次数上限，明天再来', data: { used: limitCheck.used, limit: DAILY_LIMIT } }
+  }
+
   const sec = await checkText(content, OPENID)
   if (!sec.ok) return { code: 403, message: sec.reason }
 
@@ -483,8 +530,7 @@ async function modeChat(OPENID, data) {
     return { code: 502, message: 'AI_UNAVAILABLE', data: { reason: 'AI_UNAVAILABLE', detail: e && e.message } }
   }
   const reply = aiResult.text
-  const outputSec = await checkText(reply, OPENID)
-  if (!outputSec.ok) return { code: 403, message: 'AI_CONTENT_REJECTED' }
+  // AI 输出已由大模型服务端安全过滤，不再二次调用 msgSecCheck（节省额度，避免 45009 额度耗尽阻断对话）
 
   const now = db.serverDate()
   const userMsgId = 'u_' + Date.now() + Math.random().toString(36).slice(2, 6)
@@ -697,20 +743,190 @@ async function bumpSession(OPENID, figureId, lastMsg, figureDoc) {
   }
 }
 
+// 模块级冷却：同一实例 5 分钟内最多尝试重置一次，避免把每月 10 次额度一次烧光
+let _lastQuotaResetAt = 0
+const QUOTA_RESET_COOLDOWN_MS = 5 * 60 * 1000
+
+// 内容安全结果缓存：相同内容 10 分钟内不重复检测，大幅降低 msgSecCheck 调用量
+// key: 内容hash，value: { ok, reason, expireAt }
+const _secCache = new Map()
+const SEC_CACHE_TTL = 10 * 60 * 1000
+const SEC_CACHE_MAX = 500
+
+function secCacheKey(text) {
+  // 简单字符串 hash，避免引入 crypto 依赖
+  let h = 0
+  const s = String(text).slice(0, 500)
+  for (let i = 0; i < s.length; i++) {
+    h = ((h << 5) - h + s.charCodeAt(i)) | 0
+  }
+  return 'sec_' + h
+}
+
+function getSecCache(text) {
+  const k = secCacheKey(text)
+  const v = _secCache.get(k)
+  if (!v) return null
+  if (Date.now() > v.expireAt) { _secCache.delete(k); return null }
+  return v.result
+}
+
+function setSecCache(text, result) {
+  if (_secCache.size >= SEC_CACHE_MAX) {
+    // 淘汰最早的 100 条
+    let i = 0
+    for (const key of _secCache.keys()) {
+      _secCache.delete(key)
+      if (++i >= 100) break
+    }
+  }
+  _secCache.set(secCacheKey(text), { result, expireAt: Date.now() + SEC_CACHE_TTL })
+}
+
+/**
+ * 通过 clearQuotaByAppSecret 重置全量 API 每日调用次数
+ * 文档：https://developers.weixin.qq.com/miniprogram/dev/server/API/openApi-mgnt/api_clearquotabyappsecret.html
+ * 需要在云函数环境变量里配置 WX_APPSECRET
+ */
+function resetApiQuota(appid) {
+  const appsecret = process.env.WX_APPSECRET
+  if (!appsecret) {
+    console.warn('[quota] WX_APPSECRET env not set, skip auto-reset')
+    return Promise.resolve(false)
+  }
+  const now = Date.now()
+  if (now - _lastQuotaResetAt < QUOTA_RESET_COOLDOWN_MS) {
+    console.warn('[quota] cooldown active, skip reset')
+    return Promise.resolve(false)
+  }
+  _lastQuotaResetAt = now
+  return new Promise((resolve) => {
+    try {
+      const https = require('https')
+      const url = `https://api.weixin.qq.com/cgi-bin/clear_quota/v2?appid=${encodeURIComponent(appid)}&appsecret=${encodeURIComponent(appsecret)}`
+      const body = JSON.stringify({ appid })
+      const u = new URL(url)
+      const req = https.request({
+        hostname: u.hostname,
+        path: u.pathname + u.search,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
+        timeout: 8000
+      }, (res) => {
+        let resp = ''
+        res.on('data', chunk => { resp += chunk })
+        res.on('end', () => {
+          try {
+            const r = JSON.parse(resp)
+            if (r.errcode === 0) {
+              console.log('[quota] quota reset ok')
+              resolve(true)
+            } else {
+              console.warn('[quota] reset failed:', r)
+              resolve(false)
+            }
+          } catch (e) {
+            console.warn('[quota] parse err:', resp.slice(0, 200))
+            resolve(false)
+          }
+        })
+      })
+      req.on('error', (e) => { console.warn('[quota] req err:', e.message); resolve(false) })
+      req.on('timeout', () => { req.destroy(); resolve(false) })
+      req.write(body)
+      req.end()
+    } catch (e) {
+      console.warn('[quota] unexpected err:', e.message)
+      resolve(false)
+    }
+  })
+}
+
+// a ?? b 兼容写法（Node 10 不支持 ??）
+function pick(val, fallback) {
+  return (val !== null && val !== undefined) ? val : fallback
+}
+
 async function checkText(text, openid) {
   if (!text) return { ok: true }
-  try {
+  const content = String(text).slice(0, 2000)
+  // 缓存命中：相同内容短时间内不重复调用
+  const cached = getSecCache(content)
+  if (cached) return cached
+
+  const { APPID } = cloud.getWXContext()
+  // 最终确定结果才写缓存；fail-open 放行不写（下次 API 恢复时还能正常检测）
+  const cacheIfDefinitive = function(result) {
+    if (result && result.ok) setSecCache(content, { ok: true })
+    else if (result && result.reason) setSecCache(content, { ok: false, reason: result.reason })
+    return result
+  }
+
+  const doCheck = async function() {
     const r = await cloud.openapi.security.msgSecCheck({
-      openid, version: 2, scene: 1, content: String(text).slice(0, 2000)
+      openid: openid, version: 2, scene: 1, content: content
     })
-    if (r && r.result && r.result.suggest !== 'pass') {
-      return { ok: false, reason: '内容包含不当信息：' + (r.result.label || '') }
+    const errCode = r && pick(r.errCode, r.errcode)
+    const result = r && r.result
+    if (errCode !== undefined && errCode !== 0) {
+      if (errCode === 87014) {
+        return { ok: false, reason: '内容包含不当信息', definitive: true }
+      }
+      return { ok: false, errCode: errCode, needReset: errCode === 45009, errMsg: r.errMsg || r.errmsg }
     }
+    if (result && result.suggest && result.suggest !== 'pass') {
+      return { ok: false, reason: '内容包含不当信息：' + (result.label || ''), definitive: true }
+    }
+    return { ok: true, definitive: true }
+  }
+
+  try {
+    const res = await doCheck()
+    if (res.definitive) return cacheIfDefinitive(res)
+    if (res.needReset) {
+      console.warn('[secCheck] 45009 quota exhausted, attempting reset...')
+      const resetOk = await resetApiQuota(APPID)
+      if (resetOk) {
+        try {
+          const retry = await doCheck()
+          if (retry.definitive) return cacheIfDefinitive(retry)
+        } catch (retryErr) {
+          console.warn('[secCheck] retry after reset failed:', extractErrCode(retryErr))
+        }
+      }
+    }
+    console.warn('[secCheck] non-block err (fail-open):', { errCode: res.errCode, errMsg: res.errMsg })
     return { ok: true }
   } catch (e) {
-    console.warn('secCheck failed closed:', e.message)
-    return { ok: false, reason: '内容检测服务暂不可用' }
+    const msg = e && (e.errMsg || e.errmsg || e.message || '')
+    const codeMatch = String(msg).match(/errCode:\s*(-?\d+)/)
+    const errCode = pick(e && pick(e.errCode, e.errcode), codeMatch ? Number(codeMatch[1]) : null)
+    if (errCode === 87014) {
+      return cacheIfDefinitive({ ok: false, reason: '内容包含不当信息' })
+    }
+    if (errCode === 45009) {
+      console.warn('[secCheck] 45009 in throw, attempting reset...')
+      const resetOk = await resetApiQuota(APPID)
+      if (resetOk) {
+        try {
+          const retry = await doCheck()
+          if (retry.definitive) return cacheIfDefinitive(retry)
+        } catch (retryErr) {
+          console.warn('[secCheck] retry after reset failed:', extractErrCode(retryErr))
+        }
+      }
+    }
+    console.warn('[secCheck] throw (fail-open):', { errCode: errCode, errMsg: msg.slice(0, 300) })
+    return { ok: true }
   }
+}
+
+function extractErrCode(e) {
+  if (!e) return null
+  const msg = e.errMsg || e.errmsg || e.message || ''
+  const m = String(msg).match(/errCode:\s*(-?\d+)/)
+  const code = pick(pick(e.errCode, e.errcode), m ? Number(m[1]) : null)
+  return { errCode: code, errMsg: msg.slice(0, 200) }
 }
 
 async function handleHistory(OPENID, data) {

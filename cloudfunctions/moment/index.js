@@ -203,11 +203,11 @@ async function buildCommentPreview(momentId, limit = 2, figureMap = {}) {
     return r.data.map(c => {
       const figureData = c.figureId ? commentFigureMap[c.figureId] : null
       const f = figureData || {}
-      const avatarRaw = f.mini_avatar_url || f.avatar_url || f.avatar || c.avatar || c.authorSnapshot?.avatar || ''
+      const avatarRaw = f.mini_avatar_url || f.avatar_url || f.avatar || c.avatar || (c.authorSnapshot && c.authorSnapshot.avatar) || ''
       return {
         id: c._id,
         figureId: c.figureId || '',
-        name: f.figureName || f.name || c.name || c.authorSnapshot?.name || '匿名',
+        name: f.figureName || f.name || c.name || (c.authorSnapshot && c.authorSnapshot.name) || '匿名',
         avatar: normalizeRemoteAssetUrl(avatarRaw),
         mini_avatar_url: avatarRaw,
         avatar_url: f.avatar_url || '',
@@ -475,13 +475,13 @@ async function listComments(OPENID, data) {
     else if (typeof ts === 'number') createdAtMs = ts > 1e12 ? ts : ts * 1000
     const figureData = c.figureId ? figureMap[c.figureId] : null
     const f = figureData || {}
-    const avatarRaw = f.mini_avatar_url || f.avatar_url || f.avatar || c.avatar || c.authorSnapshot?.avatar || ''
+    const avatarRaw = f.mini_avatar_url || f.avatar_url || f.avatar || c.avatar || (c.authorSnapshot && c.authorSnapshot.avatar) || ''
     return {
       _id: c._id,
       momentId: c.momentId,
       figure: {
         id: c.figureId || f.figureId || f.id || c._openid || '',
-        name: f.figureName || f.name || c.name || c.authorSnapshot?.name || '匿名',
+        name: f.figureName || f.name || c.name || (c.authorSnapshot && c.authorSnapshot.name) || '匿名',
         title: f.figureTitle || f.title || f.identity || c.figureTitle || '',
         avatar: normalizeRemoteAssetUrl(avatarRaw),
         mini_avatar_url: avatarRaw,

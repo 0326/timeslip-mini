@@ -24,7 +24,8 @@ Page({
     aiTyping: false,
     chatStatus: 0,
     showTools: false,
-    scrollAnimated: false
+    scrollAnimated: false,
+    dailyLimited: false
   },
 
   onLoad(options) {
@@ -56,6 +57,7 @@ Page({
     // 确保青月会话与欢迎消息存在
     if (isSystem) chatSession.initQingyueSession()
     this.loadHistory()
+    this.checkDailyLimit()
   },
 
   onShow() {
@@ -78,6 +80,8 @@ Page({
     if (this.data.isSystem) {
       this.syncQingyueState()
     }
+    // 每次进入页面检查日限（跨天后自动恢复）
+    this.checkDailyLimit()
   },
 
   onUnload() {
@@ -215,6 +219,89 @@ Page({
     this.setData({ inputValue: e.detail.value, inputText: e.detail.value })
   },
 
+  async checkDailyLimit() {
+    const today = this.localTodayStr()
+    const cacheKey = 'daily_limit'
+    const cached = wx.getStorageSync(cacheKey)
+    // 命中当天缓存：直接使用
+    if (cached && cached.date === today) {
+      this.setData({ dailyLimited: !!cached.reached })
+      return
+    }
+    // 缓存失效：查云端（无论哪个角色，全局计数一致，查一个即可）
+    try {
+      const cloudName = this.data.isSystem ? 'qingyue-agent' : 'chat'
+      const res = await requestCloud(cloudName, 'dailyStatus', {}, { throwError: false })
+      if (res && typeof res.reached === 'boolean') {
+        this.setData({ dailyLimited: res.reached })
+        wx.setStorageSync(cacheKey, {
+          date: today,
+          reached: res.reached,
+          used: res.used || 0
+        })
+      }
+    } catch (e) {
+      // 查询失败不影响正常使用
+    }
+  },
+
+  // 本地日期字符串（YYYY-MM-DD，东八区），用于判断是否跨天
+  localTodayStr() {
+    const d = new Date()
+    const utc = d.getTime() + d.getTimezoneOffset() * 60000
+    const sh = new Date(utc + 8 * 3600000)
+    const y = sh.getFullYear()
+    const m = String(sh.getMonth() + 1).padStart(2, '0')
+    const day = String(sh.getDate()).padStart(2, '0')
+    return y + '-' + m + '-' + day
+  },
+
+  // 本地缓存：今日已发送数 +1（全局）
+  incDailyUsed() {
+    const today = this.localTodayStr()
+    const cacheKey = 'daily_limit'
+    const cached = wx.getStorageSync(cacheKey) || { date: today, reached: false, used: 0 }
+    if (cached.date !== today) {
+      cached.date = today
+      cached.used = 0
+      cached.reached = false
+    }
+    cached.used = (cached.used || 0) + 1
+    if (cached.used >= 100) {
+      cached.reached = true
+      this.setData({ dailyLimited: true })
+    }
+    wx.setStorageSync(cacheKey, cached)
+  },
+
+  // 本地缓存：标记今日已达上限（全局）
+  markDailyReached() {
+    const today = this.localTodayStr()
+    const cacheKey = 'daily_limit'
+    wx.setStorageSync(cacheKey, { date: today, reached: true, used: 100 })
+    this.setData({ dailyLimited: true })
+  },
+
+  // 触发日限：回滚乐观消息，禁用输入
+  handleDailyLimitReached() {
+    // 移除最后一条乐观添加的用户消息
+    const messages = this.data.messages.slice(0, -1)
+    this.setData({
+      messages,
+      sending: false,
+      aiTyping: false,
+      chatStatus: 0,
+      navTitle: this.data.figureName,
+      inputValue: '',
+      inputText: '',
+      dailyLimited: true
+    })
+    wx.setNavigationBarTitle({ title: this.data.figureName })
+    this.persistMessages(messages)
+    this.markDailyReached()
+    wx.showToast({ title: '已达到今日聊天次数上限，明天再来', icon: 'none' })
+  },
+
   bindInputFocus() {
     this.setData({ showTools: false })
   },
@@ -253,6 +340,10 @@ Page({
   async onSend() {
     const text = (this.data.inputValue || '').trim()
     if (!text || this.data.sending) return
+    if (this.data.dailyLimited) {
+      wx.showToast({ title: '已达到今日聊天次数上限，明天再来', icon: 'none' })
+      return
+    }
     if (text.length > AI_CONFIG.chatMaxLength) {
       wx.showToast({ title: `最多${AI_CONFIG.chatMaxLength}字`, icon: 'none' })
       return
@@ -305,9 +396,15 @@ Page({
       }, { throwError: true })
       const aiContent = data && data.aiMsg && data.aiMsg.content
       if (!aiContent) throw new Error('AI_EMPTY_RESPONSE')
+      this.incDailyUsed()
       this.addAiMessage(aiContent)
     } catch (e) {
       console.warn('[chat] send failed:', this.formatError(e))
+      // 日限触发：回滚本地乐观消息，禁用输入
+      if (e && e.message && e.message.indexOf('今日聊天次数上限') >= 0) {
+        this.handleDailyLimitReached()
+        return
+      }
       // 所有角色报错不展示重试 UI，发一个😊表情
       this.addAiMessage('😊')
     }
@@ -334,6 +431,8 @@ Page({
         if (!aiContent) throw new Error('AGENT_EMPTY_RESPONSE')
         // 本地 session 标记 done
         chatSession.markDone(figureId, aiContent)
+        // 计数 +1
+        this.incDailyUsed()
         // 用户还在房间页 → 直接追加 AI 消息
         // 用户已离开 → 累加未读（本地 + 云端）
         if (app.isPageActive('chat/room', figureId)) {
@@ -345,6 +444,16 @@ Page({
       })
       .catch(e => {
         console.warn('[chat] qingyue async failed:', this.formatError(e))
+        // 日限触发
+        if (e && e.message && e.message.indexOf('今日聊天次数上限') >= 0) {
+          chatSession.markFailed(figureId)
+          if (app.isPageActive('chat/room', figureId)) {
+            this.handleDailyLimitReached()
+          } else {
+            this.markDailyReached()
+          }
+          return
+        }
         // 本地 session 标记 failed
         chatSession.markFailed(figureId)
         if (app.isPageActive('chat/room', figureId)) {

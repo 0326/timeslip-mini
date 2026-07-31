@@ -3,5 +3,7 @@
     "openapi": [
       "security.msgSecCheck"
     ]
-  }
+  },
+  "runtime": "Nodejs16.13",
+  "memorySize": 256
 }
