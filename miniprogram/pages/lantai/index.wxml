@@ -19,7 +19,7 @@
   </view>
 
   <block wx:if="{{tab === 'figures'}}">
-    <view wx:if="{{loading}}" class="loading-wrap">
+    <view wx:if="{{figuresLoading}}" class="loading-wrap">
       <text class="loading-text">加载人物中...</text>
     </view>
 
@@ -83,7 +83,7 @@
   </block>
 
   <block wx:else>
-    <view wx:if="{{loading}}" class="loading-wrap">
+    <view wx:if="{{booksLoading}}" class="loading-wrap">
       <text class="loading-text">加载典籍中...</text>
     </view>
     <view wx:elif="{{filteredBooks.length === 0}}" class="empty">

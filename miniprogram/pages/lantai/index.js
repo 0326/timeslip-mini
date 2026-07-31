@@ -114,7 +114,8 @@ Page({
     books: [],
     filteredBooks: [],
     searchText: '',
-    loading: true,
+    figuresLoading: true,
+    booksLoading: true,
     // 使用 scroll-view 自带的 refresher 做下拉刷新
     figureRefresherTriggered: false,
     bookRefresherTriggered: false,
@@ -278,7 +279,7 @@ Page({
       } else {
         // 数据未变时，手动更新 loading/refresher 状态，避免 UI 卡在「加载中」或下拉动画不消失
         this.setData({
-          loading: false,
+          figuresLoading: false,
           loadError: false,
           figureRefresherTriggered: false
         })
@@ -308,7 +309,7 @@ Page({
       figures,
       groups,
       letters: groups.map(g => g.letter),
-      loading: false,
+      figuresLoading: false,
       loadError: false
     })
   },
@@ -317,7 +318,7 @@ Page({
     const cached = storage.get(BOOKS_CACHE_KEY)
 
     if (cached && !force) {
-      this.setData({ books: cached, loading: false })
+      this.setData({ books: cached, booksLoading: false })
       this.filterBooks(this.data.searchText)
       this.fetchAndUpdateBooks()
       return
@@ -343,14 +344,14 @@ Page({
       }
       // 无论数据是否变化，都要刷新 UI 状态
       if (!unchanged) {
-        this.setData({ books: newBooks, loading: false })
+        this.setData({ books: newBooks, booksLoading: false })
         this.filterBooks(this.data.searchText)
       } else {
-        this.setData({ loading: false, bookRefresherTriggered: false })
+        this.setData({ booksLoading: false, bookRefresherTriggered: false })
       }
     } catch (e) {
       if (!this.data.books.length) {
-        this.setData({ books: [], loading: false })
+        this.setData({ books: [], booksLoading: false })
         this.filterBooks(this.data.searchText)
       }
     } finally {
