@@ -1,0 +1,224 @@
+<!--pages/discover/memorial-detail.wxml-->
+<!-- 批奏折详情独立页：loading / 批阅中 / 已批只读 / 提交中 / 结果 -->
+
+<view class="page">
+
+  <!-- ========== 阶段1：加载中 ========== -->
+  <view wx:if="{{stage === 'loading' || stage === 'submitting'}}" class="loading-wrap stage-center">
+    <view class="loading-dot"></view>
+    <view class="loading-tip">{{stage === 'submitting' ? '朱批呈览中，推演朝野反应...' : loadingText}}</view>
+  </view>
+
+  <!-- ========== 阶段2：批阅中（未批 - 可决策） ========== -->
+  <block wx:elif="{{stage === 'deciding' && memorial}}">
+    <scroll-view scroll-y class="detail-scroll-wrap" enhanced="{{true}}" show-scrollbar="{{false}}">
+
+      <!-- 奏折头 -->
+      <view class="detail-header">
+        <view class="detail-type" style="background:{{typeStyle.bg}};color:{{typeStyle.color}}">{{memorial.type}}</view>
+        <view class="detail-official">
+          {{memorial.official.title}} · {{memorial.official.name}}
+        </view>
+        <view class="detail-title">{{memorial.title}}</view>
+      </view>
+
+      <!-- 背景 -->
+      <view wx:if="{{memorial.background}}" class="detail-bg">
+        <view class="bg-label">背景</view>
+        <view class="bg-text">{{memorial.background}}</view>
+      </view>
+
+      <!-- 奏折正文 -->
+      <view class="detail-content">
+        <view class="content-label">奏折原文</view>
+        <view class="content-text">{{memorial.content}}</view>
+      </view>
+
+      <!-- 决策按钮区 -->
+      <view class="decision-area">
+        <view class="decision-title">朱批决策</view>
+
+        <!-- 请安折/谢恩折：一键朱批 -->
+        <block wx:if="{{memorial.type === '请安折' || memorial.type === '谢恩折'}}">
+          <view class="decision-row one-btn">
+            <button
+              class="decide-btn preset {{selectedDecision === 'preset_quick' ? 'active' : ''}}"
+              data-key="preset_quick"
+              bindtap="selectDecision"
+            >✓ 一键朱批（{{memorial.preset_vermilion}}）</button>
+          </view>
+        </block>
+
+        <!-- 密折：三按钮 + 留中 -->
+        <block wx:elif="{{memorial.type === '密折'}}">
+          <view class="decision-row three-btn">
+            <button
+              class="decide-btn approve {{selectedDecision === 'approve' ? 'active' : ''}}"
+              data-key="approve"
+              bindtap="selectDecision"
+            >准 · 依议</button>
+            <button
+              class="decide-btn partial {{selectedDecision === 'partial' ? 'active' : ''}}"
+              data-key="partial"
+              bindtap="selectDecision"
+            >驳 · 从长计议</button>
+            <button
+              class="decide-btn reject {{selectedDecision === 'reject' ? 'active' : ''}}"
+              data-key="reject"
+              bindtap="selectDecision"
+            >严 · 申饬</button>
+          </view>
+          <view class="decision-row retain-row">
+            <button
+              class="decide-btn retain {{selectedDecision === 'retain' ? 'active' : ''}}"
+              data-key="retain"
+              bindtap="selectDecision"
+            >🔒 留中不发</button>
+            <view class="retain-tip">留中的奏折不公开，不计入公开档案，但也无法获得圣明指数提升</view>
+          </view>
+        </block>
+
+        <!-- 奏事折/奇葩折：三按钮 -->
+        <block wx:else>
+          <view class="decision-row three-btn">
+            <button
+              class="decide-btn approve {{selectedDecision === 'approve' ? 'active' : ''}}"
+              data-key="approve"
+              bindtap="selectDecision"
+            >准 · 依议</button>
+            <button
+              class="decide-btn partial {{selectedDecision === 'partial' ? 'active' : ''}}"
+              data-key="partial"
+              bindtap="selectDecision"
+            >驳 · 从长计议</button>
+            <button
+              class="decide-btn reject {{selectedDecision === 'reject' ? 'active' : ''}}"
+              data-key="reject"
+              bindtap="selectDecision"
+            >严 · 申饬</button>
+          </view>
+        </block>
+
+        <!-- 非留中：自定义朱批 -->
+        <block wx:if="{{selectedDecision && selectedDecision !== 'retain'}}">
+          <view class="zhupi-area">
+            <view class="zhupi-title">
+              <text>自定义朱批（可选）</text>
+              <text class="toggle-tpl" bindtap="toggleVermilionPanel">{{showZhupiPanel ? '收起模板' : '使用模板'}}</text>
+            </view>
+            <view wx:if="{{showZhupiPanel}}" class="tpl-grid">
+              <view
+                wx:for="{{vermilionTemplates}}"
+                wx:key="key"
+                class="tpl-chip {{templateKey === item.key ? 'active' : ''}}"
+                data-key="{{item.key}}"
+                bindtap="selectTemplate"
+              >{{item.label}}</view>
+            </view>
+            <textarea
+              class="zhupi-input"
+              placeholder="落笔朱批，或点上方使用模板（留空将使用对应决策的标准朱批）"
+              maxlength="80"
+              value="{{customZhupi}}"
+              bindinput="onZhupiInput"
+            />
+            <view class="zhupi-count">{{customZhupi.length}} / 80</view>
+          </view>
+        </block>
+      </view>
+
+      <!-- 占位：底部按钮留出空间 -->
+      <view class="bottom-safe"></view>
+    </scroll-view>
+
+    <!-- 底部提交按钮 -->
+    <view class="detail-footer">
+      <button
+        class="primary-btn submit-btn {{selectedDecision ? '' : 'disabled'}}"
+        bindtap="onSubmitDecide"
+        loading="{{submitLoading}}"
+        disabled="{{!selectedDecision || submitLoading}}"
+      >{{selectedDecision === 'retain' ? '留中此折' : '朱批此折'}}</button>
+    </view>
+  </block>
+
+  <!-- ========== 阶段3：已批过，只读显示结果 ========== -->
+  <block wx:elif="{{(stage === 'answered_already' || stage === 'result') && (answeredInfo || result)}}">
+    <!-- 用 answered 或 result 数据展示 -->
+    <scroll-view scroll-y class="detail-scroll-wrap" enhanced="{{true}}" show-scrollbar="{{false}}">
+
+      <view class="result-header">
+        <view
+          class="result-type"
+          style="background:{{typeStyle.bg}};color:{{typeStyle.color}}"
+        >{{memorial.type}}</view>
+        <view class="result-title">{{memorial.title}}</view>
+      </view>
+
+      <!-- 朱批卡 -->
+      <view class="result-zhupi-card">
+        <view class="rz-title">
+          <text class="rz-label">{{result ? result.decision_label : answeredInfo.decision_label}}</text>
+          <text wx:if="{{result ? result.retained : answeredInfo.retained}}" class="rz-retain">🔒 已留中</text>
+          <view class="rz-wisdom {{ (result ? result.wisdom_delta : answeredInfo.wisdom_delta) > 0 ? 'plus' : ((result ? result.wisdom_delta : answeredInfo.wisdom_delta) < 0 ? 'minus' : '')}}">
+            圣明 {{(result ? result.wisdom_delta : answeredInfo.wisdom_delta) > 0 ? '+' : ''}}{{result ? result.wisdom_delta : answeredInfo.wisdom_delta}}
+          </view>
+        </view>
+        <view class="rz-text">「{{result ? result.zhupi : answeredInfo.zhupi}}」</view>
+      </view>
+
+      <!-- 朝野反应（留中则不显示） -->
+      <view wx:if="{{!(result ? result.retained : answeredInfo.retained)}}" class="result-section">
+        <view class="rs-title">朝野反应</view>
+        <view class="rs-body">{{result ? result.consequence : answeredInfo.consequence}}</view>
+        <view wx:if="{{result ? result.follow_up : answeredInfo.follow_up}}" class="rs-follow">后续影响：{{result ? result.follow_up : answeredInfo.follow_up}}</view>
+      </view>
+      <view wx:else class="result-section retained-section">
+        <view class="rs-title">🔒 此折已留中</view>
+        <view class="rs-body">奏折被悄悄收进了您的私人匣柜，既不会在档案库中公开，也不会引发朝野反应。</view>
+      </view>
+
+      <!-- 历史史实 -->
+      <view wx:if="{{result ? result.historical_fact : memorial.historical_fact}}" class="result-section">
+        <view class="rs-title history">历史史实</view>
+        <view class="rs-body">{{result ? result.historical_fact : memorial.historical_fact}}</view>
+      </view>
+
+      <!-- 趣味档案 -->
+      <view wx:if="{{result ? result.fun_fact : memorial.fun_fact}}" class="result-section">
+        <view class="rs-title fun">趣味档案</view>
+        <view class="rs-body">{{result ? result.fun_fact : memorial.fun_fact}}</view>
+      </view>
+
+      <!-- 小知识 -->
+      <view wx:if="{{(result ? result.trivia : memorial.trivia) && (result ? result.trivia_topic : memorial.trivia_topic)}}" class="result-section trivia-section">
+        <view class="rs-title trivia">📖 小知识 · {{result ? result.trivia_topic : memorial.trivia_topic}}</view>
+        <view class="rs-body">{{result ? result.trivia : memorial.trivia}}</view>
+      </view>
+
+      <!-- 成就解锁（仅新批时显示） -->
+      <view wx:if="{{stage === 'result' && result.unlocks && result.unlocks.length > 0}}" class="result-section unlock-section">
+        <view class="rs-title unlock">🏆 成就解锁</view>
+        <view wx:for="{{result.unlocks}}" wx:key="achievement_id" class="unlock-item">
+          <view class="unlock-left">
+            <view class="unlock-name">{{item.name}}</view>
+            <view class="unlock-desc">{{item.desc}}</view>
+          </view>
+          <view class="unlock-reward">+{{item.reward}}</view>
+        </view>
+      </view>
+
+      <view class="bottom-safe"></view>
+    </scroll-view>
+
+    <!-- 底部按钮区：分享 + 下一折 -->
+    <view class="detail-footer result-footer">
+      <button class="ghost-btn" open-type="share">分享</button>
+      <button
+        class="primary-btn next-btn"
+        bindtap="goNextMemorial"
+      >{{nextMemorialId ? '下一折 ›' : '批阅完毕'}}</button>
+    </view>
+  </block>
+
+</view>

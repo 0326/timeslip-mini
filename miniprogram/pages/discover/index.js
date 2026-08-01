@@ -120,19 +120,19 @@ Page({
               if (pendingCount > 0) {
                 next.tip = `陛下，有${pendingCount}份奏折待您批阅`
               } else {
-                next.tip = ''
+                next.tip = '今日已清'
               }
               break
             case 'letters':
               if (data.yan) {
                 if (data.yan.newReplyCount > 0) {
-                  next.tip = '你的大雁已归来，快来看看'
+                  next.tip = '雁归来，快来看看带回什么宝贝'
                   next.badge = data.yan.newReplyCount
                 } else if (data.yan.travelingCount > 0) {
                   next.tip = '你的大雁正在送信中...'
                   next.badge = 0
                 } else {
-                  next.tip = '你的大雁正在等你'
+                  next.tip = '你的大雁正在等你派遣任务'
                   next.badge = 0
                 }
               }

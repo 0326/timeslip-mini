@@ -131,16 +131,47 @@ async function getChannelsBadge(lastViewChannels) {
 
 async function getMemorialBadge(OPENID) {
   try {
-    const [allMemorialsRes, answeredRes] = await Promise.all([
-      db.collection('memorials').count(),
-      db.collection('memorial_answers').where({ _openid: OPENID }).count()
-    ])
+    var today = (function() {
+      var d = new Date()
+      var y = d.getFullYear()
+      var m = ('0' + (d.getMonth() + 1)).slice(-2)
+      var day = ('0' + d.getDate()).slice(-2)
+      return y + '-' + m + '-' + day
+    })()
 
-    const total = allMemorialsRes.total || 0
-    const answered = answeredRes.total || 0
-    const pendingCount = Math.max(0, total - answered)
+    var cfg = null
+    try {
+      var cRes = await db.collection('memorial_config').where({ _id: 'main_config' }).limit(1).get()
+      if (cRes.data && cRes.data.length) cfg = cRes.data[0]
+    } catch (_) {}
+    var defaultDaily = cfg && cfg.daily_count ? cfg.daily_count : 10
 
-    return { pendingCount }
+    var todayDoc = null
+    try {
+      var tRes = await db.collection('memorial_daily').where({ _openid: OPENID, date: today }).limit(1).get()
+      if (tRes.data && tRes.data.length) todayDoc = tRes.data[0]
+    } catch (_) {}
+
+    // 今日队列存在：按"队列长度-已完成数"算未批
+    if (todayDoc) {
+      var queue = Array.isArray(todayDoc.queue) ? todayDoc.queue : []
+      var doneIds = todayDoc.completed_ids && Array.isArray(todayDoc.completed_ids) ? todayDoc.completed_ids : []
+      var pendingCount = 0
+      for (var i = 0; i < queue.length; i++) {
+        var qid = typeof queue[i] === 'object' ? (queue[i].memorial_id || queue[i].id) : queue[i]
+        if (doneIds.indexOf(qid) === -1) pendingCount++
+      }
+      return { pendingCount: pendingCount }
+    }
+
+    // 今日队列为空：还未生成（新用户或今天还没进过批奏折页）
+    // 显示默认每日未批数（通常10），避免"显示100份"误导
+    var answeredRes = await db.collection('memorial_answers').where({ _openid: OPENID }).count()
+    var answered = answeredRes.total || 0
+    if (answered <= 0) return { pendingCount: defaultDaily }
+
+    // 老用户但今日未生成：显示0（等他进入批奏折页生成新队列后再刷新badge）
+    return { pendingCount: 0 }
   } catch (e) {
     console.warn('getMemorialBadge error:', e)
     return { pendingCount: 0 }

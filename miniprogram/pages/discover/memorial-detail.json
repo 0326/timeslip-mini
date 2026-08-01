@@ -1,0 +1,10 @@
+{
+  "usingComponents": {
+    "loading-skeleton": "/components/loading-skeleton/index"
+  },
+  "navigationStyle": "default",
+  "navigationBarTitleText": "批阅奏折",
+  "navigationBarBackgroundColor": "#FAF7F2",
+  "navigationBarTextStyle": "black",
+  "backgroundColor": "#FAF7F2"
+}

@@ -1,0 +1,407 @@
+/* pages/discover/memorial-detail.wxss */
+/* 批奏折详情独立页样式（复用原浮层样式并调整为整页） */
+
+.page {
+  min-height: 100vh;
+  background: #FAF7F2;
+  padding-bottom: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+  color: #2A2A2A;
+  display: flex;
+  flex-direction: column;
+}
+
+page { background: #FAF7F2; }
+
+/* ===== 居中加载中（loading/submitting） ===== */
+.stage-center {
+  min-height: 70vh;
+  padding-top: 280rpx;
+}
+.loading-wrap {
+  padding: 120rpx 0 60rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.loading-dot {
+  width: 48rpx; height: 48rpx;
+  border: 6rpx solid #ddd;
+  border-top-color: #8A2E2E;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 24rpx;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-tip {
+  font-size: 26rpx;
+  color: #8A8A8A;
+}
+
+/* ===== 滚动内容 ===== */
+.detail-scroll-wrap {
+  flex: 1;
+  box-sizing: border-box;
+  padding: 28rpx 28rpx 40rpx;
+  height: calc(100vh - 160rpx);
+  box-sizing: border-box;
+}
+
+.bottom-safe {
+  height: 200rpx;
+}
+
+/* 奏折头 */
+.detail-header { margin-bottom: 24rpx; }
+.detail-type {
+  display: inline-block;
+  padding: 6rpx 18rpx;
+  border-radius: 8rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+  margin-bottom: 14rpx;
+}
+.detail-official {
+  font-size: 24rpx;
+  color: #8A6A3A;
+  margin-bottom: 12rpx;
+}
+.detail-title {
+  font-size: 38rpx;
+  font-weight: 700;
+  color: #2A2A2A;
+  line-height: 1.5;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+/* 背景卡 */
+.detail-bg {
+  padding: 18rpx 20rpx;
+  background: #EEF4FF;
+  border-radius: 12rpx;
+  margin-bottom: 22rpx;
+}
+.bg-label { font-size: 22rpx; color: #3E588A; margin-bottom: 6rpx; font-weight: 600; }
+.bg-text { font-size: 26rpx; color: #3A4A6A; line-height: 1.7; }
+
+/* 正文卡 */
+.detail-content {
+  padding: 26rpx 24rpx;
+  background: #fff;
+  border-radius: 14rpx;
+  border: 1rpx solid #EFE3CF;
+  margin-bottom: 30rpx;
+}
+.content-label {
+  font-size: 22rpx;
+  color: #8A6A3A;
+  margin-bottom: 10rpx;
+  font-weight: 600;
+}
+.content-text {
+  font-size: 28rpx;
+  line-height: 2;
+  color: #2A2A2A;
+  text-align: justify;
+  font-family: Georgia, 'Times New Roman', 'PingFang SC', serif;
+}
+
+/* 决策区 */
+.decision-area { margin-top: 10rpx; }
+.decision-title {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #8A2E2E;
+  margin-bottom: 18rpx;
+  padding-left: 14rpx;
+  border-left: 5rpx solid #8A2E2E;
+}
+.decision-row { display: flex; gap: 14rpx; margin-bottom: 18rpx; }
+.decision-row.one-btn { flex-direction: column; }
+
+.decide-btn {
+  flex: 1;
+  padding: 22rpx 10rpx;
+  font-size: 26rpx;
+  border-radius: 14rpx;
+  border: 1rpx solid #E0D9CB;
+  background: #fff;
+  color: #3A3A3A;
+  line-height: 1.4;
+}
+.decide-btn::after { border: none; }
+.decide-btn.approve { background: #E6F7EF; border-color: #A6DCB9; color: #166B44; font-weight: 600; }
+.decide-btn.partial { background: #EEF4FF; border-color: #B8CAEB; color: #374C82; font-weight: 600; }
+.decide-btn.reject { background: #FFE8E8; border-color: #E8B8B8; color: #8A2E2E; font-weight: 600; }
+.decide-btn.retain { background: #FFF4E6; border-color: #E8C99A; color: #8A5A20; font-weight: 600; }
+.decide-btn.preset { background: #F1F0FF; border-color: #C3BEF5; color: #4A3CB8; font-weight: 600; padding: 24rpx 20rpx; }
+.decide-btn.active {
+  box-shadow: 0 0 0 3rpx #8A2E2E inset;
+  transform: scale(0.98);
+}
+
+.retain-row { flex-direction: column; align-items: flex-start; }
+.retain-row .decide-btn { width: 100%; }
+.retain-tip {
+  font-size: 22rpx;
+  color: #8A6A3A;
+  line-height: 1.6;
+  padding: 4rpx 6rpx;
+}
+
+/* 自定义朱批区 */
+.zhupi-area {
+  margin-top: 22rpx;
+  padding: 22rpx 20rpx;
+  background: #FFF5E6;
+  border-radius: 14rpx;
+  border: 1rpx dashed #CFA971;
+}
+.zhupi-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 24rpx;
+  color: #8A5A20;
+  font-weight: 600;
+  margin-bottom: 14rpx;
+}
+.toggle-tpl {
+  font-size: 22rpx;
+  color: #8A2E2E;
+  font-weight: 500;
+  text-decoration: underline;
+}
+.tpl-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+.tpl-chip {
+  padding: 10rpx 20rpx;
+  background: #fff;
+  border: 1rpx solid #E6D4B4;
+  color: #6A4A20;
+  border-radius: 100rpx;
+  font-size: 24rpx;
+}
+.tpl-chip.active {
+  background: #8A2E2E;
+  color: #FFE8A3;
+  border-color: #8A2E2E;
+}
+.zhupi-input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 120rpx;
+  padding: 18rpx;
+  background: #fff;
+  border-radius: 10rpx;
+  border: 1rpx solid #E6D4B4;
+  font-size: 28rpx;
+  color: #5A3A10;
+  line-height: 1.6;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+.zhupi-count {
+  text-align: right;
+  font-size: 22rpx;
+  color: #A08060;
+  margin-top: 6rpx;
+}
+
+/* ===== 底部提交按钮 ===== */
+.detail-footer {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  padding: 20rpx 32rpx calc(28rpx + env(safe-area-inset-bottom));
+  background: #FAF7F2;
+  border-top: 1rpx solid rgba(0,0,0,0.04);
+  box-shadow: 0 -4rpx 14rpx rgba(0,0,0,0.04);
+  z-index: 10;
+}
+.submit-btn {
+  width: 100%;
+  padding: 24rpx;
+  font-size: 32rpx;
+}
+
+/* 底部三按钮（结果页） */
+/* 结果页底部按钮：2个按钮，分享左 + 下一折右（占满剩余） */
+.result-footer {
+  display: flex;
+  gap: 20rpx;
+  align-items: center;
+}
+.result-footer .ghost-btn {
+  flex: 0 0 180rpx;
+  padding: 20rpx 0;
+  font-size: 28rpx;
+  text-align: center;
+}
+
+/* ===== 通用按钮样式 ===== */
+.primary-btn {
+  background: #8A2E2E;
+  color: #FFE8A3;
+  font-size: 30rpx;
+  font-weight: 600;
+  padding: 20rpx 48rpx;
+  border-radius: 100rpx;
+  line-height: 1.4;
+  border: none;
+  white-space: nowrap;
+}
+.primary-btn::after { border: none; }
+.primary-btn.disabled {
+  background: #D0CFCF;
+  color: #fff;
+}
+/* 结果页"下一折/批阅完毕"按钮：占满剩余宽度 */
+.primary-btn.next-btn {
+  flex: 1;
+  padding: 22rpx 24rpx;
+  font-size: 30rpx;
+  min-width: 0;
+}
+
+.ghost-btn {
+  background: #fff;
+  color: #8A2E2E;
+  font-size: 28rpx;
+  font-weight: 600;
+  padding: 20rpx 36rpx;
+  border-radius: 100rpx;
+  border: 1rpx solid #8A2E2E;
+  line-height: 1.4;
+}
+.ghost-btn::after { border: none; }
+
+/* ===== 结果页 ===== */
+.result-header { margin-bottom: 22rpx; }
+.result-type {
+  display: inline-block;
+  padding: 6rpx 18rpx;
+  border-radius: 8rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+  margin-bottom: 12rpx;
+}
+.result-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #2A2A2A;
+  line-height: 1.5;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.result-zhupi-card {
+  padding: 24rpx 26rpx;
+  background: #FFF5E6;
+  border-radius: 16rpx;
+  border: 1rpx dashed #CFA971;
+  margin-bottom: 28rpx;
+}
+.rz-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-bottom: 12rpx;
+}
+.rz-label {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #8A2E2E;
+  padding: 4rpx 16rpx;
+  background: rgba(138, 46, 46, 0.08);
+  border-radius: 100rpx;
+}
+.rz-retain {
+  font-size: 22rpx;
+  color: #A6631C;
+  background: #FFE8CC;
+  padding: 4rpx 16rpx;
+  border-radius: 100rpx;
+}
+.rz-wisdom {
+  margin-left: auto;
+  font-size: 26rpx;
+  font-weight: 700;
+  padding: 4rpx 18rpx;
+  border-radius: 100rpx;
+  background: #F2F2F2;
+  color: #6A6A6A;
+}
+.rz-wisdom.plus { background: #E6F7EF; color: #1E9B6A; }
+.rz-wisdom.minus { background: #FFE6E6; color: #C73636; }
+.rz-text {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #5A3A10;
+  line-height: 1.7;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.result-section {
+  padding: 22rpx 24rpx;
+  background: #fff;
+  border-radius: 14rpx;
+  margin-bottom: 18rpx;
+  border: 1rpx solid rgba(0,0,0,0.04);
+}
+.rs-title {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #2A2A2A;
+  margin-bottom: 10rpx;
+  padding-left: 14rpx;
+  border-left: 5rpx solid #8A2E2E;
+}
+.rs-title.history { border-left-color: #5E4CE6; color: #3D2EC0; }
+.rs-title.fun { border-left-color: #E6562C; color: #B83E1E; }
+.rs-title.trivia { border-left-color: #1E9B6A; color: #166B44; }
+.rs-title.unlock { border-left-color: #C78A00; color: #8A5E00; }
+
+.rs-body {
+  font-size: 26rpx;
+  color: #4A4A4A;
+  line-height: 1.8;
+}
+.rs-follow {
+  margin-top: 10rpx;
+  padding-top: 10rpx;
+  font-size: 24rpx;
+  color: #6A6A6A;
+  border-top: 1rpx dashed #EEE;
+  line-height: 1.7;
+}
+
+.retained-section {
+  background: #FFF4E6;
+  border: 1rpx dashed #E8C99A;
+}
+.unlock-section { background: #FFFBF2; border: 1rpx solid #E8C99A; }
+.unlock-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14rpx 0;
+  border-bottom: 1rpx dashed #F0DEBC;
+}
+.unlock-item:last-child { border-bottom: none; }
+.unlock-name {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #8A2E2E;
+  margin-bottom: 4rpx;
+}
+.unlock-desc { font-size: 22rpx; color: #6A4A20; }
+.unlock-reward {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #C78A00;
+}
+.trivia-section { background: #F1FAF5; border: 1rpx solid #B8E5D0; }

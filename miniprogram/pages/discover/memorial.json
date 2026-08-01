@@ -1,8 +1,10 @@
 {
   "usingComponents": {
-    "custom-nav-bar": "/components/custom-nav-bar/index",
     "memorial-scroll": "/components/memorial-scroll/index",
     "loading-skeleton": "/components/loading-skeleton/index"
   },
-  "navigationStyle": "custom"
+  "navigationStyle": "default",
+  "navigationBarTitleText": "批奏折",
+  "navigationBarBackgroundColor": "#ffffff",
+  "navigationBarTextStyle": "black"
 }

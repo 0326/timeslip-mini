@@ -1,168 +1,254 @@
+<!--pages/discover/memorial.wxml-->
+<!-- 批奏折 - 重构版：三Tab（今日待批 / 朱批档案 / 历史小课堂） -->
+
 <view class="page">
-  <custom-nav-bar title="批奏折" show-back="{{true}}" />
 
-  <view class="container" wx:if="{{!loading && !memorial}}">
-    <view class="chapter-select">
-      <view class="section-title">选择篇章</view>
-      <scroll-view class="chapter-scroll" scroll-x enhanced show-scrollbar="{{false}}">
-        <view
-          class="chapter-item {{activeChapter === ch.key ? 'active' : ''}}"
-          wx:for="{{chapters}}"
-          wx:for-item="ch"
-          wx:key="key"
-          data-key="{{ch.key}}"
-          bindtap="selectChapter"
-        >
-          {{ch.name}}
+  <!-- ========== 顶部：圣明指数栏 ========== -->
+  <view class="wisdom-bar">
+    <view class="wisdom-user">
+      <image class="wisdom-avatar" src="{{avatarSrc}}" mode="aspectFill"></image>
+      <view class="wisdom-user-info">
+        <view class="wisdom-nick">{{nickName}}陛下</view>
+        <view class="wisdom-level">{{wisdomLevel}}</view>
+      </view>
+    </view>
+    <view class="wisdom-right">
+      <view class="wisdom-label">圣明指数</view>
+      <view class="wisdom-index">{{wisdomIndex}}%</view>
+    </view>
+  </view>
+
+  <!-- ========== Tab 切换（底部，固定） ========== -->
+  <!-- 实际在页面底部，为了方便先声明class，在wxss里fixed定位 -->
+
+  <!-- ========== 今日待批 Tab ========== -->
+  <block wx:if="{{activeTab === 'today'}}">
+    <view class="tab-content today">
+      <view class="today-header">
+        <view class="today-title-row">
+          <view class="today-title">今日待批奏折</view>
+          <view class="today-progress">
+            <text wx:if="{{!dailyClear}}">剩余 <text class="num">{{queue.length - completedCount > 0 ? (queue.length - completedCount) : 0}}</text></text>
+            <text wx:else class="clear-tag">今日已清</text>
+          </view>
         </view>
+        <view class="today-meta">
+          <text wx:if="{{dailyDate}}">{{dailyDate}}</text>
+          <text wx:if="{{carryoverCount > 0}}" class="carry">· 留中{{carryoverCount}}件</text>
+        </view>
+      </view>
+
+      <!-- 加载中 -->
+      <view wx:if="{{dailyLoading}}" class="loading-wrap">
+        <view class="loading-dot"></view>
+        <view class="loading-tip">正在整理今日奏折...</view>
+      </view>
+
+      <!-- 空态 -->
+      <view wx:elif="{{queue.length === 0}}" class="empty">
+        <view class="empty-icon">📜</view>
+        <view class="empty-tip">今日暂无奏折</view>
+        <button class="empty-btn" bindtap="loadDaily">刷新</button>
+      </view>
+
+      <!-- 队列卡片列表 -->
+      <view wx:else class="queue-list">
+        <view
+          wx:for="{{queue}}"
+          wx:key="memorial_id"
+          class="queue-card {{item.done ? 'done' : ''}}"
+          data-mid="{{item.memorial_id}}"
+          bindtap="openMemorial"
+        >
+          <view class="card-left">
+            <view class="card-order">{{index + 1}}</view>
+            <view
+              class="card-type"
+              style="{{item.type === '奏事折' ? 'background:#F1F0FF;color:#5E4CE6' : ''}}{{item.type === '密折' ? 'background:#FFEEF6;color:#D4387F' : ''}}{{item.type === '请安折' ? 'background:#FFF7E0;color:#C78A00' : ''}}{{item.type === '谢恩折' ? 'background:#E6F7EF;color:#1E9B6A' : ''}}{{item.type === '奇葩折' ? 'background:#FFEBE6;color:#E6562C' : ''}}"
+            >{{item.type}}</view>
+          </view>
+          <view class="card-main">
+            <view class="card-title">{{item.title}}</view>
+            <view class="card-official">
+              {{item.official_title}} · {{item.official_name}}
+              <text wx:if="{{item.carried}}" class="carry-tag">留中</text>
+            </view>
+          </view>
+          <view class="card-right">
+            <view wx:if="{{item.done}}" class="done-tag">已批</view>
+            <view wx:else class="arrow">›</view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <!-- ========== 朱批档案 Tab ========== -->
+  <block wx:if="{{activeTab === 'archive'}}">
+    <view class="tab-content archive">
+      <view class="archive-header">
+        <view class="archive-title">朱批档案库</view>
+        <view class="archive-total">累计批阅 <text class="archive-total-num">{{archiveStats.total || 0}}</text> 道</view>
+      </view>
+
+      <!-- 统计卡片（按类型） -->
+      <view class="stats-row">
+        <view class="stat-item">
+          <view class="stat-label">奏事折</view>
+          <view class="stat-val">{{archiveStats.byType['奏事折'] || 0}}</view>
+        </view>
+        <view class="stat-item">
+          <view class="stat-label">密折</view>
+          <view class="stat-val">{{archiveStats.byType['密折'] || 0}}</view>
+        </view>
+        <view class="stat-item">
+          <view class="stat-label">请安折</view>
+          <view class="stat-val">{{archiveStats.byType['请安折'] || 0}}</view>
+        </view>
+        <view class="stat-item">
+          <view class="stat-label">谢恩折</view>
+          <view class="stat-val">{{archiveStats.byType['谢恩折'] || 0}}</view>
+        </view>
+        <view class="stat-item">
+          <view class="stat-label">奇葩折</view>
+          <view class="stat-val">{{archiveStats.byType['奇葩折'] || 0}}</view>
+        </view>
+      </view>
+
+      <!-- 筛选类型 -->
+      <scroll-view scroll-x class="filter-row" enhanced="{{true}}" show-scrollbar="{{false}}">
+        <view
+          wx:for="{{archiveTypes}}"
+          wx:key="key"
+          class="filter-chip {{archiveFilterType === item.key ? 'active' : ''}}"
+          data-key="{{item.key}}"
+          bindtap="switchArchiveType"
+        >{{item.label}}</view>
       </scroll-view>
-    </view>
 
-    <view class="memorial-list">
-      <view
-        class="memorial-card {{item.unlocked ? '' : 'locked'}}"
-        wx:for="{{memorialList}}"
-        wx:key="_id"
-        data-id="{{item._id}}"
-        bindtap="selectMemorial"
-      >
-        <view class="card-order">{{item.order}}</view>
-        <view class="card-body">
-          <view class="card-title">{{item.title}}</view>
-          <view class="card-sub">
-            <text class="dynasty-tag">{{item.dynastyName}}</text>
-            <text class="submitter">上折人：{{item.submitter}}</text>
-          </view>
-          <view class="card-progress">
-            <block wx:if="{{item.completed}}">
-              <text class="tag done">已批阅 <text class="iconfont icon-Selected"></text></text>
-              <text class="choice">选择：{{item.userChoice}}</text>
-            </block>
-            <block wx:elif="{{item.unlocked}}">
-              <text class="tag pending">待批阅</text>
-            </block>
-            <block wx:else>
-              <text class="tag lock">🔒 未解锁</text>
-              <text class="lock-hint">完成前置奏折解锁</text>
-            </block>
-          </view>
-        </view>
-        <view class="card-arrow" wx:if="{{item.unlocked}}">›</view>
-      </view>
-    </view>
-  </view>
-
-  <view class="detail-page" wx:if="{{!loading && memorial && !simulating && !simulationResult}}">
-    <view class="scroll-container">
-      <view class="scroll-header">
-        <view class="scroll-nail top-left"></view>
-        <view class="scroll-nail top-right"></view>
-        <view class="memorial-title">{{memorial.title}}</view>
-        <view class="memorial-meta">
-          <text class="chapter">{{memorial.chapter}}</text>
-          <text class="submitter">上折：{{memorial.submitter}}</text>
-        </view>
+      <!-- 列表 -->
+      <view wx:if="{{archiveLoading && archiveItems.length === 0}}" class="loading-wrap">
+        <view class="loading-dot"></view>
+        <view class="loading-tip">翻阅档案中...</view>
       </view>
 
-      <view class="scroll-body">
-        <view class="memorial-content">
-          {{memorial.content}}
-        </view>
+      <view wx:elif="{{archiveItems.length === 0}}" class="empty">
+        <view class="empty-icon">📚</view>
+        <view class="empty-tip">暂无朱批档案</view>
+        <view class="empty-sub">去今日待批批阅你的第一道奏折吧</view>
       </view>
 
-      <view class="scroll-footer">
-        <view class="scroll-nail bottom-left"></view>
-        <view class="scroll-nail bottom-right"></view>
-      </view>
-    </view>
-
-    <view class="decide-panel">
-      <view class="decide-title">朱笔决断</view>
-      <view class="options">
+      <view wx:else class="archive-list">
         <view
-          class="opt-card {{selectedOpt === opt.key ? 'selected' : ''}}"
-          wx:for="{{memorial.options}}"
-          wx:for-item="opt"
-          wx:key="key"
-          data-key="{{opt.key}}"
-          bindtap="selectOption"
+          wx:for="{{archiveItems}}"
+          wx:key="memorial_id"
+          class="archive-card"
+          data-mid="{{item.memorial_id}}"
+          bindtap="openArchiveItem"
         >
-          <view class="opt-key">{{opt.key}}</view>
-          <view class="opt-main">
-            <view class="opt-text">{{opt.text}}</view>
-            <view class="opt-hint" wx:if="{{opt.hint}}">{{opt.hint}}</view>
+          <view class="archive-top">
+            <view
+              class="archive-type"
+              style="{{item.type === '奏事折' ? 'background:#F1F0FF;color:#5E4CE6' : ''}}{{item.type === '密折' ? 'background:#FFEEF6;color:#D4387F' : ''}}{{item.type === '请安折' ? 'background:#FFF7E0;color:#C78A00' : ''}}{{item.type === '谢恩折' ? 'background:#E6F7EF;color:#1E9B6A' : ''}}{{item.type === '奇葩折' ? 'background:#FFEBE6;color:#E6562C' : ''}}"
+            >{{item.type}}</view>
+            <view class="archive-date">{{item.decided_at_label || ''}}</view>
           </view>
-          <view class="opt-check iconfont icon-Selected" wx:if="{{selectedOpt === opt.key}}"></view>
+          <view class="archive-title">{{item.title}}</view>
+          <view class="archive-zhupi-wrap">
+            <view class="zhupi-label">朱批 · {{item.decision_label || ''}}</view>
+            <view class="zhupi-text">「{{item.zhupi || ''}}」</view>
+          </view>
+          <view class="archive-bottom">
+            <text class="archive-official">{{item.official_title}} · {{item.official_name}}</text>
+            <view class="wisdom-delta {{item.wisdom_delta > 0 ? 'plus' : (item.wisdom_delta < 0 ? 'minus' : '')}}">
+              圣明{{item.wisdom_delta > 0 ? '+' : ''}}{{item.wisdom_delta}}
+            </view>
+          </view>
+        </view>
+
+        <view class="loadmore-tip" bindtap="loadMoreArchive">
+          <text wx:if="{{archiveLoading}}">加载中...</text>
+          <text wx:elif="{{archiveNoMore}}">— 没有更多了 —</text>
+          <text wx:else>加载更多</text>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <!-- ========== 历史小课堂 Tab ========== -->
+  <block wx:if="{{activeTab === 'classroom'}}">
+    <view class="tab-content classroom">
+      <view class="classroom-header">
+        <view class="classroom-title">历史小课堂</view>
+        <view class="classroom-sub">批阅之余，涨点知识</view>
+      </view>
+
+      <view class="lesson-card">
+        <view class="lesson-title">什么是「奏折」？</view>
+        <view class="lesson-body">
+          奏折是清代高级官员向皇帝奏事时使用的文书，因最初用折本书写、折叠成幅而得名。
+          奏折制度始于康熙中期，成熟于雍正朝，乾隆以后成为定制。相比从前的「题本」「奏本」，
+          奏折可直达御前，由皇帝亲自朱批，机密性高、周转快，是清代君主专制达到顶峰的标志之一。
         </view>
       </view>
 
-      <view class="zhupi-area">
-        <view class="zhupi-title">朱批（可选，最多30字）</view>
-        <input
-          class="zhupi-input"
-          placeholder="写下你的朱批..."
-          value="{{zhupi}}"
-          bindinput="onZhupiInput"
-          maxlength="30"
-        />
+      <view class="lesson-card">
+        <view class="lesson-title">五种奏折类型</view>
+        <view class="lesson-body">
+          <view class="lesson-type"><text class="t1">奏事折</text>：陈奏公务，如钱粮、刑名、军政、吏治等。</view>
+          <view class="lesson-type"><text class="t2">密折</text>：由皇帝特许的亲信官员使用，内容机密，旁人不得与闻。</view>
+          <view class="lesson-type"><text class="t3">请安折</text>：每逢节令、皇帝寿辰、或定期向皇帝问安的礼节性折件。</view>
+          <view class="lesson-type"><text class="t4">谢恩折</text>：官员因升迁、赏赐、宽宥等向皇帝表达谢意。</view>
+          <view class="lesson-type"><text class="t5">奇葩折</text>：内容琐碎、出人意料、甚至令人啼笑皆非的真实历史奏折。</view>
+        </view>
       </view>
 
-      <button
-        class="btn-decide {{selectedOpt ? 'active' : ''}}"
-        bindtap="onDecide"
-        disabled="{{!selectedOpt || simulating}}"
-      >
-        <block wx:if="{{simulating}}">推演中...</block>
-        <block wx:else><text class="iconfont icon-edit"></text> 朱批此折</block>
-      </button>
+      <view class="lesson-card">
+        <view class="lesson-title">康熙、雍正、乾隆的朱批风格</view>
+        <view class="lesson-body">
+          <view class="lesson-emperor">
+            <view class="e-name">康熙帝</view>
+            <view class="e-body">朱批相对克制，常用「知道了」「该部知道」「依议」，偶有暖心之语。</view>
+          </view>
+          <view class="lesson-emperor">
+            <view class="e-name">雍正帝</view>
+            <view class="e-body">朱批最为个性鲜明，动辄上千言，嬉笑怒骂皆成文章，是批奏折最多的清代帝王。</view>
+          </view>
+          <view class="lesson-emperor">
+            <view class="e-name">乾隆帝</view>
+            <view class="e-body">重视成例与章法，朱批常引经据典，中后期渐趋繁琐。</view>
+          </view>
+        </view>
+      </view>
+
+      <view class="lesson-card">
+        <view class="lesson-title">「留中不发」是什么意思？</view>
+        <view class="lesson-body">
+          皇帝收到奏折后，如果觉得内容不便公开、或暂时拿不定主意，便将奏折留在宫中不发抄给相关部门处理，
+          称为「留中」。密折因为内容敏感，最常被留中。留中的奏折既无朱批反馈，也不进入官方档案流转。
+        </view>
+      </view>
+
+      <view class="classroom-footer">
+        <button class="primary-btn" open-type="share">邀好友一起批奏折</button>
+      </view>
+    </view>
+  </block>
+
+  <!-- ========== 底部 Tab 栏 ========== -->
+  <view class="bottom-tabs">
+    <view class="tab-item {{activeTab === 'today' ? 'active' : ''}}" data-tab="today" bindtap="switchTab">
+      <view class="tab-icon">📜</view>
+      <view class="tab-label">今日待批</view>
+    </view>
+    <view class="tab-item {{activeTab === 'archive' ? 'active' : ''}}" data-tab="archive" bindtap="switchTab">
+      <view class="tab-icon">📚</view>
+      <view class="tab-label">朱批档案</view>
+    </view>
+    <view class="tab-item {{activeTab === 'classroom' ? 'active' : ''}}" data-tab="classroom" bindtap="switchTab">
+      <view class="tab-icon">🎓</view>
+      <view class="tab-label">历史小课堂</view>
     </view>
   </view>
 
-  <view class="simulating" wx:if="{{simulating}}">
-    <view class="sim-hero">
-      <view class="hourglass">⏳</view>
-      <view class="sim-title">历史推演中...</view>
-      <view class="sim-sub">你的选择正在改变历史走向</view>
-    </view>
-  </view>
-
-  <view class="result-page" wx:if="{{!loading && simulationResult}}">
-    <view class="result-hero {{simulationResult.outcome === 'better' ? 'good' : simulationResult.outcome === 'worse' ? 'bad' : 'neutral'}}">
-      <view class="outcome-badge">
-        <text wx:if="{{simulationResult.outcome === 'better'}}">✦ 盛世之治</text>
-        <text wx:elif="{{simulationResult.outcome === 'worse'}}"><text class="iconfont icon-warn"></text> 内忧外患</text>
-        <text wx:else>— 波澜不惊</text>
-      </view>
-      <view class="outcome-title">你的选择：{{simulationResult.choiceText}}</view>
-      <view class="outcome-hint" wx:if="{{zhupi}}">朱批：「{{zhupi}}」</view>
-    </view>
-
-    <view class="result-cards">
-      <view class="rcard">
-        <view class="rcard-title"><text class="iconfont icon-content"></text> 真实历史</view>
-        <view class="rcard-content">{{memorial.historicalOutcome}}</view>
-      </view>
-
-      <view class="rcard alternate">
-        <view class="rcard-title">🔮 推演结果 · 三个月后</view>
-        <view class="rcard-content">{{simulationResult.threeMonthsLater}}</view>
-      </view>
-
-      <view class="rcard">
-        <view class="rcard-title">🧠 AI 史评</view>
-        <view class="rcard-content">{{simulationResult.aiComment}}</view>
-      </view>
-    </view>
-
-    <view class="result-actions">
-      <button class="btn-next" bindtap="goNext" wx:if="{{nextMemorialId}}">
-        <text class="iconfont icon-content"></text> 批阅下一折
-      </button>
-      <button class="btn-list" bindtap="backToList">
-        ← 返回奏折列表
-      </button>
-    </view>
-  </view>
-
-  <loading-skeleton wx:if="{{loading}}" rows="6" />
 </view>
