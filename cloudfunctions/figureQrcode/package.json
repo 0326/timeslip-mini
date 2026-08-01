@@ -1,0 +1,9 @@
+{
+  "name": "figureQrcode",
+  "version": "1.0.0",
+  "description": "生成历史人物小程序码（getUnlimited），供 PC 端扫码跳转",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

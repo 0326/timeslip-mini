@@ -5,8 +5,24 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV, timeout: 60000 })
 const db = cloud.database()
 const _ = db.command
 const AGENT_ID = 'agt-timeslip-2g9bj8k1d6e7cf65'
-const ACP_ENDPOINT = `https://cloud1-d0gunpzup215cfd87.api.tcloudbasegateway.com/v1/aibot/bots/${AGENT_ID}/acp`
-const DEFAULT_PUBLISHABLE_KEY = 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjlkMWRjMzFlLWI0ZDAtNDQ4Yi1hNzZmLWIwY2M2M2Q4MTQ5OCJ9.eyJpc3MiOiJodHRwczovL2Nsb3VkMS1kMGd1bnB6dXAyMTVjZmQ4Ny5hcC1zaGFuZ2hhaS50Y2ItYXBpLnRlbmNlbnRjbG91ZGFwaS5jb20iLCJzdWIiOiJhbm9uIiwiYXVkIjoiY2xvdWQxLWQwZ3VucHp1cDIxNWNmZDg3IiwiZXhwIjo0MDg5MDIyMTg4LCJpYXQiOjE3ODUzMzg5ODgsIm5vbmNlIjoiekM3WmZVUmVRS0N5YzFoWjJ3TWdYUSIsImF0X2hhc2giOiJ6QzdaZlVSZVFLQ3ljMWhaMndNZ1hRIiwibmFtZSI6IkFub255bW91cyIsInNjb3BlIjoiYW5vbnltb3VzIiwicHJvamVjdF9pZCI6ImNsb3VkMS1kMGd1bnB6dXAyMTVjZmQ4NyIsIm1ldGEiOnsicGxhdGZvcm0iOiJQdWJsaXNoYWJsZUtleSJ9LCJ1c2VyX3R5cGUiOiIiLCJjbGllbnRfdHlwZSI6ImNsaWVudF91c2VyIiwiaXNfc3lzdGVtX2FkbWluIjpmYWxzZX0.QeBz7kzMOwzUwUzYK1EBu3paT5wkFhOtHEmKB8_zRRcTtETV2JL400mjsPGNBzBi_STrjC61HdRdo__bIJ7EXhKCOZRhat4VDKMOjm6kkvLtXcljHKXo-pUn5ISnxRjI_SIMQo2jgE-eqFF4XlHGeiK3uUSeycZDS21XbPkYVCztZ4MowaPZq8eys9i7i8_WfghQ9gfH1eKiXyCyS5IsKxNuYtVNePFNGkpSPbbZ0jvISYS4JAQkjFLmHv-tI01899MQr0gRq930xEcZTIl5UocwPq_UsXuyltYr36G3WLEzx5tk1LBBvTAV9_KyqJV-5nrxnxHDerIVGwMNO2_ChA'
+
+// 通用指数退避重试（容器冷启动 DNS/TLS 偶发 443/DNS 失败时救急）
+function withRetry(fn, opts = {}) {
+  const max = opts.max != null ? opts.max : 2
+  const baseMs = opts.baseMs || 800
+  const jitterMs = opts.jitterMs || 400
+  const retryOn = typeof opts.retryOn === 'function' ? opts.retryOn : () => true
+  const onRetry = typeof opts.onRetry === 'function' ? opts.onRetry : () => {}
+  let attempt = 0
+  const run = () => Promise.resolve().then(fn).catch(err => {
+    attempt += 1
+    if (attempt > max || !retryOn(err)) throw err
+    const delay = baseMs * attempt + Math.floor(Math.random() * jitterMs)
+    try { onRetry(attempt, max, err, delay) } catch (_) {}
+    return new Promise(res => setTimeout(res, delay)).then(run)
+  })
+  return run()
+}
 
 // 青月角色元数据（与前端 QINGYUE 对齐）
 const FIGURE_ID = 'sys_qingyue'
@@ -17,59 +33,6 @@ const FIGURE_AVATAR = '/images/qingyue.jpg'
 const MAX_TEXT = 500
 const MAX_HISTORY = 20
 const MAX_SEARCH_RESULTS = 5
-
-function getPublishableKey() {
-  return (process.env.QINGYUE_PUBLISHABLE_KEY || DEFAULT_PUBLISHABLE_KEY).trim()
-}
-
-function acpRequest(method, params) {
-  return new Promise((resolve, reject) => {
-    const token = getPublishableKey()
-    if (!token) {
-      reject(new Error('QINGYUE_PUBLISHABLE_KEY_MISSING'))
-      return
-    }
-
-    const body = JSON.stringify({ jsonrpc: '2.0', id: Date.now(), method, params })
-    const url = new URL(ACP_ENDPOINT)
-    const req = https.request({
-      hostname: url.hostname,
-      path: url.pathname + url.search,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-        'Content-Length': Buffer.byteLength(body)
-      },
-      timeout: 55000
-    }, res => {
-      let chunks = ''
-      res.on('data', c => { chunks += c })
-      res.on('end', () => {
-        if (res.statusCode < 200 || res.statusCode >= 300) {
-          reject(new Error(`ACP_HTTP_${res.statusCode}: ${chunks.slice(0, 500)}`))
-          return
-        }
-        try {
-          const parsed = JSON.parse(chunks)
-          if (parsed && parsed.error) {
-            reject(new Error(parsed.error.message || parsed.error.code || 'ACP_JSONRPC_ERROR'))
-            return
-          }
-          resolve(parsed)
-        } catch (e) {
-          resolve(chunks)
-        }
-      })
-    })
-    req.on('timeout', () => {
-      req.destroy(new Error('ACP_REQUEST_TIMEOUT'))
-    })
-    req.on('error', reject)
-    req.write(body)
-    req.end()
-  })
-}
 
 function buildPromptWithHistory(text, history) {
   const pairs = (history || []).slice(-8)
@@ -264,7 +227,12 @@ async function webSearch(query) {
   const errors = []
   for (const provider of providers) {
     try {
-      const html = await httpGet(provider.url)
+      const html = await withRetry(() => httpGet(provider.url), {
+        max: 1,
+        baseMs: 600,
+        jitterMs: 300,
+        retryOn: err => /443|EAI_AGAIN|ENOTFOUND|ETIMEDOUT|ECONNRESET|ECONNREFUSED|HTTP_443/i.test(err && err.message || '')
+      })
       const results = provider.parse(html)
       if (results && results.length) {
         return results.map(item => Object.assign({ source: provider.name }, item))
@@ -291,88 +259,6 @@ function buildPromptWithWeb(text, history, searchResults) {
 以下搜索结果可能包含实时信息。回答时请优先基于这些结果，不要编造；如果搜索结果不足以确认，请明确说明。
 
 ${webText}`
-}
-
-function extractAcpText(payload) {
-  const result = payload && payload.result !== undefined ? payload.result : payload
-  if (!result) return ''
-  if (typeof result === 'string') {
-    return result.indexOf('data:') >= 0 ? extractSseAcpText(result) : result
-  }
-  if (typeof result.text === 'string') return result.text
-  if (typeof result.answer === 'string') return result.answer
-  if (typeof result.reply === 'string') return result.reply
-  if (typeof result.content === 'string') return result.content
-  if (typeof result.output === 'string') return result.output
-  if (typeof result.output_text === 'string') return result.output_text
-  if (result.message) return extractAcpText(result.message)
-  if (Array.isArray(result.content)) {
-    return result.content.map(item => {
-      if (typeof item === 'string') return item
-      return item && (item.text || item.content || '')
-    }).filter(Boolean).join('')
-  }
-  if (Array.isArray(result)) {
-    return result.map(item => extractAcpText(item)).filter(Boolean).join('')
-  }
-  if (result.data) return extractAcpText(result.data)
-  return ''
-}
-
-function extractSseAcpText(raw) {
-  const frames = String(raw || '')
-    .split(/\n\n+/)
-    .map(part => part.trim())
-    .filter(Boolean)
-
-  const visibleChunks = []
-  const visibleUpdateTypes = [
-    'agent_message_chunk',
-    'assistant_message_chunk',
-    'message_chunk',
-    'text_message_chunk',
-    'message',
-    'text'
-  ]
-
-  frames.forEach(frame => {
-    const lines = frame.split(/\n/).map(line => line.trim())
-    const dataLines = lines
-      .filter(line => line.indexOf('data:') === 0)
-      .map(line => line.slice(5).trim())
-      .filter(Boolean)
-    if (!dataLines.length) return
-    const dataText = dataLines.join('\n')
-    if (dataText === '[DONE]') return
-    let event
-    try {
-      event = JSON.parse(dataText)
-    } catch (e) {
-      return
-    }
-    const update = event && event.params && event.params.update
-    if (!update) return
-    const updateType = update.sessionUpdate || update.type || ''
-    if (visibleUpdateTypes.indexOf(updateType) < 0) return
-    const text = extractVisibleContentText(update.content || update.message || update.delta)
-    if (!text) return
-    visibleChunks.push(text)
-  })
-
-  return visibleChunks.join('')
-}
-
-function extractVisibleContentText(content) {
-  if (!content) return ''
-  if (typeof content === 'string') return content
-  if (Array.isArray(content)) {
-    return content.map(item => extractVisibleContentText(item)).filter(Boolean).join('')
-  }
-  if (typeof content.text === 'string') return content.text
-  if (typeof content.content === 'string') return content.content
-  if (typeof content.delta === 'string') return content.delta
-  if (Array.isArray(content.content)) return extractVisibleContentText(content.content)
-  return ''
 }
 
 // 从 chat_messages 查历史，组装为 history 参数
@@ -681,7 +567,7 @@ async function handleSend(OPENID, data) {
   // getHistoryForBot 已包含刚写入的 user message，需去掉最后一条
   const historyBefore = history.slice(0, -1)
 
-  // 调用 Agent ACP（云函数运行时没有 cloud.extend.AI.bot，不能用 SDK 路径）
+  // 调用 CloudBase AI SDK bot.sendMessage（内网通道，避免 https.request 的 443 连通问题）
   const startedAt = Date.now()
   let finalContent = ''
   try {
@@ -693,18 +579,45 @@ async function handleSend(OPENID, data) {
         console.warn('[qingyue-agent] web search failed:', searchErr && searchErr.message)
       }
     }
-    const payload = await acpRequest('session/prompt', {
-      prompt: [
-        {
-          type: 'text',
-          text: buildPromptWithWeb(text, historyBefore, searchResults)
-        }
-      ]
+    // bot.sendMessage 的 msg 必须是纯用户问题，不能包 buildPromptWithHistory/ buildPromptWithWeb
+    // 否则会破坏 Agent 后台的工具路由（如"查询可对话人物名单"会被误触发）
+    // 联网搜索结果作为前置参考信息拼到 msg 之前，用清晰分隔符隔开
+    let finalMsg = text
+    if (searchResults && searchResults.length) {
+      const now = new Date().toISOString()
+      const webText = searchResults.map((r, i) => {
+        return `${i + 1}. ${r.title}\n摘要：${r.snippet || '无摘要'}\n链接：${r.url}`
+      }).join('\n\n')
+      finalMsg = `【联网搜索结果（检索时间 ${now}，仅供参考，不要编造）】\n${webText}\n\n【用户问题】\n${text}`
+    }
+
+    const botHistory = historyBefore
+      .filter(m => m && m.content)
+      .map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: String(m.content).slice(0, 300) }))
+      .slice(-10)
+
+    console.log('[qingyue-agent] call bot.sendMessage botId=', AGENT_ID, 'history=', botHistory.length, 'msgLen=', finalMsg.length)
+    const ai = cloud.ai()
+    const doSend = () => ai.bot.sendMessage({
+      botId: AGENT_ID,
+      msg: finalMsg,
+      history: botHistory
     })
-    finalContent = extractAcpText(payload).trim()
+    // 云函数容器冷启动时 DNS/TLS 偶发 443，带指数退避重试 2 次
+    const stream = await withRetry(doSend, {
+      max: 2,
+      baseMs: 800,
+      jitterMs: 400,
+      retryOn: err => /status code 443|443|EAI_AGAIN|ENOTFOUND|ETIMEDOUT|ECONNRESET|ECONNREFUSED/i.test(err && err.message || '')
+    })
+    let buf = ''
+    for await (const chunk of stream.textStream) {
+      buf += chunk
+    }
+    finalContent = String(buf || '').trim()
     if (!finalContent) throw new Error('AGENT_EMPTY_RESPONSE')
   } catch (e) {
-    console.error('[qingyue-agent] ACP failed:', e && e.message, e && e.stack)
+    console.error('[qingyue-agent] bot.sendMessage failed:', e && e.message, e && e.stack)
     // 失败：写 failed 状态（前端 syncSessions 时显示）
     try {
       await bumpSession(OPENID, '暂时无法回复，请稍后重试。', {

@@ -63,7 +63,12 @@ Page({
   },
 
   onLoad(options) {
-    const id = options.id || 'simaqian'
+    let id = options.id || 'simaqian'
+    // 扫小程序码进入：scene 携带 figureId
+    if (options.scene) {
+      const decoded = decodeURIComponent(options.scene)
+      if (decoded) id = decoded
+    }
     const tab = options.tab || 'bio'
     this.setData({ id, tab })
     this.loadDetail(id)

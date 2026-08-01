@@ -504,7 +504,7 @@ async function callAI(systemPrompt, history, userInput, modelConfig) {
   const model = ai.createModel(AI_GROUP_DEFAULT)
   const histMsgs = normalizeHistory(history)
   console.log('[callAI] prompt长度:', systemPrompt.length, '历史条数:', histMsgs.length, '历史总字数:', histMsgs.reduce((s, m) => s + m.content.length, 0), '分组:', AI_GROUP_DEFAULT, '模型:', cfg.name)
-  const result = await model.generateText({
+  const doGenerate = () => model.generateText({
     model: cfg.name || AI_MODEL_DEFAULT,
     temperature: cfg.temperature,
     maxOutputTokens: cfg.maxOutputTokens,
@@ -514,6 +514,7 @@ async function callAI(systemPrompt, history, userInput, modelConfig) {
       { role: 'user', content: String(userInput).slice(0, 500) }
     ]
   })
+  const result = await doGenerate()
   const text = String(
     result && result.text ||
     result && result.choices && result.choices[0] && result.choices[0].message && result.choices[0].message.content ||
