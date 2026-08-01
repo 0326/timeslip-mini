@@ -11,7 +11,7 @@ page {
   min-height: 0;
   background: #ededed;
   padding-top: 16rpx;
-  overflow: hidden;
+  overflow-y: auto;
   box-sizing: border-box;
 }
 
@@ -51,6 +51,7 @@ page {
   width: 56rpx;
   margin-right: 20rpx;
   text-align: center;
+  flex-shrink: 0;
 }
 
 .entry-img {
@@ -61,18 +62,50 @@ page {
 }
 
 .entry-name {
-  flex: 1;
   font-size: 32rpx;
   color: #191919;
+  flex-shrink: 0;
+}
+
+.entry-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  overflow: hidden;
+}
+
+.entry-tip {
+  font-size: 24rpx;
+  color: #999;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 8rpx;
+}
+
+.entry-badge {
+  min-width: 32rpx;
+  height: 32rpx;
+  padding: 0 8rpx;
+  background: #FA5151;
+  border-radius: 16rpx;
+  color: #fff;
+  font-size: 20rpx;
+  line-height: 32rpx;
+  text-align: center;
+  box-sizing: border-box;
+  margin-right: 8rpx;
+  flex-shrink: 0;
 }
 
 .entry-arrow {
   font-size: 36rpx;
   color: #c8c8c8;
-  margin-left: 8rpx;
+  flex-shrink: 0;
 }
 
 .bottom-pad {
-  height: 0;
+  height: env(safe-area-inset-bottom);
   flex-shrink: 0;
 }

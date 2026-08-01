@@ -16,15 +16,21 @@
       wx:key="key"
       class="entry"
       data-url="{{entry.url}}"
-      data-name="{{entry.name}}"
-      data-locked="{{entry.locked}}"
+      data-key="{{entry.key}}"
+      data-latestvideoid="{{entry.latestVideoId}}"
       bindtap="onItemTap"
       hover-class="entry-hover"
     >
       <image wx:if="{{entry.iconSrc}}" class="entry-img" src="{{entry.iconSrc}}" mode="aspectFit"></image>
       <text wx:else class="iconfont entry-icon icon-{{entry.iconClass}}" style="color:{{entry.color}};"></text>
       <text class="entry-name">{{entry.name}}</text>
-      <text class="iconfont entry-arrow icon-right"></text>
+      <view class="entry-right">
+        <text wx:if="{{entry.tip}}" class="entry-tip">{{entry.tip}}</text>
+        <view wx:if="{{entry.badge > 0}}" class="entry-badge">
+          {{entry.badge > 99 ? '99+' : entry.badge}}
+        </view>
+        <text class="iconfont entry-arrow icon-right"></text>
+      </view>
     </view>
   </view>
   <view class="bottom-pad"></view>
