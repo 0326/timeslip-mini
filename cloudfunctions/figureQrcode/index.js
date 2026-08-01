@@ -16,8 +16,8 @@ function resolveEnvVersion(input) {
   return 'release'
 }
 
-function fileKey(figureId) {
-  return `${QRCODE_DIR}/figure-${figureId}.png`
+function fileKey(figureId, envVersion) {
+  return `${QRCODE_DIR}/${envVersion}/figure-${figureId}.png`
 }
 
 function isHttpGateway(event) {
@@ -28,13 +28,14 @@ function wrapResult(result, event) {
   if (isHttpGateway(event)) {
     return {
       statusCode: 200,
+      headers: { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*' },
       body: JSON.stringify(result)
     }
   }
   return result
 }
 
-// ===== HTTP 工具（不依赖 fetch，使用 Node.js 内置 https 模块）=====
+// ===== HTTP 工具 =====
 
 function httpsGet(url) {
   return new Promise((resolve, reject) => {
@@ -148,23 +149,21 @@ async function generateUnlimited(scene, page, envVersion) {
 
   const resp = await httpsPost(url, bodyStr)
 
-  // 微信 API 可能返回图片（Buffer）或 JSON 错误
   const contentType = resp.headers['content-type'] || ''
   if (contentType.includes('application/json')) {
     const err = JSON.parse(resp.buffer.toString('utf8'))
     throw new Error(`getwxacodeunlimit API 错误: errcode=${err.errcode} errmsg=${err.errmsg || ''}`)
   }
 
-  // 返回的是图片二进制
   return resp.buffer
 }
 
-// ===== 缓存管理 =====
+// ===== 缓存管理（按 envVersion 隔离）=====
 
-async function getCached(figureId) {
+async function getCached(figureId, envVersion) {
   try {
     const r = await db.collection(CACHE_COLLECTION)
-      .where({ figureId })
+      .where({ figureId, envVersion })
       .limit(1)
       .get()
     return (r.data && r.data[0]) || null
@@ -173,10 +172,10 @@ async function getCached(figureId) {
   }
 }
 
-async function setCached(figureId, fileID) {
+async function setCached(figureId, envVersion, fileID) {
   try {
     await db.collection(CACHE_COLLECTION).add({
-      data: { figureId, fileID, generatedAt: db.serverDate() }
+      data: { figureId, envVersion, fileID, generatedAt: db.serverDate() }
     })
   } catch (e) {
     // 并发重复写入时忽略
@@ -213,12 +212,12 @@ exports.main = async (event) => {
     (event.queryStringParameters && event.queryStringParameters.envVersion)
   )
 
-  // 1. 命中缓存直接取临时 URL
-  const cached = await getCached(figureId)
+  // 1. 命中缓存直接取临时 URL（按 envVersion 隔离）
+  const cached = await getCached(figureId, envVersion)
   if (cached && cached.fileID) {
     try {
       const url = await getTempUrl(cached.fileID)
-      return wrapResult({ code: 0, message: 'ok', data: { url, fileID: cached.fileID, cached: true } }, event)
+      return wrapResult({ code: 0, message: 'ok', data: { url, fileID: cached.fileID, cached: true, envVersion } }, event)
     } catch (e) {
       // 缓存文件可能被误删，降级重新生成
     }
@@ -237,8 +236,8 @@ exports.main = async (event) => {
     }, event)
   }
 
-  // 3. 上传到云存储
-  const cloudPath = fileKey(figureId)
+  // 3. 上传到云存储（按 envVersion 分目录）
+  const cloudPath = fileKey(figureId, envVersion)
   let uploadRes
   try {
     uploadRes = await cloud.uploadFile({ cloudPath, fileContent: buffer })
@@ -250,13 +249,13 @@ exports.main = async (event) => {
   const fileID = uploadRes.fileID
 
   // 4. 记录缓存
-  await setCached(figureId, fileID)
+  await setCached(figureId, envVersion, fileID)
 
   // 5. 取临时 URL 返回
   try {
     const url = await getTempUrl(fileID)
-    return wrapResult({ code: 0, message: 'ok', data: { url, fileID, cached: false } }, event)
+    return wrapResult({ code: 0, message: 'ok', data: { url, fileID, cached: false, envVersion } }, event)
   } catch (e) {
-    return wrapResult({ code: 0, message: 'ok(no-url)', data: { url: '', fileID, cached: false } }, event)
+    return wrapResult({ code: 0, message: 'ok(no-url)', data: { url: '', fileID, cached: false, envVersion } }, event)
   }
 }
