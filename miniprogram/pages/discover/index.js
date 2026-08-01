@@ -9,13 +9,13 @@ Page({
       {
         items: [
           { key: 'channels', iconClass: 'shipinhao', name: '视频号', color: '#FA5151', url: '/pages/discover/channels/index' },
+          { key: 'memorial', iconClass: 'pyp', name: '批奏折', color: '#C9A24D', url: '/pages/discover/memorial', locked: true },
           { key: 'letters', iconClass: 'mail', name: '雁书', color: '#C9A24D', url: '/pages/yan/index', locked: true }
         ]
       },
       {
         items: [
           { key: 'dna', iconClass: 'cyc', name: '测一测', color: '#722ED1', url: '/pages/discover/dna-hall/index' },
-          { key: 'memorial', iconClass: 'pyp', name: '批一批', color: '#C9A24D', url: '/pages/discover/memorial', locked: true },
           { key: 'look', iconClass: 'kyk', name: '看一看', color: '#1890FF', url: '/pages/discover/look/index' }
         ]
       }

@@ -25,6 +25,7 @@ exports.main = async (event, context) => {
       case 'followStatus': return await followStatus(OPENID, data)
       case 'followedChannels': return await followedChannels(OPENID, data)
       case 'increaseView': return await increaseView(OPENID, data)
+      case 'userCommentAdd': return await userCommentAdd(OPENID, data)
 
       // ============ 管理员接口 ============
       case 'adminChannelCreate': return await adminChannelCreate(OPENID, data)
@@ -99,6 +100,46 @@ async function feedList(OPENID, data) {
       }
     } catch (_) {}
 
+    // 收集所有 figureId，回退查 figures 人物表取头像
+    const allFigureIds = [...new Set(list.map(v => v.figureId).filter(Boolean))]
+    const figureMap = {}
+    try {
+      if (allFigureIds.length > 0) {
+        // 先用原始 figureId 查 figures.id
+        const figRes = await db.collection('figures')
+          .where({ id: _.in(allFigureIds) })
+          .get()
+        for (const f of figRes.data) {
+          figureMap[f.id] = f
+        }
+        // 去掉 fig- 前缀再查一次（figures 表 id 可能存的是 "sushi" 而非 "fig-sushi"）
+        const missing = allFigureIds.filter(fid => !figureMap[fid])
+        const strippedIds = missing
+          .filter(fid => fid.startsWith('fig-'))
+          .map(fid => fid.slice(4))
+        if (strippedIds.length > 0) {
+          const figRes2 = await db.collection('figures')
+            .where({ id: _.in(strippedIds) })
+            .get()
+          for (const f of figRes2.data) {
+            const key = 'fig-' + f.id
+            figureMap[key] = f
+          }
+        }
+        // 也按 figureId 字段查一遍（兼容两种格式）
+        const stillMissing = allFigureIds.filter(fid => !figureMap[fid])
+        if (stillMissing.length > 0) {
+          const figRes3 = await db.collection('figures')
+            .where({ figureId: _.in(stillMissing) })
+            .get()
+          for (const f of figRes3.data) {
+            const key = f.figureId || f.id
+            if (key) figureMap[key] = f
+          }
+        }
+      }
+    } catch (_) {}
+
     // 评论计数（所有用户都需要）
     const commentCountMap = {}
     try {
@@ -138,6 +179,16 @@ async function feedList(OPENID, data) {
         if (ch.avatar) v.avatar = ch.avatar
         if (ch.figureName) v.figureName = ch.figureName
         if (ch.figureTitle) v.figureTitle = ch.figureTitle
+        if (ch.figureId) v.figureId = ch.figureId
+      }
+      // 头像仍为空时，回退查 figures 人物表
+      if (!v.avatar && v.figureId) {
+        const fig = figureMap[v.figureId]
+        if (fig) {
+          v.avatar = fig.mini_avatar_url || fig.avatar_url || fig.avatar || ''
+          if (!v.figureName && fig.name) v.figureName = fig.name
+          if (!v.figureTitle && (fig.title || fig.figureTitle)) v.figureTitle = fig.title || fig.figureTitle
+        }
       }
     })
   }
@@ -174,9 +225,33 @@ async function videoDetail(OPENID, data) {
         if (ch.avatar) video.avatar = ch.avatar
         if (ch.figureName) video.figureName = ch.figureName
         if (ch.figureTitle) video.figureTitle = ch.figureTitle
+        if (ch.figureId) video.figureId = ch.figureId
       }
     }
   } catch (_) {}
+
+  // 头像仍为空时，回退查 figures 人物表
+  if (!video.avatar && video.figureId) {
+    try {
+      let figRes = await db.collection('figures').where({ id: video.figureId }).limit(1).get()
+      if (!figRes.data || !figRes.data.length) {
+        // 去掉 fig- 前缀重查
+        const stripped = video.figureId.startsWith('fig-') ? video.figureId.slice(4) : ''
+        if (stripped) {
+          figRes = await db.collection('figures').where({ id: stripped }).limit(1).get()
+        }
+      }
+      if (!figRes.data || !figRes.data.length) {
+        figRes = await db.collection('figures').where({ figureId: video.figureId }).limit(1).get()
+      }
+      const fig = figRes.data && figRes.data[0]
+      if (fig) {
+        video.avatar = fig.mini_avatar_url || fig.avatar_url || fig.avatar || ''
+        if (!video.figureName && fig.name) video.figureName = fig.name
+        if (!video.figureTitle && (fig.title || fig.figureTitle)) video.figureTitle = fig.title || fig.figureTitle
+      }
+    } catch (_) {}
+  }
 
   let liked = false
   if (OPENID) {
@@ -253,10 +328,47 @@ async function channelByFigure(OPENID, data) {
   const { figureId } = data
   if (!figureId) return { code: -1, message: '缺少 figureId', data: null }
 
-  const channelRes = await db.collection('video_channels')
+  // 尝试多种格式匹配 video_channels.figureId
+  let channelRes = await db.collection('video_channels')
     .where({ figureId })
     .limit(1)
     .get()
+
+  if (!channelRes.data || channelRes.data.length === 0) {
+    // 尝试加 fig- 前缀
+    const withPrefix = figureId.startsWith('fig-') ? figureId : 'fig-' + figureId
+    channelRes = await db.collection('video_channels')
+      .where({ figureId: withPrefix })
+      .limit(1)
+      .get()
+  }
+
+  if (!channelRes.data || channelRes.data.length === 0) {
+    // 尝试去掉 fig- 前缀
+    const stripped = figureId.startsWith('fig-') ? figureId.slice(4) : ''
+    if (stripped) {
+      channelRes = await db.collection('video_channels')
+        .where({ figureId: stripped })
+        .limit(1)
+        .get()
+    }
+  }
+
+  if (!channelRes.data || channelRes.data.length === 0) {
+    // 最后尝试用 figures 表 _id 反查
+    try {
+      const figRes = await db.collection('figures').doc(figureId).get()
+      if (figRes.data) {
+        const figId = figRes.data.figureId || (figRes.data.id ? 'fig-' + figRes.data.id : '')
+        if (figId) {
+          channelRes = await db.collection('video_channels')
+            .where({ figureId: figId })
+            .limit(1)
+            .get()
+        }
+      }
+    } catch (_) {}
+  }
 
   if (!channelRes.data || channelRes.data.length === 0) {
     return { code: 0, message: 'ok', data: null }
@@ -410,6 +522,62 @@ async function increaseView(OPENID, data) {
 
 // ==================== 管理员接口 ====================
 
+async function userCommentAdd(OPENID, data) {
+  const { videoId, content } = data
+  if (!videoId || !content || !OPENID) return { code: -1, message: '参数不全', data: null }
+  const text = String(content).trim()
+  if (!text) return { code: -1, message: '评论内容不能为空', data: null }
+  if (text.length > 200) return { code: -1, message: '评论过长', data: null }
+
+  // 检查该视频是否开启了评论
+  try {
+    const vDoc = await db.collection('videos').doc(videoId).get()
+    if (vDoc.data && vDoc.data.commentEnabled === false) {
+      return { code: -1, message: '该视频未开放评论', data: null }
+    }
+  } catch (_) {}
+
+  // 微信内容安全检测
+  try {
+    const msgCheck = await cloud.openapi.security.msgSecCheck({
+      content: text
+    })
+    if (msgCheck && msgCheck.errCode !== 0) {
+      return { code: -1, message: '评论内容包含违规信息，请修改后重试', data: null }
+    }
+  } catch (e) {
+    // 如果检测接口异常，保守拒绝
+    console.warn('msgSecCheck error:', e.message)
+    return { code: -1, message: '内容审核服务暂时不可用，请稍后重试', data: null }
+  }
+
+  const userRes = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
+  const user = (userRes.data && userRes.data[0]) || {}
+
+  const doc = {
+    videoId,
+    fromFigureId: '',
+    fromFigureName: user.nickName || '穿越者',
+    fromFigureTitle: '',
+    fromAvatar: user.avatarUrl || '',
+    fromDynasty: '',
+    toFigureId: '',
+    toFigureName: '',
+    content: text,
+    createdAt: db.serverDate()
+  }
+
+  const res = await db.collection('video_comments').add({ data: doc })
+
+  try {
+    await db.collection('videos').doc(videoId).update({
+      data: { commentCount: _.inc(1) }
+    })
+  } catch (_) {}
+
+  return { code: 0, message: 'ok', data: { _id: res._id, ...doc } }
+}
+
 async function adminChannelCreate(OPENID, data) {
   await checkAdmin(OPENID)
   const { figureId, figureName, figureTitle = '', avatar = '', dynasty = '', dynastyName = '', bio = '' } = data
@@ -461,7 +629,43 @@ async function adminChannelList(OPENID, data) {
     .limit(Math.min(limit, 100))
     .get()
 
-  return { code: 0, message: 'ok', data: res.data }
+  const channels = res.data || []
+
+  // 关联查 figures 表补全头像
+  const figureIds = [...new Set(channels.map(c => c.figureId).filter(Boolean))]
+  const figureMap = {}
+  if (figureIds.length > 0) {
+    try {
+      // 先按原始 figureId 查
+      let figRes = await db.collection('figures').where({ id: _.in(figureIds) }).get()
+      for (const f of (figRes.data || [])) {
+        const key = f.id
+        if (key) figureMap[key] = f
+      }
+      // 去掉 fig- 前缀再查
+      const stripped = figureIds
+        .filter(fid => fid.startsWith('fig-') && !figureMap[fid])
+        .map(fid => fid.slice(4))
+      if (stripped.length > 0) {
+        figRes = await db.collection('figures').where({ id: _.in(stripped) }).get()
+        for (const f of (figRes.data || [])) {
+          const key = 'fig-' + f.id
+          if (key) figureMap[key] = f
+        }
+      }
+    } catch (_) {}
+  }
+
+  for (const ch of channels) {
+    const fig = ch.figureId ? figureMap[ch.figureId] : null
+    if (fig) {
+      if (!ch.avatar) ch.avatar = fig.mini_avatar_url || fig.avatar_url || fig.avatar || ''
+      if (!ch.figureName && fig.name) ch.figureName = fig.name
+      if (!ch.figureTitle && (fig.title || fig.figureTitle)) ch.figureTitle = fig.title || fig.figureTitle
+    }
+  }
+
+  return { code: 0, message: 'ok', data: channels }
 }
 
 async function adminVideoCreate(OPENID, data) {
@@ -469,7 +673,7 @@ async function adminVideoCreate(OPENID, data) {
   const {
     channelId, figureId, figureName, figureTitle = '', avatar = '', dynasty = '',
     title, description = '', coverUrl, videoUrl, duration = 0,
-    historicalEvent = '', tags = []
+    historicalEvent = '', tags = [], commentEnabled = false
   } = data
 
   if (!channelId || !title || !videoUrl || !coverUrl) {
@@ -493,6 +697,7 @@ async function adminVideoCreate(OPENID, data) {
     duration,
     historicalEvent,
     tags: Array.isArray(tags) ? tags : [],
+    commentEnabled: !!commentEnabled,
     likeCount: 0,
     viewCount: 0,
     status: 'published',
@@ -515,7 +720,7 @@ async function adminVideoUpdate(OPENID, data) {
   const { videoId, ...updateData } = data
   if (!videoId) return { code: -1, message: '缺少 videoId', data: null }
 
-  const allowed = ['title', 'description', 'coverUrl', 'videoUrl', 'duration', 'historicalEvent', 'tags', 'status']
+  const allowed = ['title', 'description', 'coverUrl', 'videoUrl', 'duration', 'historicalEvent', 'tags', 'status', 'commentEnabled']
   const toUpdate = {}
   allowed.forEach(k => {
     if (updateData[k] !== undefined) toUpdate[k] = updateData[k]

@@ -331,22 +331,21 @@ function buildModernEcho(persona, figure) {
   return echo.slice(0, 3).join('；')
 }
 
-// ===== 性格→语气词/emoji 分配 =====
+// ===== 性格→语气词分配 =====
 function buildToneHint(persona, figure) {
   const traits = Array.isArray(persona && persona.personality) ? persona.personality : []
   const name = figure.name || ''
   const text = traits.join('') + name
   let moodWords = '哦/哈/罢了'
-  let emoji = '🍵'
-  if (/豪放|豪爽|壮烈|刚猛|直爽|霸王|辛弃疾|岳飞|项羽/.test(text)) { moodWords = '咳/哎/哼/去也'; emoji = '⚔️' }
-  else if (/温婉|细腻|婉约|才女|李清照|易安|美人|妃|后/.test(text)) { moodWords = '呢/嘛/啦/呀'; emoji = '🌸' }
-  else if (/威严|帝王|皇帝|太祖|武帝|则天|始皇|嬴政|朱元璋|曹操|武则天/.test(text)) { moodWords = '嗯/也罢/哼/竟'; emoji = '👑' }
-  else if (/旷达|幽默|诙谐|美食|东坡|苏轼|李白|好酒/.test(text)) { moodWords = '哈/哈哈/也罢/嗝/妙哉'; emoji = '🍶' }
-  else if (/温厚|儒雅|谆谆|好学|崇礼|孔子|孟子|儒|师/.test(text)) { moodWords = '嗯/善/矣/呵'; emoji = '📜' }
-  else if (/缜密|多谋|心学|哲人|诸葛|孔明|阳明|谋士/.test(text)) { moodWords = '嗯/原来如此/确乎'; emoji = '✨' }
-  else if (/严谨|深沉|实录|太史|司马迁|史学家/.test(text)) { moodWords = '嗯/确/然'; emoji = '🖋️' }
-  else if (/医术|医|华佗|时珍|药/.test(text)) { moodWords = '哎/哦/注意了'; emoji = '🌿' }
-  return { moodWords, emoji }
+  if (/豪放|豪爽|壮烈|刚猛|直爽|霸王|辛弃疾|岳飞|项羽/.test(text)) moodWords = '咳/哎/哼/去也'
+  else if (/温婉|细腻|婉约|才女|李清照|易安|美人|妃|后/.test(text)) moodWords = '呢/嘛/啦/呀'
+  else if (/威严|帝王|皇帝|太祖|武帝|则天|始皇|嬴政|朱元璋|曹操|武则天/.test(text)) moodWords = '嗯/也罢/哼/竟'
+  else if (/旷达|幽默|诙谐|美食|东坡|苏轼|李白|好酒/.test(text)) moodWords = '哈/哈哈/也罢/嗝/妙哉'
+  else if (/温厚|儒雅|谆谆|好学|崇礼|孔子|孟子|儒|师/.test(text)) moodWords = '嗯/善/矣/呵'
+  else if (/缜密|多谋|心学|哲人|诸葛|孔明|阳明|谋士/.test(text)) moodWords = '嗯/原来如此/确乎'
+  else if (/严谨|深沉|实录|太史|司马迁|史学家/.test(text)) moodWords = '嗯/确/然'
+  else if (/医术|医|华佗|时珍|药/.test(text)) moodWords = '哎/哦/注意了'
+  return moodWords
 }
 
 // ===== 角色关系简表（供 prompt 用） =====
@@ -427,8 +426,7 @@ function buildChatSystemPrompt(context) {
 称呼用户：${userAddresses}
 表达方式：${speakingStyle}
 ${interests ? `关注主题：${interests}\n` : ''}现代共鸣点（用户聊到相关话题时秒懂并用白话共鸣，不要用文言端着）：${modernEcho}
-语气词池（按你的性格点缀，每句最多1个，滥用会油腻）：${toneHint.moodWords}
-句尾意境 emoji 池（**只允许用下列之一，每句最多1个，严禁网络梗 emoji/颜文字**）：${toneHint.emoji} 或 🍶🍵🌸⚔️👑📜✨🖋️🌿🏔️🌙
+语气词池（按你的性格点缀，每句最多1个，滥用会油腻）：${toneHint}
 
 【可信资料】
 ${works ? `作品（可准确引用，也可自我解构翻梗，不要模仿文风）：${works}\n` : ''}${verifiedQuotesNote ? `${verifiedQuotesNote}\n` : ''}${passagesText ? `相关事件（史料原文，仅作事实依据，严禁模仿其文言文风）：\n${passagesText}\n` : ''}${relationsText ? `人物关系（当用户提到他们时，结合你的真实情绪回应，不要像维基百科一样中立介绍；可以互吹、互怼、吐槽、怀念）：\n${relationsText}\n` : ''}${articlesText ? `专题补充：\n${articlesText}` : ''}
@@ -464,7 +462,7 @@ ${examples.map(ex => `用户：${ex.user}\n${name}：${ex.assistant}`).join('\n\
 
 【禁忌】
 ${avoidances.map((a, i) => `${i + 1}. ${a}`).join('\n')}
-10. 严禁使用网络梗表情符号（如狗头、微笑死亡脸、[旺柴]）和颜文字（如 (╯°□°)╯）；意境 emoji 每句最多 1 个
+10. 严禁使用任何 emoji、网络梗表情符号（如狗头、微笑死亡脸、[旺柴]）和颜文字（如 (╯°□°)╯）
 11. 严禁把你所有作品一口气列出来当背书，除非用户明确问"你写过什么"
 12. 严禁每句都提自己的名句，像在背课文`
 }

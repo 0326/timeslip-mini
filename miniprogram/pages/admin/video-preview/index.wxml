@@ -4,6 +4,11 @@
 ></custom-nav-bar>
 
 <view class="page">
+  <view class="back-bar" bindtap="goBack">
+    <text class="iconfont icon-left back-icon"></text>
+    <text class="back-text">返回视频管理</text>
+  </view>
+
   <view wx:if="{{loading}}" class="loading-wrap">
     <view class="spinner"></view>
     <text class="loading-text">加载中...</text>

@@ -305,6 +305,30 @@
   line-height: 1.5;
 }
 
+.existing-comments {
+  margin-top: 20rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx dashed #e0e0e0;
+}
+
+.existing-title {
+  font-size: 26rpx;
+  color: #8e8e93;
+  margin-bottom: 16rpx;
+}
+
+.switch-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.form-hint {
+  font-size: 24rpx;
+  color: #8e8e93;
+  padding: 8rpx 0 0;
+}
+
 .bottom-space {
   height: 40rpx;
 }

@@ -112,12 +112,12 @@
       </view>
     </view>
 
-    <view class="section" wx:if="{{!editId}}">
+    <view class="section">
       <view class="section-title">
-        AI评论
-        <text class="section-sub">（可选，发布后自动生成）</text>
+        AI角色评论
+        <text class="section-sub">（可选，{{editId ? '新增后保存生效' : '发布后自动生成'}}）</text>
       </view>
-      <view class="add-comment-btn" bindtap="addAiComment">+ 添加AI评论</view>
+      <view class="add-comment-btn" bindtap="addAiComment">+ 添加AI角色评论</view>
       <view class="ai-comment-list" wx:if="{{aiComments.length > 0}}">
         <view class="ai-comment-item" wx:for="{{aiComments}}" wx:key="idx" wx:for-index="idx">
           <view class="ai-comment-header">
@@ -127,6 +127,25 @@
           <view class="ai-comment-content">{{item.content}}</view>
         </view>
       </view>
+      <view class="existing-comments" wx:if="{{existingComments.length > 0}}">
+        <view class="existing-title">已有评论（{{existingComments.length}}条）</view>
+        <view class="ai-comment-item" wx:for="{{existingComments}}" wx:key="_id" wx:for-index="idx">
+          <view class="ai-comment-header">
+            <text class="ai-comment-name">{{item.fromFigureName}} · {{item.fromFigureTitle}}</text>
+            <text class="ai-comment-remove" data-id="{{item._id}}" bindtap="removeExistingComment">删除</text>
+          </view>
+          <view class="ai-comment-content">{{item.content}}</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-title">评论设置</view>
+      <view class="form-item switch-item">
+        <text class="form-label">允许用户评论</text>
+        <switch checked="{{commentEnabled}}" bindchange="onCommentEnabledChange" color="#07C160" />
+      </view>
+      <view class="form-hint">关闭后用户只能查看AI角色评论，不能自己发评论</view>
     </view>
 
     <view class="bottom-space"></view>

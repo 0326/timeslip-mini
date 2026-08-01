@@ -85,6 +85,30 @@ Page({
     })
   },
 
+  onToggleStatus(e) {
+    const id = e.currentTarget.dataset.id
+    const currentStatus = e.currentTarget.dataset.status
+    const newStatus = currentStatus === 'published' ? 'unpublished' : 'published'
+    const actionText = newStatus === 'published' ? '上架' : '下架'
+    wx.showModal({
+      title: '确认操作',
+      content: `确定要${actionText}这条视频吗？`,
+      success: async (res) => {
+        if (!res.confirm) return
+        try {
+          await requestCloud('videoChannel', 'adminVideoUpdate', {
+            videoId: id,
+            status: newStatus
+          }, { throwError: false })
+          wx.showToast({ title: `已${actionText}`, icon: 'success' })
+          this.loadVideos(true)
+        } catch (err) {
+          wx.showToast({ title: `${actionText}失败`, icon: 'none' })
+        }
+      }
+    })
+  },
+
   goUpload() {
     wx.navigateTo({ url: '/pages/admin/video-upload/index' })
   },

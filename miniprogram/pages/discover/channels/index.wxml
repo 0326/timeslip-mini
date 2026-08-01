@@ -75,13 +75,6 @@
               <text class="author-name">{{video.figureName}}</text>
               <text class="author-title" wx:if="{{video.figureTitle}}">· {{video.figureTitle}}</text>
             </view>
-            <view
-              class="follow-btn {{video.followed ? 'followed' : ''}}"
-              catchtap="onFollow"
-              data-channel-id="{{video.channelId}}"
-            >
-              {{video.followed ? '已关注' : '+ 关注'}}
-            </view>
           </view>
           <view class="video-title">{{video.title}}</view>
           <view class="video-desc" wx:if="{{video.description}}">{{video.description}}</view>
@@ -155,5 +148,18 @@
         </view>
       </view>
     </scroll-view>
+
+    <view wx:if="{{currentCommentEnabled}}" class="comment-input-bar" catchtap="stopPropagation">
+      <input
+        class="comment-input"
+        placeholder="说点什么..."
+        value="{{commentText}}"
+        bindinput="onCommentInput"
+        confirm-type="send"
+        bindconfirm="sendComment"
+        maxlength="200"
+      />
+      <view class="comment-send {{commentText ? 'active' : ''}}" bindtap="sendComment">发送</view>
+    </view>
   </view>
 </view>

@@ -5,6 +5,25 @@
   background: #000;
 }
 
+.back-bar {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 30rpx;
+  background: rgba(0, 0, 0, 0.9);
+  flex-shrink: 0;
+}
+
+.back-icon {
+  font-size: 28rpx;
+  color: #fff;
+  margin-right: 8rpx;
+}
+
+.back-text {
+  font-size: 26rpx;
+  color: #fff;
+}
+
 .loading-wrap,
 .empty-wrap {
   flex: 1;

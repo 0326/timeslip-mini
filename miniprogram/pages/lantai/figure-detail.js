@@ -91,12 +91,15 @@ Page({
         wx.showToast({ title: '未找到人物信息', icon: 'none' })
         return
       }
+      // 构造逻辑 figureId（video_channels 存的是 "fig-sushi" 格式）
+      const logicalFigureId = figure.figureId || (figure.id ? 'fig-' + figure.id : id)
       this.setData({
         figure,
+        figureId: logicalFigureId,
         dynastyInfo: getDynastyInfo(figure.dynasty),
         loading: false
       })
-      this.loadChannel(id)
+      this.loadChannel(logicalFigureId)
       this.loadRelatedArticles(id)
     } catch (e) {
       this.setData({ loading: false })
@@ -203,8 +206,13 @@ Page({
 
   goVideoDetail(e) {
     const id = e.currentTarget.dataset.id
+    const channelInfo = this.data.channelInfo || {}
+    const figureId = this.data.figureId || ''
+    const params = [`videoId=${id}`]
+    if (channelInfo._id) params.push(`channelId=${channelInfo._id}`)
+    if (figureId) params.push(`figureId=${figureId}`)
     wx.navigateTo({
-      url: `/pages/discover/channels/index?videoId=${id}`
+      url: `/pages/discover/channels/index?${params.join('&')}`
     })
   },
 

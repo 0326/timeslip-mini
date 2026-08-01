@@ -20,6 +20,10 @@ Page({
     this.loadVideo(videoId)
   },
 
+  goBack() {
+    wx.navigateBack()
+  },
+
   async loadVideo(videoId) {
     this.setData({ loading: true, error: '' })
     try {

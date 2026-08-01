@@ -10,9 +10,11 @@ Page({
       figureId: '',
       figureName: '',
       figureTitle: '',
+      avatar: '',
       bio: ''
     },
-    figureOptions: []
+    figureOptions: [],
+    selectedFigureId: ''
   },
 
   onLoad() {
@@ -38,6 +40,14 @@ Page({
     wx.stopPullDownRefresh()
   },
 
+  async loadFigures() {
+    if (this.data.figureOptions.length > 0) return
+    try {
+      const data = await requestCloud('shiji', 'figureList', { limit: 200 }, { throwError: false })
+      this.setData({ figureOptions: data || [] })
+    } catch (e) {}
+  },
+
   openCreate() {
     this.setData({
       showCreate: true,
@@ -45,9 +55,12 @@ Page({
         figureId: '',
         figureName: '',
         figureTitle: '',
+        avatar: '',
         bio: ''
-      }
+      },
+      selectedFigureId: ''
     })
+    this.loadFigures()
   },
 
   closeCreate() {
@@ -61,19 +74,27 @@ Page({
     })
   },
 
-  async submitCreate() {
-    const form = this.data.createForm
-    if (!form.figureId) {
-      wx.showToast({ title: '请输入人物ID', icon: 'none' })
-      return
-    }
-    if (!form.figureName) {
-      wx.showToast({ title: '请输入人物名称', icon: 'none' })
-      return
-    }
+  onFigureSelect(e) {
+    const figure = e.currentTarget.dataset.figure
+    this.setData({
+      selectedFigureId: figure.figureId,
+      createForm: {
+        figureId: 'fig-' + figure.figureId,
+        figureName: figure.figureName,
+        figureTitle: figure.title || '',
+        avatar: figure.avatar || '',
+        bio: ''
+      }
+    })
+  },
 
+  async submitCreate() {
+    if (!this.data.selectedFigureId) {
+      wx.showToast({ title: '请先选择角色', icon: 'none' })
+      return
+    }
     try {
-      await requestCloud('videoChannel', 'adminChannelCreate', form, { throwError: false })
+      await requestCloud('videoChannel', 'adminChannelCreate', this.data.createForm, { throwError: false })
       wx.showToast({ title: '创建成功', icon: 'success' })
       this.setData({ showCreate: false })
       this.loadChannels()
@@ -85,7 +106,7 @@ Page({
   onChannelTap(e) {
     const id = e.currentTarget.dataset.id
     wx.navigateTo({
-      url: `/pages/discover/channel-detail/index?channelId=${id}`
+      url: `/pages/admin/channel-detail/index?channelId=${id}`
     })
   },
 

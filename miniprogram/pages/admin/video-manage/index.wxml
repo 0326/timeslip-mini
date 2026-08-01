@@ -21,15 +21,16 @@
       wx:for="{{videoList}}"
       wx:key="_id"
       class="grid-item"
-      data-id="{{item._id}}"
-      bindtap="onVideoTap"
     >
-      <view class="item-cover">
+      <view class="item-cover" data-id="{{item._id}}" bindtap="onVideoTap">
         <image wx:if="{{item.coverUrl}}" class="cover-img" src="{{item.coverUrl}}" mode="aspectFill"></image>
         <view wx:else class="cover-placeholder">
           <text>{{item.title}}</text>
         </view>
         <view class="duration" wx:if="{{item.duration}}">{{item.duration}}"</view>
+        <view class="status-badge {{item.status === 'published' ? 'status-on' : 'status-off'}}">
+          {{item.status === 'published' ? '已上架' : '已下架'}}
+        </view>
       </view>
       <view class="item-info">
         <view class="item-title">{{item.title}}</view>
@@ -41,13 +42,20 @@
         </view>
       </view>
       <view class="item-actions">
-        <view class="item-edit" catchtap="onEdit" data-id="{{item._id}}">
+        <view class="action-btn action-edit" catchtap="onEdit" data-id="{{item._id}}">
           <text class="iconfont icon-edit"></text>
           <text class="action-text">编辑</text>
         </view>
-        <view class="item-delete" catchtap="onDelete" data-id="{{item._id}}">
+        <view
+          class="action-btn action-toggle"
+          catchtap="onToggleStatus"
+          data-id="{{item._id}}"
+          data-status="{{item.status}}"
+        >
+          <text class="action-text">{{item.status === 'published' ? '下架' : '上架'}}</text>
+        </view>
+        <view class="action-btn action-delete" catchtap="onDelete" data-id="{{item._id}}">
           <text class="iconfont icon-delete"></text>
-          <text class="action-text">删除</text>
         </view>
       </view>
     </view>

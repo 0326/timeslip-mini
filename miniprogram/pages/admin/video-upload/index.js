@@ -20,12 +20,15 @@ Page({
     uploading: false,
     uploadProgress: 0,
     aiComments: [],
-    showChannelPicker: false
+    showChannelPicker: false,
+    commentEnabled: false,
+    existingComments: []
   },
 
   onLoad(options) {
     if (!loginGuard.requireAdmin(this)) return
     this._editId = (options && options.editId) || ''
+    this._presetChannelId = (options && options.channelId) || ''
     this.loadChannels()
     if (this._editId) {
       this.loadVideoForEdit(this._editId)
@@ -45,11 +48,46 @@ Page({
         tags: data.tags || [],
         videoFileID: data.videoUrl || '',
         coverFileID: data.coverUrl || '',
-        duration: data.duration || 0
+        duration: data.duration || 0,
+        commentEnabled: data.commentEnabled === true
       })
+      // 加载已有评论
+      this.loadExistingComments(videoId)
     } catch (e) {
       wx.showToast({ title: '加载视频信息失败', icon: 'none' })
     }
+  },
+
+  async loadExistingComments(videoId) {
+    try {
+      const data = await requestCloud('videoChannel', 'commentList', { videoId }, { throwError: false })
+      if (data) {
+        this.setData({ existingComments: data })
+      }
+    } catch (_) {}
+  },
+
+  onCommentEnabledChange(e) {
+    this.setData({ commentEnabled: e.detail.value })
+  },
+
+  async removeExistingComment(e) {
+    const commentId = e.currentTarget.dataset.id
+    wx.showModal({
+      title: '确认删除',
+      content: '删除后不可恢复，确定删除该评论？',
+      success: async r => {
+        if (!r.confirm) return
+        try {
+          await requestCloud('videoChannel', 'adminCommentRemove', { commentId }, { throwError: false })
+          const list = this.data.existingComments.filter(c => c._id !== commentId)
+          this.setData({ existingComments: list })
+          wx.showToast({ title: '已删除', icon: 'none' })
+        } catch (err) {
+          wx.showToast({ title: '删除失败', icon: 'none' })
+        }
+      }
+    })
   },
 
   async loadChannels() {
@@ -59,6 +97,13 @@ Page({
       // 编辑模式下，channelList 加载完成后预选视频号
       if (this._editId && this.data.editId) {
         this._preselectChannel()
+      }
+      // 从视频号管理页进入时，预选视频号
+      if (this._presetChannelId) {
+        const ch = (data || []).find(c => c._id === this._presetChannelId)
+        if (ch) {
+          this.setData({ selectedChannel: ch })
+        }
       }
     } catch (e) {
       wx.showToast({ title: '加载视频号列表失败', icon: 'none' })
@@ -227,8 +272,13 @@ Page({
           videoUrl: videoFileID,
           duration: this.data.duration,
           historicalEvent: this.data.historicalEvent.trim(),
-          tags: this.data.tags
+          tags: this.data.tags,
+          commentEnabled: this.data.commentEnabled
         }, { throwError: false })
+        // 编辑模式下新增的 AI 评论也要上传
+        if (this.data.aiComments.length > 0) {
+          await this.uploadAiComments(this.data.editId)
+        }
       } else {
         const res = await requestCloud('videoChannel', 'adminVideoCreate', {
           channelId: this.data.selectedChannel._id,
@@ -238,7 +288,8 @@ Page({
           videoUrl: videoFileID,
           duration: this.data.duration,
           historicalEvent: this.data.historicalEvent.trim(),
-          tags: this.data.tags
+          tags: this.data.tags,
+          commentEnabled: this.data.commentEnabled
         }, { throwError: false })
 
         if (res && res._id && this.data.aiComments.length > 0) {

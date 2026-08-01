@@ -1,0 +1,94 @@
+<custom-nav-bar
+  title="视频号管理"
+  showBack="{{true}}"
+></custom-nav-bar>
+
+<view class="page">
+  <view wx:if="{{loading}}" class="loading-wrap">
+    <view class="spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <block wx:elif="{{channel}}">
+    <!-- 视频号信息 -->
+    <view class="channel-header">
+      <image class="ch-avatar" src="{{channel.avatar || '/images/icons/avatar.png'}}" mode="aspectFill"></image>
+      <view class="ch-meta">
+        <view class="ch-name">
+          {{channel.figureName}}
+          <text wx:if="{{channel.figureTitle}}" class="ch-title"> · {{channel.figureTitle}}</text>
+        </view>
+        <view class="ch-stats">
+          <text>{{videoList.length}} 作品</text>
+          <text class="dot">·</text>
+          <text>{{channel.followerCount || 0}} 粉丝</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 简介编辑 -->
+    <view class="section">
+      <view class="section-title">视频号简介</view>
+      <textarea
+        class="bio-input"
+        placeholder="请输入视频号简介"
+        value="{{editBio}}"
+        bindinput="onBioInput"
+        maxlength="100"
+        auto-height
+      />
+      <view class="save-row">
+        <view class="save-btn" bindtap="saveBio">保存简介</view>
+      </view>
+    </view>
+
+    <!-- 视频列表 -->
+    <view class="section">
+      <view class="section-title">
+        视频列表（{{videoList.length}}）
+        <view class="add-video-btn" bindtap="goAddVideo">+ 添加视频</view>
+      </view>
+
+      <view wx:if="{{videoList.length === 0}}" class="empty-videos">
+        <text class="empty-text">暂无视频，点击右上角添加</text>
+      </view>
+
+      <view class="video-list" wx:if="{{videoList.length > 0}}">
+        <view
+          wx:for="{{videoList}}"
+          wx:key="_id"
+          class="video-item"
+        >
+          <view class="v-cover" data-id="{{item._id}}" bindtap="onVideoTap">
+            <image wx:if="{{item.coverUrl}}" class="v-cover-img" src="{{item.coverUrl}}" mode="aspectFill"></image>
+            <view wx:else class="v-cover-placeholder">
+              <text>{{item.title}}</text>
+            </view>
+            <view class="v-status {{item.status === 'published' ? 'st-on' : 'st-off'}}">
+              {{item.status === 'published' ? '上架' : '下架'}}
+            </view>
+          </view>
+          <view class="v-info">
+            <view class="v-title">{{item.title}}</view>
+            <view class="v-stats">
+              <text><text class="iconfont icon-good"></text> {{item.likeCount || 0}}</text>
+              <text><text class="iconfont icon-eye"></text> {{item.viewCount || 0}}</text>
+            </view>
+            <view class="v-actions">
+              <view class="v-btn v-edit" data-id="{{item._id}}" bindtap="onEditVideo">编辑</view>
+              <view
+                class="v-btn v-toggle"
+                data-id="{{item._id}}"
+                data-status="{{item.status}}"
+                bindtap="onToggleVideo"
+              >{{item.status === 'published' ? '下架' : '上架'}}</view>
+              <view class="v-btn v-delete" data-id="{{item._id}}" bindtap="onDeleteVideo">删除</view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="bottom-pad"></view>
+  </block>
+</view>

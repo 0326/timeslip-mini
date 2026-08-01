@@ -35,6 +35,7 @@
     "pages/admin/video-manage/index",
     "pages/admin/video-preview/index",
     "pages/admin/channel-manage/index",
+    "pages/admin/channel-detail/index",
     "pages/admin/quiz-covers/index"
   ],
   "tabBar": {

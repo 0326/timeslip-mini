@@ -22,7 +22,9 @@ Page({
     showHeart: false,
     heartX: 0,
     heartY: 0,
-    videoPaused: false
+    videoPaused: false,
+    commentText: '',
+    currentCommentEnabled: false
   },
 
   onLoad(options) {
@@ -33,6 +35,11 @@ Page({
     })
     this._viewReported = {}
     this._targetVideoId = (options && options.videoId) || ''
+    // 记录场景参数：从角色详情页/视频号进入时，限定只看该角色/视频号的视频
+    this._scene = {
+      channelId: (options && options.channelId) || '',
+      figureId: (options && options.figureId) || ''
+    }
     this._lastTapTime = 0
     this._lastTapId = ''
     this._reportViewFn = debounce((id) => {
@@ -95,10 +102,20 @@ Page({
     this.setData({ loading: true, refreshing: reset })
 
     try {
-      const params = {
-        limit: 10,
-        type: 'recommend'
+      const scene = this._scene || {}
+      let queryType = 'recommend'
+      const params = { limit: 10, type: 'recommend' }
+
+      if (scene.channelId) {
+        queryType = 'byChannel'
+        params.type = 'byChannel'
+        params.channelId = scene.channelId
+      } else if (scene.figureId) {
+        queryType = 'byFigure'
+        params.type = 'byFigure'
+        params.figureId = scene.figureId
       }
+
       if (!reset && this.data.lastCreatedAt && this.data.lastId) {
         params.lastCreatedAt = this.data.lastCreatedAt
         params.lastId = this.data.lastId
@@ -126,7 +143,8 @@ Page({
       if (reset && newList.length > 0) {
         setTimeout(() => {
           try {
-            const ctx = wx.createVideoContext('video-0')
+            const idx = this._targetVideoId ? this.data.currentIndex : 0
+            const ctx = wx.createVideoContext('video-' + idx)
             if (ctx) ctx.play()
           } catch (_) {}
         }, 300)
@@ -236,15 +254,51 @@ Page({
     const list = this.data.videoList.slice()
     const idx = list.findIndex(v => v._id === videoId)
     if (idx >= 0 && !list[idx].liked) {
-      this.handleLike({ currentTarget: { dataset: { id: videoId } } })
+      this.onLike({ currentTarget: { dataset: { id: videoId } } })
+    }
+  },
+
+  async onLike(e) {
+    if (!loginGuard.checkLogin(this)) return
+    const videoId = e.currentTarget.dataset.id
+    const list = this.data.videoList.slice()
+    const idx = list.findIndex(v => v._id === videoId)
+    if (idx < 0) return
+
+    const wasLiked = list[idx].liked
+    const originalCount = list[idx].likeCount || 0
+    // 乐观更新
+    list[idx].liked = !wasLiked
+    list[idx].likeCount = originalCount + (wasLiked ? -1 : 1)
+    list[idx].likeCountText = this.formatCount(list[idx].likeCount)
+    this.setData({ videoList: list })
+
+    try {
+      const res = await requestCloud('videoChannel', 'toggleLike', { videoId }, { throwError: false })
+      if (res && typeof res.liked !== 'undefined') {
+        list[idx].liked = res.liked
+        list[idx].likeCount = originalCount + (res.liked ? 1 : -1)
+        list[idx].likeCountText = this.formatCount(list[idx].likeCount)
+        this.setData({ videoList: list })
+      }
+    } catch (err) {
+      // 回滚
+      list[idx].liked = wasLiked
+      list[idx].likeCount = originalCount
+      list[idx].likeCountText = this.formatCount(originalCount)
+      this.setData({ videoList: list })
+      wx.showToast({ title: '😊', icon: 'none' })
     }
   },
 
   async openComments(e) {
     const { id } = e.currentTarget.dataset
+    const video = this.data.videoList.find(v => v._id === id)
+    const commentEnabled = video ? !!video.commentEnabled : false
     this.setData({
       showComments: true,
       currentVideoId: id,
+      currentCommentEnabled: commentEnabled,
       commentList: [],
       commentLoading: true
     })
@@ -261,7 +315,43 @@ Page({
   },
 
   closeComments() {
-    this.setData({ showComments: false })
+    this.setData({ showComments: false, commentText: '' })
+  },
+
+  onCommentInput(e) {
+    this.setData({ commentText: e.detail.value })
+  },
+
+  async sendComment() {
+    const text = (this.data.commentText || '').trim()
+    if (!text) return
+    if (!loginGuard.checkLogin(this)) return
+
+    const videoId = this.data.currentVideoId
+    if (!videoId) return
+
+    wx.showLoading({ title: '发送中...' })
+    try {
+      const newComment = await requestCloud('videoChannel', 'userCommentAdd', { videoId, content: text }, { throwError: false })
+      if (newComment) {
+        const list = this.data.commentList.slice()
+        list.push(newComment)
+        const videoList = this.data.videoList.slice()
+        const vIdx = videoList.findIndex(v => v._id === videoId)
+        if (vIdx >= 0) {
+          videoList[vIdx].commentCount = (videoList[vIdx].commentCount || 0) + 1
+          videoList[vIdx].commentCountText = this.formatCount(videoList[vIdx].commentCount)
+        }
+        this.setData({ commentList: list, commentText: '', videoList })
+        wx.hideLoading()
+      } else {
+        wx.hideLoading()
+        wx.showToast({ title: '😊', icon: 'none' })
+      }
+    } catch (e) {
+      wx.hideLoading()
+      wx.showToast({ title: '😊', icon: 'none' })
+    }
   },
 
   goChannel(e) {
@@ -298,7 +388,7 @@ Page({
     const video = this.data.videoList[this.data.currentIndex]
     if (!video) return { title: '穿越圈', path: '/pages/discover/index' }
     return {
-      title: `${video.figureName} | ${video.title}`,
+      title: `${video.figureName}的视频号|${video.title}`,
       path: `/pages/discover/channels/index?videoId=${video._id}`,
       imageUrl: video.coverUrl || ''
     }

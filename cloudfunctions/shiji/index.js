@@ -160,7 +160,18 @@ async function figureDetail(OPENID, data) {
   const targetId = data.figureId || data.id
   if (!targetId) return fail('缺少 figureId')
 
-  const res = await db.collection('figures').where({ id: targetId }).limit(1).get()
+  let res = await db.collection('figures').where({ id: targetId }).limit(1).get()
+  if (!res.data || !res.data.length) {
+    // 去掉 fig- 前缀重查（figures 表 id 可能存的是 "sushi" 而非 "fig-sushi"）
+    const stripped = targetId.startsWith('fig-') ? targetId.slice(4) : ''
+    if (stripped) {
+      res = await db.collection('figures').where({ id: stripped }).limit(1).get()
+    }
+  }
+  if (!res.data || !res.data.length) {
+    // 也尝试用 figureId 字段查
+    res = await db.collection('figures').where({ figureId: targetId }).limit(1).get()
+  }
   if (!res.data || !res.data.length) return fail('人物不存在')
 
   const figure = normalizeFigure(res.data[0])
