@@ -3,11 +3,12 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV, timeout: 60000 })
 const db = cloud.database()
 const _ = db.command
 
-const MAX_HISTORY = 20
+const MAX_HISTORY = 8
 
 // Prompt 与模型默认配置
 const PROMPT_VERSION = 1
-const AI_MODEL_DEFAULT = 'hy3'
+const AI_MODEL_DEFAULT = 'hy3-preview'
+const AI_GROUP_DEFAULT = 'hunyuan-v3'
 const DEFAULT_MODEL_CONFIG = { name: AI_MODEL_DEFAULT, temperature: 0.8, maxOutputTokens: 600 }
 
 async function tryUnlock(OPENID, key) {
@@ -79,12 +80,12 @@ async function loadFigurePassages(figureId, userInput) {
     .orderBy('sort_order', 'asc')
     .limit(100)
     .get()
-  return rankPassages(res.data || [], userInput).slice(0, 5).map(item => ({
+  return rankPassages(res.data || [], userInput).slice(0, 3).map(item => ({
     figureId: item.figure_id,
     eventName: item.event_name || '',
     eventYear: item.event_year != null ? item.event_year : null,
     role: item.role || '',
-    excerpt: String(item.excerpt || '').slice(0, 200),
+    excerpt: String(item.excerpt || '').slice(0, 120),
     passageId: item.passage_id || '',
     sortOrder: item.sort_order || 0,
     source: {
@@ -483,7 +484,7 @@ async function loadServerHistory(OPENID, figureId, limit) {
     .get()
   return r.data.reverse().map(m => ({
     role: m.role === 'user' ? 'user' : 'assistant',
-    content: String(m.content || '').slice(0, 1000)
+    content: String(m.content || '').slice(0, 300)
   }))
 }
 
@@ -493,21 +494,23 @@ function normalizeHistory(history = []) {
     .slice(-MAX_HISTORY)
     .map(m => ({
       role: m.role === 'user' ? 'user' : 'assistant',
-      content: String(m.content).slice(0, 1000)
+      content: String(m.content).slice(0, 300)
     }))
 }
 
 async function callAI(systemPrompt, history, userInput, modelConfig) {
   const cfg = modelConfig || DEFAULT_MODEL_CONFIG
   const ai = cloud.ai()
-  const model = ai.createModel('cloudbase')
+  const model = ai.createModel(AI_GROUP_DEFAULT)
+  const histMsgs = normalizeHistory(history)
+  console.log('[callAI] prompt长度:', systemPrompt.length, '历史条数:', histMsgs.length, '历史总字数:', histMsgs.reduce((s, m) => s + m.content.length, 0), '分组:', AI_GROUP_DEFAULT, '模型:', cfg.name)
   const result = await model.generateText({
     model: cfg.name || AI_MODEL_DEFAULT,
     temperature: cfg.temperature,
     maxOutputTokens: cfg.maxOutputTokens,
     messages: [
       { role: 'system', content: systemPrompt },
-      ...normalizeHistory(history),
+      ...histMsgs,
       { role: 'user', content: String(userInput).slice(0, 500) }
     ]
   })
