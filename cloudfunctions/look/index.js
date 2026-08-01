@@ -59,8 +59,8 @@ exports.main = async (event, context) => {
       case 'adminArticleList': return await adminArticleList(OPENID, data)
       case 'adminCommentRemove': return await adminCommentRemove(OPENID, data)
 
-      // ============ 批量导入接口（仅限开发环境） ============
-      case 'batchImport': return await batchImport(data)
+      // ============ 批量导入接口（仅限管理员） ============
+      case 'batchImport': return await batchImport(OPENID, data)
 
       default: return { code: -1, message: '未知 action: ' + action, data: null }
     }
@@ -461,18 +461,20 @@ async function submitComment(OPENID, data) {
     return { code: -1, message: '评论最多500字', data: null }
   }
 
-  // 内容安全审核
+  // 内容安全审核（fail-closed：审核服务异常时拒绝，防止违规内容入库）
   try {
     const checkRes = await cloud.openapi.security.msgSecCheck({
+      openid: OPENID,
       content,
       scene: 2,
       version: 2
     })
-    if (checkRes.errCode && checkRes.errCode !== 0) {
+    if (checkRes && checkRes.result && checkRes.result.suggest !== 'pass') {
       return { code: -1, message: '评论内容不合规', data: null }
     }
   } catch (e) {
     console.warn('msgSecCheck failed:', e)
+    return { code: -1, message: '评论审核服务异常，请稍后重试', data: null }
   }
 
   // 获取用户信息
@@ -634,7 +636,8 @@ async function adminArticleRemove(OPENID, data) {
 }
 
 // ==================== 批量导入 ====================
-async function batchImport(data) {
+async function batchImport(OPENID, data) {
+  await checkAdmin(OPENID)
   const articles = data.articles || []
   if (!articles.length) return { code: -1, message: '无文章数据', data: null }
 

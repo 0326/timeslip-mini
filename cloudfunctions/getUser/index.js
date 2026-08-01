@@ -77,6 +77,33 @@ function generateCrossNo() {
   return 'CY' + rand
 }
 
+// [安全] 统计型成就条件校验器：返回 null 表示通过，返回字符串表示拒绝原因
+// 事件型成就（first_chat/first_letter/first_like/first_visit/first_profile/first_memorial/dna_done/dna_share/read_book）
+// 由客户端在行为发生时触发，无需服务端统计校验
+function checkAchievementCondition(key, stats, points) {
+  const conditions = {
+    chat_10: () => (stats.chatCount || 0) >= 10,
+    chat_50: () => (stats.chatCount || 0) >= 50,
+    chat_100: () => (stats.chatCount || 0) >= 100,
+    letter_5: () => (stats.letterCount || 0) >= 5,
+    letter_10: () => (stats.letterCount || 0) >= 10,
+    comment_10: () => (stats.momentCommentCount || 0) >= 10,
+    memorial_5: () => (stats.memorialCount || 0) >= 5,
+    memorial_20: () => (stats.memorialCount || 0) >= 20,
+    memorial_master: () => (stats.memorialCount || 0) >= 50,
+    read_5: () => (stats.readBookCount || 0) >= 5,
+    time_master: () => points >= 1000,
+    collector: () => false, // 需跨集合统计已解锁成就数，仅允许服务端内部调用
+    all_dynasties: () => false, // 需跨集合统计，仅允许服务端内部调用
+    all_figures: () => false, // 需跨集合统计，仅允许服务端内部调用
+    moment_popular: () => false // 需跨集合统计，仅允许服务端内部调用
+  }
+  const checker = conditions[key]
+  if (!checker) return null // 事件型成就，无需校验
+  if (!checker()) return '成就条件未满足'
+  return null
+}
+
 exports.main = async (event, context) => {
   try {
     const { OPENID, APPID } = cloud.getWXContext()
@@ -168,21 +195,8 @@ exports.main = async (event, context) => {
     }
 
     if (action === 'addPoints') {
-      const points = Math.max(0, Number(event.points) || 0)
-      const reason = event.reason || ''
-      if (points <= 0) return { code: 0, message: 'ok', data: null }
-
-      const res = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
-      if (!res.data || res.data.length === 0) return { code: -1, message: '用户不存在', data: null }
-
-      await db.collection('users').doc(res.data[0]._id).update({
-        data: {
-          points: _.inc(points),
-          updatedAt: db.serverDate(),
-          [`stats.${reason}`]: _.inc(1)
-        }
-      })
-      return { code: 0, message: 'ok', data: { added: points } }
+      // [安全] 该接口已禁用客户端直调，加分逻辑由服务端事件触发
+      return { code: -1, message: '该接口已禁用', data: null }
     }
 
     if (action === 'stats') {
@@ -274,6 +288,12 @@ exports.main = async (event, context) => {
       if (achievements.some(a => a.key === key)) {
         return { code: 0, message: 'ok', data: { unlocked: false, reward: 0 } }
       }
+
+      // [安全] 统计型成就需服务端校验条件，事件型成就允许客户端触发
+      const stats = user.stats || {}
+      const points = user.points || 0
+      const condErr = checkAchievementCondition(key, stats, points)
+      if (condErr) return { code: -1, message: condErr, data: null }
 
       const reward = REWARDS[key] || 0
       achievements.push({ key, unlockedAt: db.serverDate() })

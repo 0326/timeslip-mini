@@ -4,11 +4,16 @@
     ".write": "auth.openid == resource.data._openid",
     "nickName": true,
     "avatarUrl": true,
-    "crossNo": true,
-    "memberLevel": true,
-    "points": true,
-    "createdAt": true,
-    "updatedAt": true,
+    "lastActiveAt": true,
+    "points": false,
+    "memberLevel": false,
+    "crossNo": false,
+    "role": false,
+    "achievements": false,
+    "stats": false,
+    "dnaResult": false,
+    "createdAt": false,
+    "updatedAt": false,
     "_openid": false
   },
   "chat_sessions": {
@@ -48,6 +53,16 @@
     ".read": true,
     ".write": false
   },
+  "memorial_answers": {
+    ".read": "auth.openid == resource.data._openid",
+    ".write": false,
+    "_openid": false
+  },
+  "memorial_simulations": {
+    ".read": "auth.openid == resource.data._openid",
+    ".write": false,
+    "_openid": false
+  },
   "user_memorial_progress": {
     ".read": "auth.openid == resource.data._openid",
     ".write": false,
@@ -61,9 +76,18 @@
     ".read": true,
     ".write": false
   },
+  "dna_quizzes": {
+    ".read": true,
+    ".write": false
+  },
   "dna_results": {
     ".read": "auth.openid == resource.data._openid",
-    ".write": "auth.openid != null && auth.openid == newData._openid",
+    ".write": false,
+    "_openid": false
+  },
+  "dna_records": {
+    ".read": "auth.openid == resource.data._openid",
+    ".write": false,
     "_openid": false
   },
   "figures": {
@@ -73,6 +97,15 @@
   "historical_figures": {
     ".read": true,
     ".write": false
+  },
+  "books": {
+    ".read": true,
+    ".write": false
+  },
+  "reading_progress": {
+    ".read": "auth.openid == resource.data._openid",
+    ".write": false,
+    "_openid": false
   },
   "achievements": {
     ".read": true,
@@ -93,10 +126,6 @@
     ".write": "auth.openid != null && auth.openid == newData._openid",
     "_openid": false
   },
-  "books": {
-    ".read": true,
-    ".write": false
-  },
   "content_audit_log": {
     ".read": "auth.openid == resource.data._openid",
     ".write": false,
@@ -104,6 +133,76 @@
   },
   "system_config": {
     ".read": true,
+    ".write": false
+  },
+  "articles": {
+    ".read": true,
+    ".write": false
+  },
+  "article_comments": {
+    ".read": true,
+    ".write": false,
+    "_openid": false
+  },
+  "article_likes": {
+    ".read": true,
+    ".write": "auth.openid != null && auth.openid == newData._openid"
+  },
+  "article_bookmarks": {
+    ".read": "auth.openid == resource.data._openid",
+    ".write": "auth.openid != null && auth.openid == newData._openid",
+    "_openid": false
+  },
+  "article_polls": {
+    ".read": true,
+    ".write": "auth.openid != null && auth.openid == newData._openid"
+  },
+  "video_channels": {
+    ".read": true,
+    ".write": false
+  },
+  "videos": {
+    ".read": true,
+    ".write": false
+  },
+  "video_comments": {
+    ".read": true,
+    ".write": false,
+    "_openid": false
+  },
+  "video_likes": {
+    ".read": true,
+    ".write": "auth.openid != null && auth.openid == newData._openid"
+  },
+  "video_follows": {
+    ".read": true,
+    ".write": "auth.openid != null && auth.openid == newData._openid"
+  },
+  "yan_letters": {
+    ".read": "auth.openid == resource.data._openid",
+    ".write": false,
+    "_openid": false
+  },
+  "yan_user_gifts": {
+    ".read": "auth.openid == resource.data._openid",
+    ".write": false,
+    "_openid": false
+  },
+  "pigeon_letters": {
+    ".read": "auth.openid == resource.data._openid",
+    ".write": false,
+    "_openid": false
+  },
+  "qrcode_cache": {
+    ".read": true,
+    ".write": false
+  },
+  "figure_ai_profiles": {
+    ".read": true,
+    ".write": false
+  },
+  "acp_sessions_qingyue": {
+    ".read": false,
     ".write": false
   }
 }

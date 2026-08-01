@@ -235,8 +235,16 @@ const VIDEO_COMMENT_SEED = [
 ]
 
 exports.main = async (event, context) => {
+  const { OPENID } = cloud.getWXContext()
   const { action = 'init' } = event
   const data = normalizeEventData(event)
+
+  // [安全] 除只读的 checkStatus 外，所有操作均需管理员权限
+  if (action !== 'checkStatus') {
+    const adminErr = await checkAdmin(OPENID)
+    if (adminErr) return { code: -1, message: adminErr }
+  }
+
   try {
     switch (action) {
       case 'init': return await initAll(data)
@@ -263,6 +271,20 @@ exports.main = async (event, context) => {
 function normalizeEventData(event) {
   const { action, data, ...rest } = event || {}
   return data && typeof data === 'object' ? { ...rest, ...data } : rest
+}
+
+// [安全] 管理员鉴权：返回 null 表示通过，返回字符串表示拒绝原因
+async function checkAdmin(OPENID) {
+  if (!OPENID) return '未登录'
+  try {
+    const res = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
+    if (!res.data || res.data.length === 0) return '用户不存在'
+    const role = res.data[0].role || 'user'
+    if (role !== 'admin' && role !== 'superadmin') return '无管理员权限'
+    return null
+  } catch (e) {
+    return '鉴权失败: ' + e.message
+  }
 }
 
 async function initAll(data) {
