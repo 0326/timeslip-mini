@@ -66,10 +66,10 @@ Page({
     const id = e.currentTarget.dataset.id
     const idx = this.data.chapters.findIndex(c => c.id === id)
     if (idx < 0) return
+    wx.setStorageSync(`book_chapters_${this.data.bookId}`, this.data.chapters)
     wx.navigateTo({
       url: `/pages/lantai/book-chapter?bookId=${this.data.bookId}`
         + `&bookTitle=${encodeURIComponent(this.data.bookTitle)}`
-        + `&chapters=${encodeURIComponent(JSON.stringify(this.data.chapters))}`
         + `&chapterIndex=${idx}`
     })
   },

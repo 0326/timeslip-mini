@@ -38,7 +38,7 @@ exports.main = async (event, context) => {
     }
   } catch (err) {
     console.error('moment err:', err)
-    return { code: -1, message: err.message || '动态服务异常' }
+    return { code: -1, message: '动态服务异常' }
   }
 }
 
@@ -75,7 +75,7 @@ async function secCheckText(text, openid) {
     return { ok: true }
   } catch (e) {
     console.warn('msgSecCheck warn', e)
-    return { ok: true }
+    return { ok: false, reason: '内容审核服务异常，请稍后重试' }
   }
 }
 

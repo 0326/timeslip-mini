@@ -18,6 +18,22 @@ async function tryUnlock(OPENID, key) {
   } catch (e) { console.warn('tryUnlock fail', key, e.message) }
 }
 
+async function secCheckText(text, openid) {
+  if (!text) return { ok: true }
+  try {
+    const r = await cloud.openapi.security.msgSecCheck({
+      openid, version: 2, scene: 1, content: String(text).slice(0, 2000)
+    })
+    if (r && r.result && r.result.suggest !== 'pass') {
+      return { ok: false, reason: '内容包含不当信息' }
+    }
+    return { ok: true }
+  } catch (e) {
+    console.warn('msgSecCheck warn', e)
+    return { ok: false, reason: '内容审核服务异常，请稍后重试' }
+  }
+}
+
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext()
   const { action } = event
@@ -32,7 +48,7 @@ exports.main = async (event, context) => {
     }
   } catch (e) {
     console.error('memorial err:', e)
-    return { code: -1, message: e.message || '服务异常' }
+    return { code: -1, message: '服务异常' }
   }
 }
 
@@ -91,6 +107,11 @@ async function decide(OPENID, data) {
 
   const opt = (m.options || []).find(o => o.k === decision)
   if (!opt) return { code: -1, message: '选项错误' }
+
+  if (zhupi) {
+    const sec = await secCheckText(zhupi, OPENID)
+    if (!sec.ok) return { code: -1, message: sec.reason }
+  }
 
   const doc = {
     memorialId,

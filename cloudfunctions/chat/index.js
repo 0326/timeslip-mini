@@ -618,7 +618,7 @@ exports.main = async (event, context) => {
     }
   } catch (err) {
     console.error('chat cloudFn err:', err)
-    return { code: -1, message: err.message || '聊天服务异常' }
+    return { code: -1, message: '聊天服务异常' }
   }
 }
 
@@ -764,6 +764,11 @@ async function modePigeonReply(OPENID, data) {
   const reply = mockAIGenerate('pigeon_reply', figureId, letterContent)
   try {
     if (letterId) {
+      // [安全] 校验信件归属，防止越权改写他人信件
+      const letterRes = await db.collection('letters').doc(letterId).get()
+      if (!letterRes.data || letterRes.data._openid !== OPENID) {
+        return { code: -1, message: '信件不存在或无权限' }
+      }
       await db.collection('letters').doc(letterId).update({
         data: { aiReply: reply, repliedAt: db.serverDate() }
       })
@@ -1052,7 +1057,7 @@ async function checkText(text, openid) {
       }
     }
     console.warn('[secCheck] non-block err (fail-open):', { errCode: res.errCode, errMsg: res.errMsg })
-    return { ok: true }
+    return { ok: false, reason: '内容审核服务异常，请稍后重试' }
   } catch (e) {
     const msg = e && (e.errMsg || e.errmsg || e.message || '')
     const codeMatch = String(msg).match(/errCode:\s*(-?\d+)/)

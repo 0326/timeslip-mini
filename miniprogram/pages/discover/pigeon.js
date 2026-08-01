@@ -103,8 +103,8 @@ Page({
     if (!canSend) return
 
     try {
-      const check = await requestCloud('contentCheck', 'check', { content: letterContent }, { throwError: false })
-      if (check && check.pass === false) {
+      const check = await requestCloud('contentCheck', 'text', { content: letterContent }, { throwError: false })
+      if (check && check.ok === false) {
         wx.showToast({ title: '内容不合规，请修改', icon: 'none' })
         return
       }
@@ -155,9 +155,10 @@ Page({
 
   typeReply(chars, i) {
     if (i >= chars.length) return
-    const display = this.data.reply.displayContent.concat([chars[i]])
+    const end = Math.min(i + 3, chars.length)
+    const display = this.data.reply.displayContent.concat(chars.slice(i, end))
     this.setData({ 'reply.displayContent': display })
-    setTimeout(() => this.typeReply(chars, i + 1), 60)
+    setTimeout(() => this.typeReply(chars, end), 60)
   },
 
   formatReplyTime() {

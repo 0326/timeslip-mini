@@ -43,7 +43,7 @@ exports.main = async (event, context) => {
     }
   } catch (err) {
     console.error('videoChannel err:', err)
-    return { code: -1, message: err.message || '服务异常', data: null }
+    return { code: -1, message: '服务异常', data: null }
   }
 }
 
@@ -140,12 +140,11 @@ async function feedList(OPENID, data) {
       }
     } catch (_) {}
 
-    // 评论计数（所有用户都需要）
+    // 评论计数（直接读 videos 文档的 commentCount 冗余字段，避免 N+1 查询）
     const commentCountMap = {}
     try {
-      for (const vid of videoIds) {
-        const c = await db.collection('video_comments').where({ videoId: vid }).count()
-        commentCountMap[vid] = c.total
+      for (const v of list) {
+        commentCountMap[v._id] = v.commentCount || 0
       }
     } catch (_) {}
 
@@ -405,33 +404,40 @@ async function toggleLike(OPENID, data) {
   const { videoId } = data
   if (!videoId || !OPENID) return { code: -1, message: '参数不全', data: null }
 
-  const videoDoc = await db.collection('videos').doc(videoId).get()
-  if (!videoDoc.data || videoDoc.data.status === 'deleted') {
-    return { code: -1, message: '视频不存在', data: null }
+  try {
+    const result = await db.runTransaction(async transaction => {
+      const videoDoc = await transaction.collection('videos').doc(videoId).get()
+      if (!videoDoc.data || videoDoc.data.status === 'deleted') {
+        throw new Error('视频不存在')
+      }
+
+      const exist = await transaction.collection('video_likes')
+        .where({ videoId, _openid: OPENID })
+        .get()
+
+      let liked
+      if (exist.data && exist.data.length > 0) {
+        await transaction.collection('video_likes').doc(exist.data[0]._id).remove()
+        await transaction.collection('videos').doc(videoId).update({
+          data: { likeCount: _.inc(-1) }
+        })
+        liked = false
+      } else {
+        await transaction.collection('video_likes').add({
+          data: { videoId, _openid: OPENID, createdAt: db.serverDate() }
+        })
+        await transaction.collection('videos').doc(videoId).update({
+          data: { likeCount: _.inc(1) }
+        })
+        liked = true
+      }
+      return { liked }
+    })
+    return { code: 0, message: 'ok', data: result }
+  } catch (e) {
+    console.warn('toggleLike err:', e.message)
+    return { code: -1, message: e.message === '视频不存在' ? '视频不存在' : '操作失败', data: null }
   }
-
-  const exist = await db.collection('video_likes')
-    .where({ videoId, _openid: OPENID })
-    .get()
-
-  let liked
-  if (exist.data && exist.data.length > 0) {
-    await db.collection('video_likes').doc(exist.data[0]._id).remove()
-    await db.collection('videos').doc(videoId).update({
-      data: { likeCount: _.inc(-1) }
-    })
-    liked = false
-  } else {
-    await db.collection('video_likes').add({
-      data: { videoId, _openid: OPENID, createdAt: db.serverDate() }
-    })
-    await db.collection('videos').doc(videoId).update({
-      data: { likeCount: _.inc(1) }
-    })
-    liked = true
-  }
-
-  return { code: 0, message: 'ok', data: { liked } }
 }
 
 async function likeStatus(OPENID, data) {
@@ -449,38 +455,45 @@ async function toggleFollow(OPENID, data) {
   const { channelId } = data
   if (!channelId || !OPENID) return { code: -1, message: '参数不全', data: null }
 
-  const channelDoc = await db.collection('video_channels').doc(channelId).get()
-  if (!channelDoc.data) return { code: -1, message: '视频号不存在', data: null }
+  try {
+    const result = await db.runTransaction(async transaction => {
+      const channelDoc = await transaction.collection('video_channels').doc(channelId).get()
+      if (!channelDoc.data) throw new Error('视频号不存在')
 
-  const exist = await db.collection('video_follows')
-    .where({ channelId, _openid: OPENID })
-    .get()
+      const exist = await transaction.collection('video_follows')
+        .where({ channelId, _openid: OPENID })
+        .get()
 
-  let followed, followerCount
-  if (exist.data && exist.data.length > 0) {
-    await db.collection('video_follows').doc(exist.data[0]._id).remove()
-    const up = await db.collection('video_channels').doc(channelId).update({
-      data: { followerCount: _.inc(-1), updatedAt: db.serverDate() }
-    })
-    followed = false
-    followerCount = Math.max(0, (channelDoc.data.followerCount || 0) - 1)
-  } else {
-    await db.collection('video_follows').add({
-      data: {
-        channelId,
-        figureId: channelDoc.data.figureId || '',
-        _openid: OPENID,
-        createdAt: db.serverDate()
+      let followed, followerCount
+      if (exist.data && exist.data.length > 0) {
+        await transaction.collection('video_follows').doc(exist.data[0]._id).remove()
+        await transaction.collection('video_channels').doc(channelId).update({
+          data: { followerCount: _.inc(-1), updatedAt: db.serverDate() }
+        })
+        followed = false
+        followerCount = Math.max(0, (channelDoc.data.followerCount || 0) - 1)
+      } else {
+        await transaction.collection('video_follows').add({
+          data: {
+            channelId,
+            figureId: channelDoc.data.figureId || '',
+            _openid: OPENID,
+            createdAt: db.serverDate()
+          }
+        })
+        await transaction.collection('video_channels').doc(channelId).update({
+          data: { followerCount: _.inc(1), updatedAt: db.serverDate() }
+        })
+        followed = true
+        followerCount = (channelDoc.data.followerCount || 0) + 1
       }
+      return { followed, followerCount }
     })
-    await db.collection('video_channels').doc(channelId).update({
-      data: { followerCount: _.inc(1), updatedAt: db.serverDate() }
-    })
-    followed = true
-    followerCount = (channelDoc.data.followerCount || 0) + 1
+    return { code: 0, message: 'ok', data: result }
+  } catch (e) {
+    console.warn('toggleFollow err:', e.message)
+    return { code: -1, message: e.message === '视频号不存在' ? '视频号不存在' : '操作失败', data: null }
   }
-
-  return { code: 0, message: 'ok', data: { followed, followerCount } }
 }
 
 async function followStatus(OPENID, data) {
@@ -511,6 +524,17 @@ async function increaseView(OPENID, data) {
   if (!videoId) return { code: -1, message: '缺少 videoId', data: null }
 
   try {
+    // [安全] 24h 内同一用户对同一视频只计一次播放
+    if (OPENID) {
+      const today = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10)
+      const viewKey = `${OPENID}_${videoId}_${today}`
+      try {
+        await db.collection('video_view_log').add({ data: { _id: viewKey, _openid: OPENID, videoId, date: today, createdAt: db.serverDate() } })
+      } catch (e) {
+        // 唯一键冲突说明今天已计过，不重复计数
+        return { code: 0, message: 'ok', data: { counted: false } }
+      }
+    }
     await db.collection('videos').doc(videoId).update({
       data: { viewCount: _.inc(1) }
     })
@@ -849,6 +873,6 @@ async function debugInfo() {
       }
     }
   } catch (e) {
-    return { code: -1, message: e.message, data: null }
+    return { code: -1, message: '服务异常', data: null }
   }
 }

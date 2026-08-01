@@ -104,6 +104,22 @@ function checkAchievementCondition(key, stats, points) {
   return null
 }
 
+async function secCheckText(text, openid) {
+  if (!text) return { ok: true }
+  try {
+    const r = await cloud.openapi.security.msgSecCheck({
+      openid, version: 2, scene: 1, content: String(text).slice(0, 2000)
+    })
+    if (r && r.result && r.result.suggest !== 'pass') {
+      return { ok: false, reason: '昵称包含不当信息' }
+    }
+    return { ok: true }
+  } catch (e) {
+    console.warn('msgSecCheck warn', e)
+    return { ok: false, reason: '内容审核服务异常，请稍后重试' }
+  }
+}
+
 exports.main = async (event, context) => {
   try {
     const { OPENID, APPID } = cloud.getWXContext()
@@ -118,6 +134,9 @@ exports.main = async (event, context) => {
       const avatarUrl = (event.avatarUrl || '').toString().trim()
       if (!nickName) return { code: -1, message: '请填写昵称', data: null }
       if (!avatarUrl) return { code: -1, message: '请选择头像', data: null }
+
+      const nickCheck = await secCheckText(nickName, OPENID)
+      if (!nickCheck.ok) return { code: -1, message: nickCheck.reason, data: null }
 
       const existing = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
       if (existing.data && existing.data.length > 0) {
@@ -185,6 +204,11 @@ exports.main = async (event, context) => {
       allowedFields.forEach(f => {
         if (event[f] !== undefined) updateData[f] = event[f]
       })
+
+      if (event.nickName !== undefined) {
+        const nickCheck = await secCheckText(event.nickName, OPENID)
+        if (!nickCheck.ok) return { code: -1, message: nickCheck.reason, data: null }
+      }
 
       const res = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
       if (!res.data || res.data.length === 0) {
@@ -402,6 +426,6 @@ exports.main = async (event, context) => {
     return { code: -1, message: '未知操作: ' + (action || 'none'), data: null }
   } catch (err) {
     console.error('getUser 云函数错误:', err)
-    return { code: -1, message: err.message || '服务异常', data: null }
+    return { code: -1, message: '服务异常', data: null }
   }
 }

@@ -860,6 +860,6 @@ exports.main = async (event, context) => {
     }
   } catch (err) {
     console.error('qingyue-agent err:', err && err.stack || err)
-    return { code: -1, message: (err && err.message) || '青月服务异常' }
+    return { code: -1, message: '青月服务异常' }
   }
 }

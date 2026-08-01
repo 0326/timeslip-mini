@@ -14,7 +14,7 @@ exports.main = async (event, context) => {
     }
   } catch (e) {
     console.error('contentCheck err:', e)
-    return { code: 0, message: 'fallthrough allow', data: { ok: true, fallthrough: true, error: e.message } }
+    return { code: -1, message: '审核服务异常', data: { ok: false, reason: '审核服务异常' } }
   }
 }
 
@@ -46,7 +46,7 @@ async function checkText(openid, data) {
     return { code: 0, message: 'ok', data: { ok: true, suggest: 'pass' } }
   } catch (e) {
     console.warn('text sec fallback allow', e)
-    return { code: 0, message: 'fallthrough', data: { ok: true, fallthrough: true } }
+    return { code: 0, message: 'blocked', data: { ok: false, reason: '内容审核服务异常，请稍后重试' } }
   }
 }
 
@@ -71,7 +71,7 @@ async function checkImage(openid, data) {
     return { code: 0, message: 'ok', data: { ok: true } }
   } catch (e) {
     console.warn('img sec err, block by default', e)
-    return { code: 0, message: 'fallthrough', data: { ok: true, fallthrough: true } }
+    return { code: 0, message: 'blocked', data: { ok: false, reason: '图片审核服务异常，请稍后重试' } }
   }
 }
 

@@ -66,7 +66,7 @@ exports.main = async (event, context) => {
     }
   } catch (err) {
     console.error('look err:', err)
-    return { code: -1, message: err.message || '服务异常', data: null }
+    return { code: -1, message: '服务异常', data: null }
   }
 }
 
@@ -659,7 +659,7 @@ async function batchImport(OPENID, data) {
       await db.collection('articles').add({ data: doc })
       inserted++
     } catch (err) {
-      errors.push({ title: article.title, error: err.message })
+      errors.push({ title: article.title, error: '导入失败' })
     }
   }
 

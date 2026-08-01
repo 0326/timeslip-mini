@@ -54,7 +54,7 @@ exports.main = async (event, context) => {
     }
   } catch (err) {
     console.error('pigeon err', err)
-    return { code: -1, message: err.message }
+    return { code: -1, message: '信件服务异常' }
   }
 }
 
@@ -70,7 +70,7 @@ async function sec(text, oid) {
     if (r && r.result && r.result.suggest !== 'pass') return { ok: false, reason: '内容不当' }
     return { ok: true }
   } catch (e) {
-    return { ok: true }
+    return { ok: false, reason: '内容审核服务异常' }
   }
 }
 

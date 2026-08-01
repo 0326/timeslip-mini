@@ -114,11 +114,9 @@ Page({
   onLoad(options) {
     const bookId = options.bookId || 'shiji'
     const bookTitle = decodeURIComponent(options.bookTitle || '')
-    const chapterId = options.chapterId || ''
-    const chaptersStr = options.chapters || ''
-    let chapters = []
-    try { chapters = chaptersStr ? JSON.parse(decodeURIComponent(chaptersStr)) : [] } catch (e) {}
-    const chapterIndex = options.chapterIndex !== undefined ? Number(options.chapterIndex) : chapters.findIndex(c => c.id === chapterId)
+    const chapterIndex = options.chapterIndex !== undefined ? Number(options.chapterIndex) : -1
+    const chapters = wx.getStorageSync(`book_chapters_${bookId}`) || []
+    if (chapters.length) wx.removeStorageSync(`book_chapters_${bookId}`)
 
     try {
       const sys = wx.getSystemInfoSync()

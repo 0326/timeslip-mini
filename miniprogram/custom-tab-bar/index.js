@@ -9,22 +9,6 @@ Component({
       { pagePath: '/pages/profile/index', text: '我的', icon: '/images/tabbar/mine.png', iconActive: '/images/tabbar/mine_f.png' }
     ]
   },
-  lifetimes: {
-    attached() {
-      try {
-        const app = getApp()
-        if (app && app.onTabChange) {
-          app.onTabChange = (idx) => this.setData({ selected: idx })
-        }
-        if (app && app.subscribeTabBadge) {
-          app.subscribeTabBadge((badges) => {
-            const list = this.data.list.map((l, i) => ({ ...l, badge: badges[i] || 0 }))
-            this.setData({ list })
-          })
-        }
-      } catch (_) {}
-    }
-  },
   methods: {
     onTabTap(e) {
       const idx = e.currentTarget.dataset.index
@@ -39,10 +23,6 @@ Component({
         url: path,
         success: () => {
           this.setData({ selected: idx })
-          try {
-            const app = getApp()
-            if (app && app.emitTabChange) app.emitTabChange(idx, path)
-          } catch (_) {}
         },
         fail: (err) => {
           console.warn('switchTab fail', err)

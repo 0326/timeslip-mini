@@ -303,15 +303,3 @@ page {
   opacity: 0.85;
   transform: scale(0.97);
 }
-.retry-btn {
-  display: inline-block;
-  margin: 12rpx 0 0;
-  padding: 0 18rpx;
-  height: 52rpx;
-  line-height: 52rpx;
-  font-size: 24rpx;
-  color: #576b95;
-  background: #fff;
-  border: 1rpx solid #d9d9d9;
-  border-radius: 26rpx;
-}

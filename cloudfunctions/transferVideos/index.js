@@ -10,7 +10,13 @@ const db = cloud.database()
 // ============================================================
 
 exports.main = async (event, context) => {
+  const { OPENID } = cloud.getWXContext()
   const { action = 'transferBatch' } = event
+
+  if (action !== 'status') {
+    const adminErr = await checkAdmin(OPENID)
+    if (adminErr) return { code: -1, message: adminErr }
+  }
 
   switch (action) {
     case 'transferBatch': return await transferBatch(event)
@@ -18,6 +24,19 @@ exports.main = async (event, context) => {
     case 'status': return await checkStatus()
     case 'test': return await testConnection()
     default: return { code: -1, message: '未知 action: ' + action }
+  }
+}
+
+async function checkAdmin(OPENID) {
+  if (!OPENID) return '未登录'
+  try {
+    const res = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
+    if (!res.data || res.data.length === 0) return '用户不存在'
+    const role = res.data[0].role || 'user'
+    if (role !== 'admin' && role !== 'superadmin') return '无管理员权限'
+    return null
+  } catch (e) {
+    return '鉴权失败'
   }
 }
 

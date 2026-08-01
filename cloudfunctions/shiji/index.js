@@ -144,7 +144,8 @@ async function figureList(OPENID, data) {
   let query = db.collection('figures')
 
   if (keyword) {
-    query = query.where({ name: db.RegExp({ regexp: keyword, options: 'i' }) })
+    const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').slice(0, 20)
+    query = query.where({ name: db.RegExp({ regexp: escapedKeyword, options: 'i' }) })
   }
 
   const res = await query

@@ -30,7 +30,6 @@
             </view>
             <view class="system_bubble">
               <text class="bubble-text" user-select="{{true}}">{{item.content}}</text>
-              <button wx:if="{{item.status === 'failed'}}" class="retry-btn" data-id="{{item._id}}" bindtap="onRetry">重试</button>
             </view>
           </block>
 

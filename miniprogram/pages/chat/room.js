@@ -474,44 +474,6 @@ Page({
     return parts.length ? parts.join(' ') : String(e)
   },
 
-  addFailedMessage(text) {
-    const failedMessage = {
-      _id: uid('a_'),
-      role: 'figure',
-      figureId: this.data.figureId,
-      content: '暂时无法回复，请稍后重试。',
-      status: 'failed',
-      retryText: text,
-      createdAt: Date.now()
-    }
-    const messages = this.data.messages.concat([failedMessage])
-    this.setData({
-      messages,
-      sending: false,
-      aiTyping: false,
-      chatStatus: 0,
-      navTitle: this.data.figureName
-    })
-    wx.setNavigationBarTitle({ title: this.data.figureName })
-    this.persistMessages(messages)
-    this.scrollToBottom()
-  },
-
-  onRetry(e) {
-    if (this.data.sending) return
-    const id = e.currentTarget.dataset.id
-    const failed = this.data.messages.find(message => message._id === id)
-    if (!failed || failed.status !== 'failed') return
-    const index = this.data.messages.findIndex(message => message._id === id)
-    const previous = index > 0 ? this.data.messages[index - 1] : null
-    const nextMessages = this.data.messages.filter((message, messageIndex) =>
-      messageIndex !== index && !(messageIndex === index - 1 && previous && previous.role === 'user')
-    )
-    this.setData({ messages: nextMessages })
-    this.persistMessages(nextMessages)
-    this.sendText(failed.retryText)
-  },
-
   addAiMessage(content) {
     const now = Date.now()
     const fullMsg = {

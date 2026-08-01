@@ -1433,7 +1433,24 @@ const COMMENT_SEED = {
   ]
 }
 
+async function checkAdmin(OPENID) {
+  if (!OPENID) return '未登录'
+  try {
+    const res = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
+    if (!res.data || res.data.length === 0) return '用户不存在'
+    const role = res.data[0].role || 'user'
+    if (role !== 'admin' && role !== 'superadmin') return '无管理员权限'
+    return null
+  } catch (e) {
+    return '鉴权失败'
+  }
+}
+
 exports.main = async (event, context) => {
+  const { OPENID } = cloud.getWXContext()
+  const adminErr = await checkAdmin(OPENID)
+  if (adminErr) return { code: -1, message: adminErr }
+
   const { force = false } = event || {}
   const targetFigureIds = MOMENT_SEED.map(m => m.figureId)
 
@@ -1551,8 +1568,7 @@ exports.main = async (event, context) => {
     console.error('seedMoments err:', err)
     return {
       code: -1,
-      message: err.message || 'seed fail',
-      stack: err.stack
+      message: 'seed fail'
     }
   }
 }

@@ -288,7 +288,7 @@ async function checkText(text, openid) {
     }
     return { ok: true }
   } catch (e) {
-    return { ok: true }
+    return { ok: false, reason: '内容审核服务异常，请稍后重试' }
   }
 }
 
@@ -311,7 +311,7 @@ exports.main = async (event, context) => {
     }
   } catch (err) {
     console.error('yan err:', err)
-    return { code: -1, message: err.message || '雁书服务异常' }
+    return { code: -1, message: '雁书服务异常' }
   }
 }
 
