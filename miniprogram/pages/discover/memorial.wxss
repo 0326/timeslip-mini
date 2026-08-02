@@ -173,33 +173,33 @@
 .queue-card:active { transform: scale(0.98); opacity: 0.9; }
 .queue-card.done { background: #F7F5F0; opacity: 0.75; }
 
-.card-left {
-  width: 90rpx;
+/* 主内容区：上（编号+名称）下（标签+人物）的纵向结构 */
+.card-body {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  justify-content: center;
   gap: 12rpx;
-  flex-shrink: 0;
+}
+/* 上排：编号 + 奏折标题 横排 */
+.card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14rpx;
 }
 .card-order {
+  flex-shrink: 0;
   font-size: 28rpx;
   font-weight: 700;
   color: #8A2E2E;
   font-family: Georgia, 'Times New Roman', serif;
-}
-.card-type {
-  padding: 4rpx 12rpx;
-  border-radius: 8rpx;
-  font-size: 20rpx;
-  font-weight: 600;
-}
-
-.card-main {
-  flex: 1;
-  min-width: 0;
-  padding: 0 20rpx;
+  line-height: 1.5;
+  margin-top: 2rpx;
 }
 .card-title {
+  flex: 1;
+  min-width: 0;
   font-size: 28rpx;
   font-weight: 600;
   color: #2A2A2A;
@@ -209,8 +209,22 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+/* 下排：类型标签 + 职位·人物 横排 */
+.card-foot {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+}
+.card-type {
+  flex-shrink: 0;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  font-size: 20rpx;
+  font-weight: 600;
+}
 .card-official {
-  margin-top: 10rpx;
+  flex: 1;
+  min-width: 0;
   font-size: 22rpx;
   color: #8A8A8A;
 }

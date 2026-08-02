@@ -385,6 +385,16 @@ async function actionDecide(OPENID, body) {
   var retained = false
   var optionChosen = null
 
+  // 压缩单次圣明指数的增减，保持"方向感"但数值收敛：
+  // 原始wisdom_delta（可能是+4/+3/+2/+1/0/-1/-2/-3等）映射到 [-2, +2] 整数区间，避免一日猛涨几十点
+  function compressWisdom(raw) {
+    if (raw >= 3) return 2
+    if (raw >= 1) return 1
+    if (raw === 0) return 0
+    if (raw <= -3) return -2
+    if (raw <= -1) return -1
+    return 0
+  }
   if (decision === 'retain') {
     if (type !== '密折') return { code: 1, message: '非密折不可留中' }
     retained = true
@@ -393,12 +403,14 @@ async function actionDecide(OPENID, body) {
     consequence = '此折留中，不发内阁，不抄录副。外界无第三人知。'
     var ust = await getUserStats(OPENID)
     var temp = ust.retain + 1
-    wisdomDelta = temp > 0 && temp % 3 === 0 ? -3 : 0
+    // 留中惩罚从-3缩到-1（每3次）
+    wisdomDelta = temp > 0 && temp % 3 === 0 ? -1 : 0
   } else if (type === '请安折' || type === '谢恩折') {
     finalZhupi = presetQuick ? (mem.preset_vermilion || '知道了') : (customZhupi || (mem.preset_vermilion || '知道了'))
     decisionLabel = '朱批'
     consequence = '朱批发出，圣颜甚慰'
-    wisdomDelta = type === '请安折' ? 2 : 1
+    // 请安折从+2缩到+1（日常流程，仅给1点正向），谢恩折从+1缩到0（基本礼仪不加分）
+    wisdomDelta = type === '请安折' ? 1 : 0
   } else {
     var opts = mem.options || []
     for (var oi = 0; oi < opts.length; oi++) {
@@ -408,7 +420,7 @@ async function actionDecide(OPENID, body) {
     decisionLabel = optionChosen.label
     finalZhupi = customZhupi || optionChosen.vermilion || ''
     consequence = optionChosen.consequence || ''
-    wisdomDelta = optionChosen.wisdom_delta || 0
+    wisdomDelta = compressWisdom(optionChosen.wisdom_delta || 0)
   }
 
   var followUp = (optionChosen && optionChosen.follow_up) || ''
@@ -444,6 +456,27 @@ async function actionDecide(OPENID, body) {
       })
     }
   } catch (e) { console.warn('daily update warn:', e.message) }
+
+  // 每日增量上限（当天圣明指数最多涨7点、最多降7点），保证至少7天连续满批才能到"圣明之君"
+  var oldUserWisdom = 50
+  try {
+    const uu = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
+    if (uu.data && uu.data.length) oldUserWisdom = typeof uu.data[0].wisdom_index === 'number' ? uu.data[0].wisdom_index : 50
+  } catch (_) {}
+  try {
+    const dt = await dailyCol.where({ _openid: OPENID, date: today }).limit(1).get()
+    if (dt.data && dt.data.length && typeof dt.data[0].wisdom_index === 'number') {
+      var initToday = dt.data[0].wisdom_index
+      var tentative = oldUserWisdom + wisdomDelta
+      var maxAllow = initToday + 7
+      var minAllow = initToday - 7
+      if (tentative > maxAllow) tentative = maxAllow
+      if (tentative < minAllow) tentative = minAllow
+      if (tentative > 100) tentative = 100
+      if (tentative < 0) tentative = 0
+      wisdomDelta = tentative - oldUserWisdom
+    }
+  } catch (_e) { console.warn('daily wisdom cap warn:', _e.message) }
 
   var delta = {
     total_done: 1, retain_count: retained ? 1 : 0, zhupi_total_len: zhupiLen,
