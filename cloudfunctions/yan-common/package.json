@@ -1,0 +1,9 @@
+{
+  "name": "yan-common",
+  "version": "1.0.0",
+  "description": "雁书功能公共模块（信使配置、人物数据、AI回信模板、风物池、成就、内容安全）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

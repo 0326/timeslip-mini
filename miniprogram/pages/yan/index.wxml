@@ -22,6 +22,20 @@
   <!-- 滚动内容区 -->
   <scroll-view scroll-y class="view-area">
 
+    <!-- P1-3 草稿提示条 -->
+    <view class="draft-hint" wx:if="{{showDraftHint}}">
+      <view class="dh-left">
+        <view class="dh-icon">📝</view>
+        <view class="dh-text">
+          <view class="dh-title">有未发送的草稿</view>
+          <view class="dh-sub">保存于 {{savedDraftAt}}</view>
+        </view>
+      </view>
+      <view class="dh-actions">
+        <view class="dh-btn discard" bindtap="discardDraft">丢弃</view>
+      </view>
+    </view>
+
     <!-- ====== 鸿雁展示区（整体swiper切换） ====== -->
     <view class="hero-section">
       <view class="hero-swiper-wrap">
@@ -35,8 +49,13 @@
                 <view class="hero-name-row">
                   <view class="hero-name">{{item.name}}</view>
                   <view class="hero-rarity-tag rarity-{{item.rarityType}}">{{item.rarityLabel}}</view>
-                  <view class="carrier-busy-badge" wx:if="{{carrierBusy[item.key]}}">
-                    <view class="busy-dot"></view>
+                  <!-- P1-5a 信使状态徽章：就绪 / 传送中 -->
+                  <view class="carrier-status-badge ready" wx:if="{{!carrierBusy[item.key]}}">
+                    <view class="status-dot"></view>
+                    <text>就绪</text>
+                  </view>
+                  <view class="carrier-status-badge busy" wx:else>
+                    <view class="status-dot"></view>
                     <text>传送中</text>
                   </view>
                 </view>
@@ -108,7 +127,8 @@
           <view class="tc-progress-fill" style="width: {{currentTraveling.progress || 0}}%"></view>
         </view>
         <view class="tc-footer">
-          <text>出发于 {{currentTraveling.sentAtText}}</text>
+          <view class="tc-footer-left">出发于 {{currentTraveling.sentAtText}}</view>
+          <view class="tc-footer-right">预计 {{currentTraveling.arriveAtText || '--'}} 到达</view>
         </view>
       </view>
     </view>

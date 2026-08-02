@@ -50,9 +50,12 @@
           <view class="section-count" wx:if="{{arrivedLetters.length > 0}}">共 {{arrivedLetters.length}} 封</view>
         </view>
 
+        <!-- P1-5b 空状态优化：大图 + 去写信按钮 -->
         <view class="empty-state" wx:if="{{arrivedLetters.length === 0 && travelingLetters.length === 0}}">
+          <view class="empty-icon">📭</view>
           <view class="empty-text">尚无书信往来</view>
           <view class="empty-hint">去雁书写一封寄往古时空的信吧</view>
+          <button class="btn-go-write" bindtap="goWrite">去写一封信</button>
         </view>
 
         <view class="letter-card {{!item.read ? 'unread' : ''}}" wx:for="{{arrivedLetters}}" wx:key="_id" bindtap="viewLetter" data-id="{{item._id}}">
@@ -87,7 +90,11 @@
                 <view class="reply-from-meta">{{detailLetter.dynastyName}} · {{detailLetter.figureTitle}}</view>
               </view>
             </view>
-            <view class="reply-body">{{detailLetter.reply ? detailLetter.reply.content : '回信撰写中，请稍后再来查看…'}}</view>
+            <!-- 逐字显示：typing 时结尾加闪烁光标 -->
+            <view class="reply-body">
+              <text>{{typedReply || ''}}</text>
+              <view class="typing-caret" wx:if="{{typing}}"></view>
+            </view>
           </view>
 
           <view class="detail-original">
@@ -105,9 +112,16 @@
             <view class="gift-desc">{{detailLetter.gift.desc}}</view>
           </view>
 
-          <button class="btn-claim" wx:if="{{detailLetter.gift && !detailLetter.claimed}}" bindtap="claimGift" data-id="{{detailLetter._id}}">
-            收入藏馆
-          </button>
+          <!-- P1-5b 底部操作按钮：收入藏馆 + 继续通信（水平并排） -->
+          <view class="detail-actions">
+            <block wx:if="{{detailLetter.gift && !detailLetter.claimed}}">
+              <button class="btn-detail claim" bindtap="claimGift" data-id="{{detailLetter._id}}">收入藏馆</button>
+              <button class="btn-detail continue" bindtap="continueChat">继续通信</button>
+            </block>
+            <block wx:else>
+              <button class="btn-detail continue full" bindtap="continueChat">继续通信</button>
+            </block>
+          </view>
           <view class="claimed-tip" wx:if="{{detailLetter.claimed}}">风物已收入藏馆</view>
         </block>
       </scroll-view>

@@ -11,7 +11,7 @@
               binderror="onAvatarError"
             />
           </view>
-          <view class="avatar-edit iconfont icon-edit"></view>
+          <!-- <view class="avatar-edit iconfont icon-edit"></view> -->
         </view>
         <view class="user-meta">
           <view class="user-name-row">
@@ -19,7 +19,7 @@
           </view>
           <view class="user-id-row">
             <text class="u-crossno">穿越编号：{{userInfo.crossNo || '--'}}</text>
-            <view class="seal" wx:if="{{userInfo.memberLevel}}">{{userInfo.memberLevel || '布衣'}}</view>
+            <!-- <view class="seal" wx:if="{{userInfo.memberLevel}}">{{userInfo.memberLevel || '布衣'}}</view> -->
           </view>
           <view class="u-points">
             <text class="p-icon">✨</text>

@@ -179,8 +179,9 @@ Page({
 
   sendLetter() {
     const f = this.data.figure || {}
+    const figureId = (f.figureId || f.id || f._id || '').toString()
     wx.navigateTo({
-      url: `/pages/discover/pigeon?figureId=${f._id}&figureName=${encodeURIComponent(f.name)}`
+      url: `/pages/yan/index?figureId=${figureId}&figureName=${encodeURIComponent(f.name || '')}`
     })
   },
 

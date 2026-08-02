@@ -211,6 +211,10 @@
   align-items: center;
   padding: 80rpx 0;
 }
+.empty-icon {
+  font-size: 96rpx;
+  margin-bottom: 16rpx;
+}
 .empty-text {
   font-size: 30rpx;
   color: #999999;
@@ -219,6 +223,25 @@
 .empty-hint {
   font-size: 24rpx;
   color: #cccccc;
+  margin-bottom: 8rpx;
+}
+.btn-go-write {
+  margin-top: 24rpx;
+  padding: 16rpx 56rpx;
+  background: linear-gradient(135deg, #C9A24D, #A67B2D);
+  color: #ffffff;
+  font-size: 28rpx;
+  font-weight: 500;
+  border-radius: 999rpx;
+  line-height: 1.4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  box-shadow: 0 8rpx 24rpx rgba(201, 162, 77, 0.25);
+}
+.btn-go-write::after {
+  border: none;
 }
 
 /* ====== 详情弹窗 ====== */
@@ -307,6 +330,19 @@
   white-space: pre-wrap;
   word-break: break-all;
 }
+.reply-body .typing-caret {
+  display: inline-block;
+  width: 4rpx;
+  height: 40rpx;
+  background: #8B5A2B;
+  margin-left: 4rpx;
+  vertical-align: middle;
+  animation: caretBlink 0.8s step-end infinite;
+}
+@keyframes caretBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
 .detail-original {
   background: #f8f8f8;
   border-radius: 12rpx;
@@ -387,4 +423,47 @@
   font-size: 28rpx;
   color: #4CAF50;
   padding: 20rpx;
+}
+
+/* P1-5b 详情弹窗底部操作按钮：收入藏馆 + 继续通信（水平并排） */
+.detail-actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 8rpx;
+}
+.btn-detail {
+  flex: 1;
+  height: 88rpx;
+  border-radius: 16rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  letter-spacing: 4rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  border: none;
+  box-sizing: border-box;
+}
+.btn-detail::after {
+  border: none;
+}
+.btn-detail.claim {
+  background: linear-gradient(135deg, #C9A24D 0%, #A67B2D 100%);
+  color: #ffffff;
+  box-shadow: 0 8rpx 24rpx rgba(201, 162, 77, 0.3);
+}
+.btn-detail.claim:active {
+  opacity: 0.85;
+}
+.btn-detail.continue {
+  background: #ffffff;
+  color: #A67B2D;
+  border: 2rpx solid #C9A24D;
+}
+.btn-detail.continue:active {
+  background: rgba(201, 162, 77, 0.06);
+}
+.btn-detail.full {
+  flex: 1;
 }

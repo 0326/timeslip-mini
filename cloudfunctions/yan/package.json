@@ -4,6 +4,7 @@
   "description": "雁书云函数：异步慢交互时空漂流信",
   "main": "index.js",
   "dependencies": {
-    "wx-server-sdk": "~2.6.3"
+    "wx-server-sdk": "~2.6.3",
+    "yan-common": "file:../yan-common"
   }
 }

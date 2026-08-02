@@ -3,6 +3,9 @@ const loginGuard = require('../../utils/loginGuard')
 
 const app = getApp()
 
+const TYPE_INTERVAL = 60
+const TYPE_CHARS_PER_TICK = 3
+
 Page({
   data: {
     statusBarHeight: 20,
@@ -12,6 +15,9 @@ Page({
     unreadCount: 0,
     showDetail: false,
     detailLetter: null,
+    // 逐字显示
+    typedReply: '',
+    typing: false,
     loading: true
   },
 
@@ -36,14 +42,20 @@ Page({
 
   onHide() {
     this.clearCountdownLoop()
+    this.stopTyping()
   },
 
   onUnload() {
     this.clearCountdownLoop()
+    this.stopTyping()
   },
 
   goBack() {
     wx.navigateBack({ fail: () => wx.switchTab({ url: '/pages/discover/index' }) })
+  },
+
+  goWrite() {
+    wx.navigateTo({ url: '/pages/yan/index' })
   },
 
   async loadLetters() {
@@ -87,7 +99,7 @@ Page({
     if (!ts) return ''
     const d = new Date(ts)
     const pad = n => (n < 10 ? '0' + n : n)
-    return d.getMonth() + 1 + '月' + d.getDate() + '日 ' + pad(d.getHours()) + ':' + pad(d.getMinutes())
+    return (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + pad(d.getHours()) + ':' + pad(d.getMinutes())
   },
 
   calcProgress(l) {
@@ -138,6 +150,7 @@ Page({
       const data = await requestCloud('yan', 'detail', { letterId: id }, { throwError: false })
       if (data) {
         this.setData({ showDetail: true, detailLetter: data })
+        this.startTypeReply(data.reply && data.reply.content ? data.reply.content : '')
         if (data.status === 'arrived' && !data.read) {
           requestCloud('yan', 'read', { letterId: id }, { throwError: false })
           this.syncReadLocal(id)
@@ -154,8 +167,55 @@ Page({
     this.setData({ arrivedLetters, unreadCount })
   },
 
+  // 逐字显示
+  startTypeReply(fullText) {
+    this.stopTyping()
+    if (!fullText) {
+      this.setData({ typedReply: '', typing: false })
+      return
+    }
+    this.setData({ typedReply: '', typing: true })
+    this._typeText = fullText
+    this._typeIndex = 0
+    this._typeTimer = setInterval(() => {
+      this._typeIndex = Math.min(this._typeText.length, this._typeIndex + TYPE_CHARS_PER_TICK)
+      this.setData({ typedReply: this._typeText.slice(0, this._typeIndex) })
+      if (this._typeIndex >= this._typeText.length) {
+        this.stopTyping()
+      }
+    }, TYPE_INTERVAL)
+  },
+
+  stopTyping() {
+    if (this._typeTimer) {
+      clearInterval(this._typeTimer)
+      this._typeTimer = null
+    }
+    if (this._typeText) {
+      // 若正在打字过程中停止，直接显示全部内容
+      const full = this._typeText
+      this._typeText = ''
+      this.setData({ typedReply: full, typing: false })
+    } else {
+      this.setData({ typing: false })
+    }
+  },
+
   closeDetail() {
-    this.setData({ showDetail: false, detailLetter: null })
+    this.stopTyping()
+    this.setData({ showDetail: false, detailLetter: null, typedReply: '' })
+  },
+
+  // 继续通信（跳写信页，带 figureId）
+  continueChat() {
+    const d = this.data.detailLetter
+    if (!d) return
+    const figureId = encodeURIComponent(String(d.figureId || ''))
+    const figureName = encodeURIComponent(String(d.figureName || ''))
+    this.closeDetail()
+    setTimeout(() => {
+      wx.navigateTo({ url: '/pages/yan/index?figureId=' + figureId + '&figureName=' + figureName })
+    }, 80)
   },
 
   async claimGift(e) {
@@ -170,7 +230,7 @@ Page({
         const arrivedLetters = this.data.arrivedLetters.map(l =>
           l._id === id ? Object.assign({}, l, { claimed: true }) : l
         )
-        this.setData({ showDetail: false, detailLetter, arrivedLetters })
+        this.setData({ detailLetter, arrivedLetters })
       }
     } catch (e) {}
   },

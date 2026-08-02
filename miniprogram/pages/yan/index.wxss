@@ -87,6 +87,59 @@
   height: 0;
 }
 
+/* P1-3 草稿提示条 */
+.draft-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 12rpx 32rpx 4rpx;
+  padding: 20rpx 24rpx;
+  background: linear-gradient(135deg, rgba(201, 162, 77, 0.06), rgba(201, 162, 77, 0.14));
+  border: 1rpx solid rgba(201, 162, 77, 0.22);
+  border-radius: 16rpx;
+}
+.dh-left {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  min-width: 0;
+  flex: 1;
+}
+.dh-icon {
+  font-size: 44rpx;
+  flex-shrink: 0;
+}
+.dh-text {
+  min-width: 0;
+}
+.dh-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #8B5A2B;
+  margin-bottom: 4rpx;
+}
+.dh-sub {
+  font-size: 22rpx;
+  color: #A67B2D;
+  opacity: 0.85;
+}
+.dh-actions {
+  flex-shrink: 0;
+}
+.dh-btn {
+  padding: 12rpx 24rpx;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+}
+.dh-btn.discard {
+  background: rgba(255, 255, 255, 0.7);
+  color: #999999;
+  border: 1rpx solid #e0e0e0;
+}
+.dh-btn.discard:active {
+  background: #f0f0f0;
+}
+
 /* ====== 鸿雁展示区（整体swiper） ====== */
 .hero-section {
   padding: 24rpx 0 16rpx;
@@ -140,25 +193,43 @@
 .rarity-fine { color: #4CAF50; background: rgba(76,175,80,0.1); }
 .rarity-rare { color: #2196F3; background: rgba(33,150,243,0.1); }
 
-/* 传送中徽章（放在名字行里） */
-.carrier-busy-badge {
+/* P1-5a 信使状态徽章（就绪/传送中两种状态，放在名字行里） */
+.carrier-status-badge {
   display: flex;
   align-items: center;
   gap: 6rpx;
   padding: 4rpx 14rpx;
-  background: rgba(201, 162, 77, 0.12);
-  border: 1rpx solid rgba(201, 162, 77, 0.4);
   border-radius: 999rpx;
 }
-.busy-dot {
+.carrier-status-badge text {
+  font-size: 20rpx;
+  line-height: 1.2;
+}
+.carrier-status-badge .status-dot {
   width: 8rpx;
   height: 8rpx;
   border-radius: 50%;
+  flex-shrink: 0;
+}
+.carrier-status-badge.ready {
+  background: rgba(76, 175, 80, 0.1);
+  border: 1rpx solid rgba(76, 175, 80, 0.4);
+}
+.carrier-status-badge.ready .status-dot {
+  background: #4CAF50;
+}
+.carrier-status-badge.ready text {
+  color: #388E3C;
+}
+.carrier-status-badge.busy {
+  background: rgba(201, 162, 77, 0.12);
+  border: 1rpx solid rgba(201, 162, 77, 0.4);
+}
+.carrier-status-badge.busy .status-dot {
   background: #C9A24D;
   animation: livePulse 1.5s ease-in-out infinite;
 }
-.carrier-busy-badge text {
-  font-size: 20rpx;
+.carrier-status-badge.busy text {
   color: #A67B2D;
 }
 @keyframes livePulse {
@@ -397,6 +468,16 @@
   margin-top: 12rpx;
   font-size: 22rpx;
   color: #cccccc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.tc-footer-left {
+  color: #bbbbbb;
+}
+.tc-footer-right {
+  color: #A67B2D;
+  font-weight: 500;
 }
 
 /* ====== 选择区域 ====== */

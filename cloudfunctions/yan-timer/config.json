@@ -1,0 +1,18 @@
+{
+  "triggers": [
+    {
+      "name": "processArrivedTimer",
+      "type": "timer",
+      "config": "0 * * * * * *"
+    }
+  ],
+  "timeout": 60,
+  "runtime": "Nodejs18.15",
+  "memorySize": 512,
+  "permissions": {
+    "openapi": [
+      "subscribeMessage.send",
+      "security.msgSecCheck"
+    ]
+  }
+}
