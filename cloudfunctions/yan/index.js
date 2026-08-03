@@ -6,7 +6,7 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
-const common = require('yan-common')
+const common = require('./common')
 
 // 云存储路径前缀（P1-1：carriers action 中返回前端用的完整图片 URL）
 const CLOUD_PREFIX = 'cloud://cloud1-d0gunpzup215cfd87.636c-cloud1-d0gunpzup215cfd87-1457646459/mini-assets/yan/'
@@ -24,7 +24,7 @@ exports.main = async (event, context) => {
       case 'list': return await getList(OPENID, data)
       case 'collection': return await getCollection(OPENID, data)
       case 'figures': return await getFigures()
-      case 'carriers': return await getCarriers()
+      case 'carriers': return await getCarriers(OPENID)
       case 'read': return await markRead(OPENID, data)
       case 'detail': return await getDetail(OPENID, data)
       case 'claim': return await claimGift(OPENID, data)
@@ -54,6 +54,7 @@ async function getFigures() {
   const dynasties = [{ key: 'random', name: '随机漂流' }, ...Array.from(dynastySet.values())]
   const safeFigures = list.map(f => ({
     figureId: f.figureId,
+    _dbId: f._dbId || '',
     name: f.name,
     title: f.title,
     dynasty: f.dynasty,
@@ -64,20 +65,23 @@ async function getFigures() {
 }
 
 // ========== 信使配置（P1-1 增强：返回前端完整字段+云存储图片路径） ==========
-async function getCarriers() {
+async function getCarriers(OPENID) {
+  const isAdmin = await checkAdmin(OPENID)
   const data = common.CARRIER_LIST.map(c => {
-    const speedLabel = common.DEV_MODE
+    const speedLabel = c.speedLabel || (common.DEV_MODE
       ? '秒级'
-      : (c.duration / 3600000) + '小时'
+      : (c.duration / 3600000) + '小时')
     const loadMap = { small: 30, medium: 60, large: 100 }
     const rarityType =
       c.rareWeight <= 30 ? 'common' :
-      c.rareWeight <= 60 ? 'fine' : 'rare'
+      c.rareWeight <= 60 ? 'fine' :
+      c.rareWeight <= 90 ? 'rare' : 'legendary'
+    const locked = !!(c.adminOnly && !isAdmin)
     return {
       key: c.key,
       name: c.name,
       image: CLOUD_PREFIX + c.key + '.jpg',
-      flyImage: CLOUD_PREFIX + c.key + '-fly.jpg',
+      flyImage: c.key === 'daocao' ? CLOUD_PREFIX + 'dadiao-fly.png' : CLOUD_PREFIX + c.key + '-fly.jpg',
       duration: c.duration,
       speed: Math.max(10, Math.round(100 - c.duration / (24 * 3600 * 1000) * 100)),
       speedLabel,
@@ -90,10 +94,22 @@ async function getCarriers() {
       rarityType,
       tags: c.tags,
       desc: c.desc,
-      aura: c.aura || 'rgba(201,162,77,0.2)'
+      aura: c.aura || 'rgba(201,162,77,0.2)',
+      adminOnly: !!c.adminOnly,
+      locked
     }
   })
   return { code: 0, message: 'ok', data }
+}
+
+// ========== 管理员权限校验 ==========
+async function checkAdmin(OPENID) {
+  try {
+    const r = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
+    return !!(r.data && r.data[0] && r.data[0].role === 'admin')
+  } catch (e) {
+    return false
+  }
 }
 
 // ========== 发送雁书（P0-3 安全加固+P1-4 订阅状态记录） ==========
@@ -104,10 +120,15 @@ async function sendLetter(OPENID, data) {
 
   // 1. 内容基础校验
   if (!content) return { code: -1, message: '请书写信笺内容' }
-  if (content.length > 500) return { code: -1, message: '信笺内容不超过500字' }
+  if (content.length > 150) return { code: -1, message: '信笺内容不超过150字' }
 
   const carrier = common.CARRIERS[carrierKey]
   if (!carrier) return { code: -1, message: '未知信使' }
+
+  if (carrier.adminOnly) {
+    const isAdmin = await checkAdmin(OPENID)
+    if (!isAdmin) return { code: -1, message: '该信使尚未解锁' }
+  }
 
   // 2. content 安全审核（fail-open：异常时放行，标记 pending）
   const sec = await common.checkText(content, OPENID)
@@ -163,6 +184,7 @@ async function sendLetter(OPENID, data) {
     fromName,
     status: 'traveling',
     drifted,
+    deliveryMode: isDrift ? 'random' : 'direct',
     sentAt: now,
     arriveAt: now + carrier.duration,
     reply: null,
@@ -197,7 +219,10 @@ async function getList(OPENID, data) {
   try {
     let where = { _openid: OPENID }
     if (tab === 'traveling') {
-      where.status = _.or([{ status: 'traveling' }, { status: 'processing' }])
+      where = _.and([
+        { _openid: OPENID },
+        _.or([{ status: 'traveling' }, { status: 'processing' }, { status: 'returned' }])
+      ])
     }
     if (tab === 'arrived') {
       where.status = 'arrived'
@@ -240,10 +265,49 @@ async function markRead(OPENID, data) {
     const r = await db.collection('yan_letters').doc(letterId).get()
     if (!r.data) return { code: -1, message: '信件不存在' }
     if (r.data._openid !== OPENID) return { code: 403, message: '无权限' }
-    await db.collection('yan_letters').doc(letterId).update({ data: { read: true } })
-    return { code: 0, message: 'ok' }
+    if (r.data.status === 'returned') {
+      const receiveResult = await db.collection('yan_letters')
+        .where({ _id: letterId, _openid: OPENID, status: 'returned' })
+        .update({ data: { read: true, status: 'arrived', receivedAt: db.serverDate() } })
+      if (receiveResult.stats && receiveResult.stats.updated && r.data.gift && !r.data.claimed) {
+        await collectGift(OPENID, r.data.gift)
+        await db.collection('yan_letters').doc(letterId).update({ data: { claimed: true } })
+      }
+    } else {
+      await db.collection('yan_letters').doc(letterId).update({ data: { read: true } })
+    }
+    const received = await db.collection('yan_letters').doc(letterId).get()
+    return { code: 0, message: 'ok', data: formatLetter(received.data) }
   } catch (e) {
     return { code: -1, message: e.message }
+  }
+}
+
+async function collectGift(OPENID, gift) {
+  const existR = await db.collection('yan_user_gifts')
+    .where({ _openid: OPENID, giftId: gift.id })
+    .limit(1)
+    .get()
+  if (existR.data && existR.data.length) {
+    await db.collection('yan_user_gifts').doc(existR.data[0]._id).update({
+      data: { count: _.inc(1), lastAt: db.serverDate() }
+    })
+  } else {
+    await db.collection('yan_user_gifts').add({
+      data: {
+        _openid: OPENID,
+        giftId: gift.id,
+        name: gift.name,
+        icon: gift.icon,
+        rarity: gift.rarity,
+        rarityLabel: gift.rarityLabel,
+        type: gift.type,
+        desc: gift.desc,
+        count: 1,
+        firstAt: db.serverDate(),
+        lastAt: db.serverDate()
+      }
+    })
   }
 }
 
@@ -261,32 +325,7 @@ async function claimGift(OPENID, data) {
     await db.collection('yan_letters').doc(letterId).update({ data: { claimed: true } })
 
     const gift = r.data.gift
-    const existR = await db.collection('yan_user_gifts')
-      .where({ _openid: OPENID, giftId: gift.id })
-      .limit(1)
-      .get()
-
-    if (existR.data && existR.data.length) {
-      await db.collection('yan_user_gifts').doc(existR.data[0]._id).update({
-        data: { count: _.inc(1), lastAt: db.serverDate() }
-      })
-    } else {
-      await db.collection('yan_user_gifts').add({
-        data: {
-          _openid: OPENID,
-          giftId: gift.id,
-          name: gift.name,
-          icon: gift.icon,
-          rarity: gift.rarity,
-          rarityLabel: gift.rarityLabel,
-          type: gift.type,
-          desc: gift.desc,
-          count: 1,
-          firstAt: db.serverDate(),
-          lastAt: db.serverDate()
-        }
-      })
-    }
+    await collectGift(OPENID, gift)
 
     return { code: 0, message: 'ok', data: { gift } }
   } catch (e) {
@@ -374,6 +413,7 @@ function formatLetter(l) {
     fromName: l.fromName,
     status: l.status,
     drifted: l.drifted || false,
+    deliveryMode: l.deliveryMode || 'direct',
     sentAt: l.sentAt,
     arriveAt: l.arriveAt,
     reply: l.reply,
@@ -389,13 +429,13 @@ async function processArrived(OPENID) {
   const now = Date.now()
   try {
     const r = await db.collection('yan_letters')
-      .where({
-        _openid: OPENID,
-        ..._.or([
+      .where(_.and([
+        { _openid: OPENID },
+        _.or([
           { status: 'traveling', arriveAt: _.lte(now) },
           { status: 'processing', processingAt: _.lt(now - PROCESSING_STALE_MS) }
         ])
-      })
+      ]))
       .limit(20)
       .get()
 
@@ -415,8 +455,8 @@ async function processArrived(OPENID) {
           data: {
             status: 'arrived',
             processingAt: _.remove(),
-            reply: { content: reply.content, figureName: figure.name, source: reply.source },
-            gift,
+            reply: _.set({ content: reply.content, figureName: figure.name, source: reply.source }),
+            gift: _.set(gift),
             arrivedAt: db.serverDate()
           }
         })

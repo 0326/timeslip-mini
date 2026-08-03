@@ -4,7 +4,6 @@
   "description": "雁书定时任务：每分钟扫描到期信件并生成回信、掉落风物、推送订阅消息",
   "main": "index.js",
   "dependencies": {
-    "wx-server-sdk": "~2.6.3",
-    "yan-common": "file:../yan-common"
+    "wx-server-sdk": "~2.6.3"
   }
 }

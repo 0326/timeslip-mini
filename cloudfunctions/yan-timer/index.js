@@ -1,11 +1,11 @@
 // cloudfunctions/yan-timer/index.js
-// 定时任务：每分钟扫描到期信件，生成回信与风物，解锁成就，推送订阅消息
+// 定时任务：扫描到期信件，先生成回信与风物并标记为已返回，用户查看后再归档为已收信
 const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
-const common = require('yan-common')
+const common = require('./common')
 
 const PROCESSING_STALE_MS = 2 * 60 * 1000
 
@@ -18,12 +18,10 @@ exports.main = async () => {
   try {
     // 跨用户批量查询所有到期信件
     const r = await db.collection('yan_letters')
-      .where({
-        ..._.or([
-          { status: 'traveling', arriveAt: _.lte(now) },
-          { status: 'processing', processingAt: _.lt(now - PROCESSING_STALE_MS) }
-        ])
-      })
+      .where(_.or([
+        { status: 'traveling', arriveAt: _.lte(now) },
+        { status: 'processing', processingAt: _.lt(now - PROCESSING_STALE_MS) }
+      ]))
       .orderBy('sentAt', 'asc')
       .limit(50)
       .get()
@@ -119,10 +117,10 @@ async function processOneLetter(letter, now) {
     // 6. 更新信件为 arrived
     await db.collection('yan_letters').doc(letter._id).update({
       data: {
-        status: 'arrived',
+        status: 'returned',
         processingAt: _.remove(),
-        reply: { content: reply.content, figureName: figure.name, source: reply.source },
-        gift,
+        reply: _.set({ content: reply.content, figureName: figure.name, source: reply.source }),
+        gift: _.set(gift),
         arrivedAt: db.serverDate()
       }
     })
@@ -131,7 +129,7 @@ async function processOneLetter(letter, now) {
     try {
       await common.tryUnlock(letter._openid, 'first_letter')
       const cnt = await db.collection('yan_letters')
-        .where({ _openid: letter._openid, status: 'arrived' })
+        .where({ _openid: letter._openid, status: 'returned' })
         .count()
       const total = cnt.total || 0
       if (total >= 5) await common.tryUnlock(letter._openid, 'letter_5')

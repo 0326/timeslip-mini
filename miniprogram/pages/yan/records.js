@@ -3,9 +3,6 @@ const loginGuard = require('../../utils/loginGuard')
 
 const app = getApp()
 
-const TYPE_INTERVAL = 60
-const TYPE_CHARS_PER_TICK = 3
-
 Page({
   data: {
     statusBarHeight: 20,
@@ -15,9 +12,7 @@ Page({
     unreadCount: 0,
     showDetail: false,
     detailLetter: null,
-    // 逐字显示
-    typedReply: '',
-    typing: false,
+    replyContent: '',
     loading: true
   },
 
@@ -66,12 +61,14 @@ Page({
       if (data) {
         const letters = data.letters || []
         const traveling = letters
-          .filter(l => l.status === 'traveling' || l.status === 'processing')
+          .filter(l => l.status === 'traveling' || l.status === 'processing' || l.status === 'returned')
           .map(l => ({
             ...l,
+            isRandomDrift: l.deliveryMode === 'random',
+            isReturned: l.status === 'returned',
             sentAtText: this.formatTime(l.sentAt),
-            remainText: this.formatCountdown(Math.max(0, l.arriveAt - Date.now())),
-            progress: this.calcProgress(l)
+            remainText: l.status === 'returned' ? '已返回，点击查看' : this.formatCountdown(Math.max(0, l.arriveAt - Date.now())),
+            progress: l.status === 'returned' ? 100 : this.calcProgress(l)
           }))
         const arrived = letters
           .filter(l => l.status === 'arrived')
@@ -86,10 +83,10 @@ Page({
           loading: false
         })
       } else {
-        this.setData({ loading: false })
+        this.setData({ travelingLetters: [], arrivedLetters: [], unreadCount: 0, loading: false })
       }
     } catch (e) {
-      this.setData({ loading: false })
+      this.setData({ travelingLetters: [], arrivedLetters: [], unreadCount: 0, loading: false })
     } finally {
       this._loadingLetters = false
     }
@@ -104,8 +101,10 @@ Page({
 
   calcProgress(l) {
     if (!l.arriveAt || !l.sentAt) return 0
+    const duration = l.arriveAt - l.sentAt
+    if (duration <= 0) return 100
     const now = Date.now()
-    return Math.min(100, Math.round(((now - l.sentAt) / (l.arriveAt - l.sentAt)) * 100))
+    return Math.max(0, Math.min(100, Math.round(((now - l.sentAt) / duration) * 100)))
   },
 
   startCountdownLoop() {
@@ -114,12 +113,13 @@ Page({
       if (this.data.travelingLetters.length === 0) return
       const now = Date.now()
       const updated = this.data.travelingLetters.map(l => {
+        if (l.isReturned) return l
         const remain = Math.max(0, l.arriveAt - now)
         const progress = l.arriveAt > l.sentAt ? Math.min(100, ((now - l.sentAt) / (l.arriveAt - l.sentAt)) * 100) : 100
         return Object.assign({}, l, { remainText: this.formatCountdown(remain), progress: Math.round(progress) })
       })
       this.setData({ travelingLetters: updated })
-      const arrived = updated.filter(l => l.remainText === '已到达')
+      const arrived = updated.filter(l => !l.isReturned && l.remainText === '已到达')
       if (arrived.length > 0) {
         this.loadLetters()
       }
@@ -149,14 +149,29 @@ Page({
     try {
       const data = await requestCloud('yan', 'detail', { letterId: id }, { throwError: false })
       if (data) {
-        this.setData({ showDetail: true, detailLetter: data })
-        this.startTypeReply(data.reply && data.reply.content ? data.reply.content : '')
-        if (data.status === 'arrived' && !data.read) {
-          requestCloud('yan', 'read', { letterId: id }, { throwError: false })
-          this.syncReadLocal(id)
+        var replyContent = ''
+        if (data.reply && data.reply.content) {
+          replyContent = this.trimReplyContent(data.reply.content)
+        }
+        this.setData({ showDetail: true, detailLetter: data, replyContent: replyContent })
+        if (data.status === 'returned' || (data.status === 'arrived' && !data.read)) {
+          await requestCloud('yan', 'read', { letterId: id }, { throwError: false })
+          await this.loadLetters()
+          this.setData({ detailLetter: Object.assign({}, data, { status: 'arrived', read: true, claimed: data.gift ? true : data.claimed }) })
         }
       }
     } catch (e) {}
+  },
+
+  // 去掉开头"古代贤人启"和结尾"拜复"等格式语
+  trimReplyContent(text) {
+    if (!text) return ''
+    var t = text.replace(/^[\s]*古代贤人启[：:]*[\s]*/, '')
+    t = t.replace(/[\s]*古代贤人\s*顿首拜复[\s。]*$/, '')
+    t = t.replace(/[\s]*古代贤人\s*拜复[\s。]*$/, '')
+    t = t.replace(/[\s]*顿首拜复[\s。]*$/, '')
+    t = t.replace(/[\s]*拜复[\s。]*$/, '')
+    return t.trim()
   },
 
   syncReadLocal(letterId) {
@@ -167,72 +182,27 @@ Page({
     this.setData({ arrivedLetters, unreadCount })
   },
 
-  // 逐字显示
-  startTypeReply(fullText) {
-    this.stopTyping()
-    if (!fullText) {
-      this.setData({ typedReply: '', typing: false })
-      return
-    }
-    this.setData({ typedReply: '', typing: true })
-    this._typeText = fullText
-    this._typeIndex = 0
-    this._typeTimer = setInterval(() => {
-      this._typeIndex = Math.min(this._typeText.length, this._typeIndex + TYPE_CHARS_PER_TICK)
-      this.setData({ typedReply: this._typeText.slice(0, this._typeIndex) })
-      if (this._typeIndex >= this._typeText.length) {
-        this.stopTyping()
-      }
-    }, TYPE_INTERVAL)
-  },
-
-  stopTyping() {
-    if (this._typeTimer) {
-      clearInterval(this._typeTimer)
-      this._typeTimer = null
-    }
-    if (this._typeText) {
-      // 若正在打字过程中停止，直接显示全部内容
-      const full = this._typeText
-      this._typeText = ''
-      this.setData({ typedReply: full, typing: false })
-    } else {
-      this.setData({ typing: false })
-    }
-  },
-
   closeDetail() {
-    this.stopTyping()
-    this.setData({ showDetail: false, detailLetter: null, typedReply: '' })
+    this.setData({ showDetail: false, detailLetter: null, replyContent: '' })
   },
 
-  // 继续通信（跳写信页，带 figureId）
+  // 继续回信（跳写信页，带 figureId）
   continueChat() {
     const d = this.data.detailLetter
     if (!d) return
     const figureId = encodeURIComponent(String(d.figureId || ''))
     const figureName = encodeURIComponent(String(d.figureName || ''))
     this.closeDetail()
-    setTimeout(() => {
+    setTimeout(function() {
       wx.navigateTo({ url: '/pages/yan/index?figureId=' + figureId + '&figureName=' + figureName })
     }, 80)
   },
 
-  async claimGift(e) {
-    const id = e.currentTarget.dataset.id
-    try {
-      const data = await requestCloud('yan', 'claim', { letterId: id }, { showLoading: true, loadingText: '收入藏馆...' })
-      if (data) {
-        wx.showToast({ title: '已收入藏馆', icon: 'success' })
-        const detailLetter = this.data.detailLetter
-          ? Object.assign({}, this.data.detailLetter, { claimed: true })
-          : null
-        const arrivedLetters = this.data.arrivedLetters.map(l =>
-          l._id === id ? Object.assign({}, l, { claimed: true }) : l
-        )
-        this.setData({ detailLetter, arrivedLetters })
-      }
-    } catch (e) {}
+  goCollection() {
+    this.closeDetail()
+    setTimeout(function() {
+      wx.navigateTo({ url: '/pages/yan/collection' })
+    }, 80)
   },
 
   stopProp() {}

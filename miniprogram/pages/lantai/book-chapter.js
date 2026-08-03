@@ -120,7 +120,10 @@ Page({
 
     try {
       const sys = wx.getSystemInfoSync()
-      this.setData({ safeBottom: sys.safeAreaInsets ? sys.safeAreaInsets.bottom : 0 })
+      const safeBottomPx = sys.safeAreaInsets ? sys.safeAreaInsets.bottom : 0
+      const windowWidth = sys.windowWidth || 375
+      const safeBottomRpx = Math.round(safeBottomPx * 750 / windowWidth)
+      this.setData({ safeBottom: safeBottomRpx })
       this._windowHeight = sys.windowHeight
     } catch (e) {}
     const savedFont = storage.get('reader_fontSize')

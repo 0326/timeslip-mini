@@ -30,7 +30,7 @@ const CARRIERS = {
     powerLabel: '轻薄',
     rareWeight: 25,
     rareLabel: '普通',
-    tags: ['一日往返', '载物轻薄', '偶有迷途'],
+    tags: ['载物轻薄', '偶有迷途'],
     desc: '羽翼轻盈，乘风疾行。气力有限，只能捎带轻巧风物，偶尔会迷失时空。',
     aura: 'rgba(212,165,116,0.2)'
   },
@@ -43,7 +43,7 @@ const CARRIERS = {
     powerLabel: '中等',
     rareWeight: 55,
     rareLabel: '精良',
-    tags: ['两日往返', '定向必达', '稳妥可靠'],
+    tags: ['定向必达', '稳妥可靠'],
     desc: '循亘古航路而行，守信不误，定向投递万无一失。所携风物品相适中。',
     aura: 'rgba(196,30,58,0.18)'
   },
@@ -56,13 +56,28 @@ const CARRIERS = {
     powerLabel: '厚重',
     rareWeight: 90,
     rareLabel: '稀有',
-    tags: ['三日往返', '可负重宝', '偶会漂流'],
+    tags: ['可负重宝', '偶会漂流'],
     desc: '翱翔云海，负重远行。运力超群，常带回厚重珍稀古物；偶有随风漂泊。',
     aura: 'rgba(15,52,96,0.35)'
+  },
+  jingwei: {
+    key: 'jingwei',
+    name: '精卫',
+    duration: 7 * 1000,
+    speedLabel: '7秒',
+    accuracy: 1.0,
+    power: 'large',
+    powerLabel: '厚重',
+    rareWeight: 100,
+    rareLabel: '传说',
+    tags: ['神鸟通灵', '万里必达'],
+    desc: '炎帝之女化鸟，衔石填海，百折不挠。神鸟通灵，万里必达，携古之重宝如若等闲。',
+    aura: 'rgba(255,107,53,0.25)',
+    adminOnly: true
   }
 }
 
-const CARRIER_LIST = ['qinghong', 'guiyan', 'daocao'].map(k => ({ key: k, ...CARRIERS[k] }))
+const CARRIER_LIST = ['qinghong', 'guiyan', 'daocao', 'jingwei'].map(k => ({ key: k, ...CARRIERS[k] }))
 
 // ========== 朝代名映射 ==========
 const DYNASTY_NAME_MAP = {

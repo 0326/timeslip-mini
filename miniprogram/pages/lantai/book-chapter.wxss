@@ -104,7 +104,7 @@
   backdrop-filter: blur(12rpx);
   border-top: 1rpx solid rgba(201, 162, 77, 0.2);
   display: flex;
-  padding: 16rpx 24rpx;
+  padding: 16rpx 24rpx 0;
   gap: 16rpx;
   z-index: 100;
 }

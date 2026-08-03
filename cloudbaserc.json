@@ -29,6 +29,20 @@
       "memorySize": 256,
       "installDependency": true,
       "runtime": "Nodejs20.19"
+    },
+    {
+      "name": "yan",
+      "timeout": 60,
+      "memorySize": 512,
+      "installDependency": true,
+      "runtime": "Nodejs16.13"
+    },
+    {
+      "name": "yan-timer",
+      "timeout": 60,
+      "memorySize": 512,
+      "installDependency": true,
+      "runtime": "Nodejs16.13"
     }
   ]
 }

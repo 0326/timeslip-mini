@@ -3,7 +3,7 @@
     {
       "name": "processArrivedTimer",
       "type": "timer",
-      "config": "0 * * * * * *"
+      "config": "*/5 * * * * * *"
     }
   ],
   "timeout": 60,

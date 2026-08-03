@@ -337,7 +337,7 @@ Page({
   async fetchAndUpdateBooks() {
     try {
       const rows = await loadAll(
-        () => db.collection('books').orderBy('sort_order', 'asc'),
+        () => db.collection('books').where({ _id: _.neq(null) }).orderBy('sort_order', 'asc'),
         PAGE_SIZE,
         100
       )

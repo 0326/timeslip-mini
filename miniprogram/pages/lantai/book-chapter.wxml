@@ -1,14 +1,10 @@
 <custom-nav-bar
   title="{{currentChapter ? currentChapter.title : ''}}"
   bgColor="#FFF9F0"
->
-  <view slot="right" class="reader-actions">
-    <text class="r-btn" bindtap="toggleTranslation">{{showTranslation ? '原文' : '译文'}}</text>
-  </view>
-</custom-nav-bar>
+/>
 
 <view class="reader-page ancient-paper">
-  <view class="content-wrap" style="padding-bottom: {{safeBottom + 120}}rpx;">
+  <view class="content-wrap" style="padding-bottom: {{safeBottom + 140}}rpx;">
     <view class="ch-head">
       <text class="ch-sub">{{currentChapter.subtitle}}</text>
       <text class="ch-title">{{currentChapter.title}}</text>
@@ -33,7 +29,7 @@
     </view>
   </view>
 
-  <view class="reader-toolbar" style="padding-bottom: {{safeBottom + 16}}rpx;">
+  <view class="reader-toolbar" style="padding-bottom: {{safeBottom + 24}}rpx;">
     <view class="t-btn" bindtap="changeFontSize" data-type="minus">A-</view>
     <view class="t-btn" bindtap="changeFontSize" data-type="plus">A+</view>
     <view class="t-btn" bindtap="toggleTranslation">{{showTranslation ? '原文' : '译文'}}</view>

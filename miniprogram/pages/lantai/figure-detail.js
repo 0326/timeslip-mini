@@ -180,8 +180,10 @@ Page({
   sendLetter() {
     const f = this.data.figure || {}
     const figureId = (f.figureId || f.id || f._id || '').toString()
+    const figureName = encodeURIComponent(f.name || f.figureName || '')
+    const dynasty = f.dynasty || ''
     wx.navigateTo({
-      url: `/pages/yan/index?figureId=${figureId}&figureName=${encodeURIComponent(f.name || '')}`
+      url: `/pages/yan/index?figureId=${figureId}&figureName=${figureName}&dynasty=${dynasty}`
     })
   },
 

@@ -81,7 +81,7 @@
     </view>
     <view class="a-btn a-ancient" bindtap="sendLetter">
       <text class="iconfont a-btn-icon icon-mail"></text>
-      <text class="a-btn-text">飞鸽传书</text>
+      <text class="a-btn-text">鸿雁传书</text>
     </view>
   </view>
 

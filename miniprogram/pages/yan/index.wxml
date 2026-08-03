@@ -1,160 +1,41 @@
 <view class="yan-page">
 
-  <!-- 自定义导航栏（只保留返回箭头+标题） -->
-  <view class="nav-bar" style="padding-top: {{statusBarHeight}}px; height: {{navHeight}}px;">
-    <view class="nav-left" bindtap="goBack">
-      <view class="nav-back-arrow"></view>
-    </view>
-    <view class="nav-title">雁书</view>
-    <view class="nav-right"></view>
-  </view>
-
-  <!-- 右上角悬浮图标（胶囊按钮下方） -->
-  <view class="float-icons" style="top: {{floatIconsTop}}px; right: {{floatIconsRight}}px;">
-    <view class="float-icon-btn" bindtap="goRecords">
-      <view class="float-icon records-icon"></view>
-    </view>
-    <view class="float-icon-btn" bindtap="goCollection">
-      <view class="float-icon collection-icon"></view>
-    </view>
-  </view>
-
   <!-- 滚动内容区 -->
   <scroll-view scroll-y class="view-area">
 
-    <!-- P1-3 草稿提示条 -->
-    <view class="draft-hint" wx:if="{{showDraftHint}}">
-      <view class="dh-left">
-        <view class="dh-icon">📝</view>
-        <view class="dh-text">
-          <view class="dh-title">有未发送的草稿</view>
-          <view class="dh-sub">保存于 {{savedDraftAt}}</view>
-        </view>
+    <!-- ====== 记录 & 藏馆 banner 入口（一排二） ====== -->
+    <view class="banner-row">
+      <view class="banner-card banner-records" bindtap="goRecords">
+        <image class="banner-img" src="cloud://cloud1-d0gunpzup215cfd87.636c-cloud1-d0gunpzup215cfd87-1457646459/mini-assets/yan/banner-records.jpg" mode="aspectFill" />
+        <view class="banner-mask"></view>
+        <view class="banner-text">记录<text class="iconfont icon-right banner-arrow"></text></view>
       </view>
-      <view class="dh-actions">
-        <view class="dh-btn discard" bindtap="discardDraft">丢弃</view>
-      </view>
-    </view>
-
-    <!-- ====== 鸿雁展示区（整体swiper切换） ====== -->
-    <view class="hero-section">
-      <view class="hero-swiper-wrap">
-        <view class="stage-arrow left" bindtap="switchCarrier" data-dir="-1">‹</view>
-
-        <swiper class="hero-swiper" current="{{carrierIndex}}" bindchange="onCarrierSwiperChange" circular>
-          <swiper-item wx:for="{{carriers}}" wx:key="key">
-            <view class="hero-card">
-              <!-- 左侧：名字+稀有度+状态 + 标签 + 属性 -->
-              <view class="hero-info">
-                <view class="hero-name-row">
-                  <view class="hero-name">{{item.name}}</view>
-                  <view class="hero-rarity-tag rarity-{{item.rarityType}}">{{item.rarityLabel}}</view>
-                  <!-- P1-5a 信使状态徽章：就绪 / 传送中 -->
-                  <view class="carrier-status-badge ready" wx:if="{{!carrierBusy[item.key]}}">
-                    <view class="status-dot"></view>
-                    <text>就绪</text>
-                  </view>
-                  <view class="carrier-status-badge busy" wx:else>
-                    <view class="status-dot"></view>
-                    <text>传送中</text>
-                  </view>
-                </view>
-                <view class="hero-tags">
-                  <view class="hero-tag" wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this">{{tag}}</view>
-                </view>
-                <view class="hero-stats">
-                  <view class="stat-row">
-                    <view class="stat-label">速度</view>
-                    <view class="stat-bar-wrap"><view class="stat-bar-fill" style="width: {{item.speed}}%"></view></view>
-                    <view class="stat-value">{{item.speedLabel}}</view>
-                  </view>
-                  <view class="stat-row">
-                    <view class="stat-label">准确率</view>
-                    <view class="stat-bar-wrap"><view class="stat-bar-fill" style="width: {{item.accuracy}}%"></view></view>
-                    <view class="stat-value">{{item.accuracyLabel}}</view>
-                  </view>
-                  <view class="stat-row">
-                    <view class="stat-label">载物</view>
-                    <view class="stat-bar-wrap"><view class="stat-bar-fill" style="width: {{item.load}}%"></view></view>
-                    <view class="stat-value">{{item.loadLabel}}</view>
-                  </view>
-                  <view class="stat-row">
-                    <view class="stat-label">稀有度</view>
-                    <view class="stat-bar-wrap"><view class="stat-bar-fill" style="width: {{item.rarity}}%"></view></view>
-                    <view class="stat-value">{{item.rarityLabel}}</view>
-                  </view>
-                </view>
-              </view>
-
-              <!-- 右侧：大雁形象 -->
-              <view class="hero-bird">
-                <view class="carrier-figure {{carrierBusy[item.key] ? 'transmitting' : ''}}" style="--aura-color: {{item.aura}};">
-                  <view class="carrier-aura"></view>
-                  <view class="transmit-trail" wx:if="{{carrierBusy[item.key]}}"></view>
-                  <image class="carrier-bird-img" src="{{carrierBusy[item.key] ? item.flyImage : item.image}}" mode="aspectFit" />
-                </view>
-              </view>
-            </view>
-          </swiper-item>
-        </swiper>
-
-        <view class="stage-arrow right" bindtap="switchCarrier" data-dir="1">›</view>
-      </view>
-
-      <!-- 指示器（模块下方居中） -->
-      <view class="stage-dots">
-        <view class="stage-dot {{carrierIndex === idx ? 'active' : ''}}" wx:for="{{carriers}}" wx:for-index="idx" wx:key="key" bindtap="goCarrier" data-idx="{{idx}}"></view>
+      <view class="banner-card banner-collection" bindtap="goCollection">
+        <image class="banner-img" src="cloud://cloud1-d0gunpzup215cfd87.636c-cloud1-d0gunpzup215cfd87-1457646459/mini-assets/yan/banner-collection.jpg" mode="aspectFill" />
+        <view class="banner-mask"></view>
+        <view class="banner-text">藏馆<text class="iconfont icon-right banner-arrow"></text></view>
       </view>
     </view>
 
-    <!-- 大雁简介 -->
-    <view class="carrier-desc">{{carriers[carrierIndex].desc}}</view>
+    <!-- ====== 书信模块 ====== -->
+    <view class="letter-module">
 
-    <!-- ====== 传送中：展示进度条 ====== -->
-    <view class="traveling-section" wx:if="{{currentTraveling}}">
-      <view class="traveling-card">
-        <view class="tc-header">
-          <view class="tc-info">
-            <view class="tc-carrier">{{carriers[carrierIndex].name}} · 前往{{currentTraveling.dynastyName}}</view>
-            <view class="tc-target">收信人：{{currentTraveling.figureName}}</view>
-          </view>
-          <view class="tc-countdown">
-            <view class="tc-time">{{currentTraveling.remainText || '计算中'}}</view>
-            <view class="tc-label">剩余</view>
+      <!-- 收信朝代 + 收信人（一行二列，点击弹窗选择） -->
+      <view class="recipient-row">
+        <view class="recipient-item" bindtap="openDynastyPicker">
+          <view class="picker-field">
+            <text class="picker-label">朝代</text>
+            <text class="picker-value {{selectedDynasty === 'random' ? 'drift' : ''}}">{{selectedDynastyName}}</text>
+            <view class="picker-arrow"></view>
           </view>
         </view>
-        <view class="tc-progress">
-          <view class="tc-progress-fill" style="width: {{currentTraveling.progress || 0}}%"></view>
-        </view>
-        <view class="tc-footer">
-          <view class="tc-footer-left">出发于 {{currentTraveling.sentAtText}}</view>
-          <view class="tc-footer-right">预计 {{currentTraveling.arriveAtText || '--'}} 到达</view>
-        </view>
-      </view>
-    </view>
-
-    <block wx:else>
-      <!-- 选择朝代 -->
-      <view class="select-section">
-        <view class="section-label">选择收信朝代</view>
-        <scroll-view scroll-x class="scroll-row" enhanced show-scrollbar="{{false}}">
-          <view class="dynasty-chip {{selectedDynasty === item.key ? 'selected' : ''}} {{item.key === 'random' ? 'drift' : ''}}" wx:for="{{dynasties}}" wx:key="key" bindtap="selectDynasty" data-key="{{item.key}}">
-            <text wx:if="{{item.key === 'random'}}">随机漂流</text>
-            <text wx:else>{{item.name}}</text>
+        <view class="recipient-item" bindtap="openFigurePicker">
+          <view class="picker-field {{selectedDynasty === 'random' ? 'disabled' : ''}}">
+            <text class="picker-label">收信人</text>
+            <text class="picker-value">{{selectedDynasty === 'random' ? '随机人物' : (selectedFigureName || '请选择')}}</text>
+            <view class="picker-arrow"></view>
           </view>
-        </scroll-view>
-      </view>
-
-      <!-- 选择角色 -->
-      <view class="select-section" wx:if="{{selectedDynasty !== 'random'}}">
-        <view class="section-label">选择收信人</view>
-        <scroll-view scroll-x class="scroll-row" enhanced show-scrollbar="{{false}}">
-          <view class="figure-chip {{selectedFigureId === item.figureId ? 'selected' : ''}}" wx:for="{{figures}}" wx:key="figureId" bindtap="selectFigure" data-id="{{item.figureId}}">
-            <image class="fc-avatar" wx:if="{{item.avatar}}" src="{{item.avatar}}" mode="aspectFill" lazy-load binderror="onAvatarError" data-index="{{index}}" />
-            <view class="fc-avatar fc-avatar-fallback" wx:else>{{item.name ? item.name[0] : '?'}}</view>
-            <view class="fc-name">{{item.name}}</view>
-          </view>
-        </scroll-view>
+        </view>
       </view>
 
       <!-- 随机漂流提示 -->
@@ -164,7 +45,6 @@
 
       <!-- 信笺输入 -->
       <view class="letter-section">
-        <view class="section-label">书写笺书</view>
         <view class="letter-paper">
           <view class="letter-to" wx:if="{{selectedDynasty !== 'random' && selectedFigureId}}">
             致：<text class="letter-to-name">{{selectedFigureName}}</text>
@@ -172,11 +52,98 @@
           <view class="letter-to" wx:else>
             致：<text class="letter-to-name">时空中有缘人</text>
           </view>
-          <textarea class="letter-textarea" value="{{letterContent}}" bindinput="onLetterInput" placeholder="在此写下你想对先贤说的话..." placeholder-class="letter-placeholder" maxlength="500" auto-height confirm-type="done" show-confirm-bar="{{false}}"></textarea>
-          <view class="letter-count">{{letterContent.length}}/500</view>
+          <textarea class="letter-textarea" value="{{letterContent}}" bindinput="onLetterInput" placeholder="选择朝代和收信人，在此写下你想对先贤说的话，然后选择信使，大雁就会穿越时空将信笺送往过去，运气好还能收到古人寄回来的文物哦！" placeholder-class="letter-placeholder" maxlength="150" auto-height confirm-type="done" show-confirm-bar="{{false}}"></textarea>
+          <view class="letter-count">{{letterContent.length}}/150</view>
         </view>
       </view>
-    </block>
+    </view>
+
+    <!-- ====== 轻鸿模块（信使选择，置于书信模块下方） ====== -->
+    <view class="carrier-module">
+      <view class="carrier-title">选择信使</view>
+
+      <view class="hero-section">
+        <view class="hero-swiper-wrap">
+          <view class="stage-arrow left" catchtap="switchCarrier" data-dir="-1">‹</view>
+
+          <swiper class="hero-swiper" current="{{carrierIndex}}" bindchange="onCarrierSwiperChange" circular>
+            <swiper-item wx:for="{{carriers}}" wx:key="key">
+              <view class="hero-card {{item.locked ? 'carrier-locked' : ''}}" bindtap="openCarrierLetter" data-key="{{item.key}}">
+                <view class="carrier-status-badge returned carrier-status-corner" wx:if="{{!item.locked && carrierReturned[item.key]}}">
+                  <view class="status-dot"></view><text>已返回</text>
+                </view>
+                <view class="carrier-status-badge ready carrier-status-corner" wx:elif="{{!item.locked && !carrierBusy[item.key]}}">
+                  <view class="status-dot"></view>
+                  <text>就绪</text>
+                </view>
+                <view class="carrier-status-badge busy carrier-status-corner" wx:elif="{{!item.locked && carrierBusy[item.key]}}">
+                  <view class="status-dot"></view>
+                  <text>传送中</text>
+                </view>
+
+                <view class="hero-info">
+                  <view class="hero-name-row">
+                    <view class="hero-name">{{item.name}}</view>
+                    <view class="hero-rarity-tag rarity-{{item.rarityType}}">{{item.rarityLabel}}</view>
+                    <view class="hero-rarity-tag locked-tag" wx:if="{{item.locked}}">未解锁</view>
+                  </view>
+                  <view class="hero-tags">
+                    <view class="hero-tag" wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this">{{tag}}</view>
+                  </view>
+                  <view class="hero-desc">{{item.desc}}</view>
+                </view>
+
+                <view class="hero-bird">
+                  <view class="carrier-figure {{carrierBusy[item.key] ? 'transmitting' : ''}}" style="--aura-color: {{item.aura}};">
+                    <view class="carrier-aura"></view>
+                    <view class="transmit-trail" wx:if="{{!item.locked && carrierBusy[item.key]}}"></view>
+                    <image class="carrier-bird-img" src="{{item.image}}" mode="aspectFit" />
+                  </view>
+                </view>
+
+                <view class="carrier-traveling-status" wx:if="{{!item.locked && carrierReturned[item.key]}}">
+                  <view class="ts-time">已返回，点击查看详情</view>
+                </view>
+                <view class="carrier-traveling-status" wx:elif="{{!item.locked && carrierBusy[item.key] && carrierTraveling[item.key]}}">
+                  <view class="ts-time">剩余 {{carrierTraveling[item.key].remainText}} 返回</view>
+                </view>
+              </view>
+            </swiper-item>
+          </swiper>
+
+          <view class="stage-arrow right" catchtap="switchCarrier" data-dir="1">›</view>
+        </view>
+
+        <!-- 四指标 2×2（大雁下方） -->
+        <view class="hero-stats {{carriers[carrierIndex].locked ? 'stats-locked' : ''}}">
+          <view class="stat-row">
+            <view class="stat-label">速度</view>
+            <view class="stat-bar-wrap"><view class="stat-bar-fill" style="width: {{carriers[carrierIndex].speed}}%"></view></view>
+            <view class="stat-value">{{carriers[carrierIndex].speedLabel}}</view>
+          </view>
+          <view class="stat-row">
+            <view class="stat-label">准确率</view>
+            <view class="stat-bar-wrap"><view class="stat-bar-fill" style="width: {{carriers[carrierIndex].accuracy}}%"></view></view>
+            <view class="stat-value">{{carriers[carrierIndex].accuracyLabel}}</view>
+          </view>
+          <view class="stat-row">
+            <view class="stat-label">载物</view>
+            <view class="stat-bar-wrap"><view class="stat-bar-fill" style="width: {{carriers[carrierIndex].load}}%"></view></view>
+            <view class="stat-value">{{carriers[carrierIndex].loadLabel}}</view>
+          </view>
+          <view class="stat-row">
+            <view class="stat-label">稀有度</view>
+            <view class="stat-bar-wrap"><view class="stat-bar-fill" style="width: {{carriers[carrierIndex].rarity}}%"></view></view>
+            <view class="stat-value">{{carriers[carrierIndex].rarityLabel}}</view>
+          </view>
+        </view>
+
+        <!-- 指示器（模块下方居中） -->
+        <view class="stage-dots">
+          <view class="stage-dot {{carrierIndex === idx ? 'active' : ''}}" wx:for="{{carriers}}" wx:for-index="idx" wx:key="key" bindtap="goCarrier" data-idx="{{idx}}"></view>
+        </view>
+      </view>
+    </view>
 
     <!-- 底部占位（防止内容被固定按钮遮挡） -->
     <view class="bottom-placeholder"></view>
@@ -186,13 +153,76 @@
   <!-- 底部固定发送按钮 -->
   <view class="send-bar">
     <button class="btn-send {{!canSend ? 'disabled' : ''}}" bindtap="sendLetter" disabled="{{!canSend || sending}}">
-      <block wx:if="{{carrierBusy[carriers[carrierIndex].key]}}">
-        此鸿雁正在送信中
+      <block wx:if="{{carriers[carrierIndex].locked}}">
+        该信使尚未解锁
       </block>
       <block wx:else>
-        {{sending ? '托付中...' : '鸿雁传书'}}
+        <block wx:if="{{carrierBusy[carriers[carrierIndex].key]}}">
+          此鸿雁正在送信中
+        </block>
+        <block wx:else>
+          {{sending ? '托付中...' : '鸿雁传书'}}
+        </block>
       </block>
     </button>
+  </view>
+
+  <!-- ====== 选择弹窗 ====== -->
+  <view class="picker-mask" wx:if="{{pickerVisible}}" bindtap="closePicker"></view>
+  <view class="picker-popup" wx:if="{{pickerVisible}}">
+    <view class="pp-header">
+      <text class="pp-title">{{pickerTitle}}</text>
+      <view class="pp-close" bindtap="closePicker">✕</view>
+    </view>
+    <scroll-view scroll-y class="pp-body">
+      <view class="pp-tag-list">
+        <view class="pp-tag {{item.active ? 'active' : ''}}"
+          wx:for="{{pickerList}}"
+          wx:key="name"
+          data-key="{{item.key}}"
+          data-id="{{item.figureId}}"
+          data-name="{{item.name}}"
+          bindtap="onPickerTagTap">
+          {{item.name}}
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 与记录页一致的回信详情弹窗 -->
+  <view class="detail-mask" wx:if="{{showDetail}}" bindtap="closeDetail">
+    <view class="detail-popup" catchtap="stopProp">
+      <view class="detail-close" bindtap="closeDetail">✕</view>
+      <scroll-view scroll-y class="detail-scroll" enhanced show-scrollbar="{{false}}">
+        <block wx:if="{{detailLetter}}">
+          <view class="detail-title">来自{{detailLetter.figureName}}的回信</view>
+          <view class="detail-reply-paper">
+            <view class="reply-from">
+              <view>
+                <view class="reply-from-name">{{detailLetter.figureName}}</view>
+                <view class="reply-from-meta">{{detailLetter.dynastyName}} · {{detailLetter.figureTitle}}</view>
+              </view>
+            </view>
+            <scroll-view scroll-y class="reply-body-scroll" enhanced show-scrollbar="{{false}}">
+              <view class="reply-body">{{replyContent || ''}}</view>
+            </scroll-view>
+          </view>
+          <view class="detail-gift-section" wx:if="{{detailLetter.gift}}">
+            <view class="gift-section-title">带回风物</view>
+            <view class="gift-item">
+              <view class="gift-icon">{{detailLetter.gift.icon}}</view>
+              <view class="gift-name">{{detailLetter.gift.name}}</view>
+              <view class="gift-rarity rarity-dot-{{detailLetter.gift.rarity}}">{{detailLetter.gift.rarityLabel}}</view>
+            </view>
+            <view class="gift-desc">{{detailLetter.gift.desc}}</view>
+          </view>
+          <view class="detail-actions">
+            <button class="btn-detail continue" bindtap="continueChat">继续回信</button>
+            <button class="btn-detail claim" bindtap="goCollectionDetail">去藏馆查看</button>
+          </view>
+        </block>
+      </scroll-view>
+    </view>
   </view>
 
 </view>
