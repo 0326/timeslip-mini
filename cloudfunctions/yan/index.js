@@ -10,6 +10,8 @@ const common = require('./common')
 
 // 云存储路径前缀（P1-1：carriers action 中返回前端用的完整图片 URL）
 const CLOUD_PREFIX = 'cloud://cloud1-d0gunpzup215cfd87.636c-cloud1-d0gunpzup215cfd87-1457646459/mini-assets/yan/'
+// 风物图片云存储前缀（giftData.js 中 imageUrl/photoUrl 存的是相对路径）
+const GIFT_CLOUD_PREFIX = 'cloud://cloud1-d0gunpzup215cfd87.636c-cloud1-d0gunpzup215cfd87-1457646459/'
 
 const PROCESSING_STALE_MS = 2 * 60 * 1000
 
@@ -299,10 +301,15 @@ async function collectGift(OPENID, gift) {
         giftId: gift.id,
         name: gift.name,
         icon: gift.icon,
+        imageUrl: gift.imageUrl || '',
+        photoUrl: gift.photoUrl || '',
         rarity: gift.rarity,
         rarityLabel: gift.rarityLabel,
         type: gift.type,
+        dynasty: gift.dynasty || '',
+        dynastyName: gift.dynastyName || '',
         desc: gift.desc,
+        history: gift.history || '',
         count: 1,
         firstAt: db.serverDate(),
         lastAt: db.serverDate()
@@ -349,23 +356,35 @@ async function getCollection(OPENID, data) {
 
     const collected = r.data || []
     const collectedIds = collected.map(g => g.giftId)
-    const locked = common.GIFT_POOL.filter(g => !collectedIds.includes(g.id)).map(g => ({
-      giftId: g.id,
-      name: g.name,
-      icon: g.icon,
-      rarity: g.rarity,
-      rarityLabel: common.RARITY_LABELS[g.rarity],
-      type: g.type,
-      desc: g.desc,
-      count: 0,
-      locked: true
-    }))
 
+    // 未解锁文物：显示真实名称和图标但置灰，不用 ??
+    const locked = common.GIFT_POOL
+      .filter(g => !collectedIds.includes(g.id))
+      .filter(g => filter === 'all' || g.type === filter)
+      .map(g => ({
+        giftId: g.id,
+        name: g.name,
+        icon: g.icon,
+        imageUrl: g.imageUrl ? GIFT_CLOUD_PREFIX + g.imageUrl : '',
+        photoUrl: g.photoUrl ? GIFT_CLOUD_PREFIX + g.photoUrl : '',
+        rarity: g.rarity,
+        rarityLabel: common.RARITY_LABELS[g.rarity],
+        type: g.type,
+        dynasty: g.dynasty || '',
+        dynastyName: g.dynastyName || '',
+        desc: g.desc,
+        history: g.history || '',
+        count: 0,
+        locked: true
+      }))
+
+    // 统计数据基于全量 GIFT_POOL（不受筛选影响）
+    const allCollectedIds = collected.map(g => g.giftId)
     const stats = {
-      collected: collected.length,
+      collected: allCollectedIds.length,
       total: common.GIFT_POOL.length,
       rare: collected.filter(g => g.rarity >= 3).length,
-      completion: Math.round(collected.length / common.GIFT_POOL.length * 1000) / 10
+      completion: Math.round(allCollectedIds.length / common.GIFT_POOL.length * 1000) / 10
     }
 
     return {
@@ -376,10 +395,15 @@ async function getCollection(OPENID, data) {
           giftId: g.giftId,
           name: g.name,
           icon: g.icon,
+          imageUrl: g.imageUrl ? (g.imageUrl.startsWith('cloud:') ? g.imageUrl : GIFT_CLOUD_PREFIX + g.imageUrl) : '',
+          photoUrl: g.photoUrl ? (g.photoUrl.startsWith('cloud:') ? g.photoUrl : GIFT_CLOUD_PREFIX + g.photoUrl) : '',
           rarity: g.rarity,
           rarityLabel: g.rarityLabel,
           type: g.type,
+          dynasty: g.dynasty || '',
+          dynastyName: g.dynastyName || '',
           desc: g.desc,
+          history: g.history || '',
           count: g.count || 1,
           locked: false
         })),
@@ -391,8 +415,12 @@ async function getCollection(OPENID, data) {
     return { code: 0, message: 'ok', data: {
       collected: [],
       locked: common.GIFT_POOL.map(g => ({
-        giftId: g.id, name: g.name, icon: g.icon, rarity: g.rarity,
-        rarityLabel: common.RARITY_LABELS[g.rarity], type: g.type, locked: true
+        giftId: g.id, name: g.name, icon: g.icon,
+        imageUrl: g.imageUrl ? GIFT_CLOUD_PREFIX + g.imageUrl : '',
+        photoUrl: g.photoUrl ? GIFT_CLOUD_PREFIX + g.photoUrl : '',
+        rarity: g.rarity, rarityLabel: common.RARITY_LABELS[g.rarity],
+        type: g.type, dynasty: g.dynasty || '', dynastyName: g.dynastyName || '',
+        desc: g.desc, history: g.history || '', locked: true
       })),
       stats: { collected: 0, total: common.GIFT_POOL.length, rare: 0, completion: 0 }
     } }
@@ -449,7 +477,7 @@ async function processArrived(OPENID) {
         const figure = common.findFigure(letter.figureId)
         const carrier = common.CARRIERS[letter.carrier] || common.CARRIERS.qinghong
         const reply = await common.generateReply(figure, letter.content, letter.fromName)
-        const gift = common.dropGift(carrier.power)
+        const gift = common.dropGift(carrier.power, letter.figureId, figure.dynasty)
 
         await db.collection('yan_letters').doc(letter._id).update({
           data: {

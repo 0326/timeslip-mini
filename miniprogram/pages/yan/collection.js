@@ -7,8 +7,14 @@ const GIFT_FILTERS = [
   { key: 'all', name: '全部' },
   { key: '笔墨纸砚', name: '笔墨纸砚' },
   { key: '茶酒食', name: '茶酒食' },
-  { key: '玉器青铜', name: '玉器青铜' },
-  { key: '古籍字画', name: '古籍字画' }
+  { key: '玉器', name: '玉器' },
+  { key: '青铜器', name: '青铜器' },
+  { key: '陶瓷', name: '陶瓷' },
+  { key: '金银器', name: '金银器' },
+  { key: '古籍字画', name: '古籍字画' },
+  { key: '漆木竹器', name: '漆木竹器' },
+  { key: '织绣服饰', name: '织绣服饰' },
+  { key: '杂项珍玩', name: '杂项珍玩' }
 ]
 
 Page({
@@ -20,7 +26,9 @@ Page({
     collectedGifts: [],
     lockedGifts: [],
     collectionStats: { collected: 0, total: 0, rare: 0, completion: 0 },
-    loading: true
+    loading: true,
+    detailVisible: false,
+    detailGift: null
   },
 
   onLoad() {
@@ -67,5 +75,36 @@ Page({
     const key = e.currentTarget.dataset.key
     this.setData({ giftFilter: key, loading: true })
     this.loadCollection()
+  },
+
+  showGiftDetail(e) {
+    const gift = e.currentTarget.dataset.gift
+    if (!gift) return
+    this.setData({ detailVisible: true, detailGift: gift })
+  },
+
+  closeDetail() {
+    this.setData({ detailVisible: false, detailGift: null })
+  },
+
+  onImageError(e) {
+    const index = e.currentTarget.dataset.index
+    const type = e.currentTarget.dataset.type
+    if (index === undefined || !type) return
+    const key = type === 'collected' ? 'collectedGifts' : 'lockedGifts'
+    const list = this.data[key]
+    if (list[index]) {
+      const update = {}
+      update[key + '[' + index + '].imageUrl'] = ''
+      this.setData(update)
+    }
+  },
+
+  onDetailImageError() {
+    this.setData({ 'detailGift.imageUrl': '' })
+  },
+
+  onDetailPhotoError() {
+    this.setData({ 'detailGift.photoUrl': '' })
   }
 })

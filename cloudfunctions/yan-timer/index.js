@@ -111,8 +111,8 @@ async function processOneLetter(letter, now) {
     // 4. 生成回信（AI or 模板，返回 {content, source}）
     const reply = await common.generateReply(figure, letter.content, letter.fromName, history)
 
-    // 5. 掉落风物
-    const gift = common.dropGift(carrier.power)
+    // 5. 掉落风物（基于角色专属 + 朝代文物 + 稀有度衰减）
+    const gift = common.dropGift(carrier.power, letter.figureId, figure.dynasty)
 
     // 6. 更新信件为 arrived
     await db.collection('yan_letters').doc(letter._id).update({

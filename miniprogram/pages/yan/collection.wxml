@@ -39,15 +39,18 @@
       </scroll-view>
 
       <view class="collection-grid">
-        <view class="collection-item rarity-{{item.rarity}}" wx:for="{{collectedGifts}}" wx:key="giftId">
+        <view class="collection-item rarity-{{item.rarity}}" wx:for="{{collectedGifts}}" wx:key="giftId" bindtap="showGiftDetail" data-gift="{{item}}">
           <view class="item-rarity-dot rarity-dot-{{item.rarity}}"></view>
-          <view class="item-icon">{{item.icon}}</view>
+          <image wx:if="{{item.imageUrl}}" class="item-icon-img" src="{{item.imageUrl}}" mode="aspectFit" binderror="onImageError" data-index="{{index}}" data-type="collected"></image>
+          <view wx:else class="item-icon">{{item.icon}}</view>
           <view class="item-name">{{item.name}}</view>
           <view class="item-count" wx:if="{{item.count > 1}}">x{{item.count}}</view>
         </view>
-        <view class="collection-item locked" wx:for="{{lockedGifts}}" wx:key="giftId">
-          <view class="item-icon">?</view>
-          <view class="item-name">未解锁</view>
+        <view class="collection-item locked" wx:for="{{lockedGifts}}" wx:key="giftId" bindtap="showGiftDetail" data-gift="{{item}}">
+          <view class="item-rarity-dot rarity-dot-{{item.rarity}}"></view>
+          <image wx:if="{{item.imageUrl}}" class="item-icon-img" src="{{item.imageUrl}}" mode="aspectFit" binderror="onImageError" data-index="{{index}}" data-type="locked"></image>
+          <view wx:else class="item-icon">{{item.icon}}</view>
+          <view class="item-name">{{item.name}}</view>
         </view>
       </view>
 
@@ -58,5 +61,31 @@
     </block>
 
   </scroll-view>
+
+  <view class="detail-mask" wx:if="{{detailVisible}}" bindtap="closeDetail"></view>
+  <view class="detail-popup" wx:if="{{detailVisible && detailGift}}">
+    <view class="detail-close" bindtap="closeDetail">
+      <view class="detail-close-icon"></view>
+    </view>
+    <view class="detail-header">
+      <image wx:if="{{detailGift.imageUrl}}" class="detail-icon-img" src="{{detailGift.imageUrl}}" mode="aspectFit" binderror="onDetailImageError"></image>
+      <view wx:else class="detail-icon-fallback">{{detailGift.icon}}</view>
+      <view class="detail-title-area">
+        <view class="detail-name">{{detailGift.name}}</view>
+        <view class="detail-meta">
+          <text class="detail-rarity rarity-text-{{detailGift.rarity}}">{{detailGift.rarityLabel}}</text>
+          <text class="detail-dynasty" wx:if="{{detailGift.dynastyName}}">{{detailGift.dynastyName}}</text>
+          <text class="detail-type">{{detailGift.type}}</text>
+        </view>
+      </view>
+    </view>
+    <view class="detail-status" wx:if="{{detailGift.locked}}">
+      <text class="detail-locked-tag">未解锁</text>
+    </view>
+    <view class="detail-count" wx:if="{{!detailGift.locked && detailGift.count > 1}}">已收藏 x{{detailGift.count}}</view>
+    <image wx:if="{{detailGift.photoUrl}}" class="detail-photo" src="{{detailGift.photoUrl}}" mode="aspectFit" binderror="onDetailPhotoError"></image>
+    <view class="detail-desc">{{detailGift.desc}}</view>
+    <view class="detail-history">{{detailGift.history}}</view>
+  </view>
 
 </view>

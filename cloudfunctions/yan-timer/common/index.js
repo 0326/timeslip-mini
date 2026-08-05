@@ -5,6 +5,9 @@ const cloud = require('wx-server-sdk')
 const db = cloud.database()
 const _ = db.command
 
+// 引入100件文物数据
+const { GIFT_POOL } = require('./giftData')
+
 // ========== 全局配置 ==========
 const DEV_MODE = process.env.NODE_ENV === 'dev' || process.env.YAN_DEV === '1'
 const HOUR = 3600 * 1000
@@ -163,39 +166,128 @@ function randomFigure(exclude, dynasty) {
   return pool[Math.floor(Math.random() * pool.length)]
 }
 
-// ========== 风物池 ==========
-const GIFT_POOL = [
-  { id: 'g-brush', name: '湖笔', icon: '🖌️', rarity: 1, type: '笔墨纸砚', desc: '宣笔之冠，锋颖尖齐', weight: { small: 30, medium: 15, large: 5 } },
-  { id: 'g-paper', name: '澄心笺', icon: '📄', rarity: 1, type: '笔墨纸砚', desc: '南唐澄心堂纸，光洁如玉', weight: { small: 28, medium: 12, large: 4 } },
-  { id: 'g-incense', name: '鹅梨帐香', icon: '🕯️', rarity: 2, type: '茶酒食', desc: '江南合香，清幽入梦', weight: { small: 15, medium: 20, large: 8 } },
-  { id: 'g-coin', name: '开元通宝', icon: '🪙', rarity: 1, type: '玉器青铜', desc: '唐初铸币，字迹遒劲', weight: { small: 25, medium: 10, large: 3 } },
-  { id: 'g-snack', name: '水晶点心', icon: '🍡', rarity: 1, type: '茶酒食', desc: '宋时茶肆点心，玲珑剔透', weight: { small: 22, medium: 8, large: 2 } },
-  { id: 'g-tea', name: '顾渚紫笋', icon: '🍵', rarity: 2, type: '茶酒食', desc: '唐代贡茶，紫笋飘香', weight: { small: 8, medium: 25, large: 12 } },
-  { id: 'g-fan', name: '折扇', icon: '🪭', rarity: 2, type: '笔墨纸砚', desc: '苏工折扇，一面书画', weight: { small: 5, medium: 22, large: 10 } },
-  { id: 'g-jade', name: '螭纹玉佩', icon: '🔮', rarity: 3, type: '玉器青铜', desc: '和田白玉，螭龙穿云', weight: { small: 2, medium: 12, large: 20 } },
-  { id: 'g-pottery', name: '越窑青瓷', icon: '🏺', rarity: 2, type: '玉器青铜', desc: '秘色瓷盏，千峰翠色', weight: { small: 3, medium: 18, large: 15 } },
-  { id: 'g-calligraphy', name: '兰亭序拓', icon: '📜', rarity: 3, type: '古籍字画', desc: '神龙本拓片，天下第一行书', weight: { small: 1, medium: 10, large: 18 } },
-  { id: 'g-wine', name: '剑南烧春', icon: '🍶', rarity: 3, type: '茶酒食', desc: '唐时名酒，剑南春前身', weight: { small: 0, medium: 8, large: 22 } },
-  { id: 'g-bronze', name: '商周青铜爵', icon: '⚱️', rarity: 4, type: '玉器青铜', desc: '三足酒器，饕餮纹饰', weight: { small: 0, medium: 2, large: 15 } },
-  { id: 'g-scroll', name: '古籍残卷', icon: '📕', rarity: 3, type: '古籍字画', desc: '敦煌遗书残页，墨迹犹新', weight: { small: 0, medium: 5, large: 20 } },
-  { id: 'g-rubbing', name: '名家碑拓', icon: '🪨', rarity: 3, type: '古籍字画', desc: '汉碑原拓，金石气足', weight: { small: 0, medium: 6, large: 18 } },
-  { id: 'g-seal', name: '传国玉玺(仿)', icon: '⚜️', rarity: 4, type: '玉器青铜', desc: '仿制传国玺，螭纽方寸', weight: { small: 0, medium: 1, large: 8 } }
-]
+// ========== 风物池（100件文物数据从 giftData.js 引入） ==========
 
 const RARITY_LABELS = { 1: '普通', 2: '精良', 3: '稀有', 4: '传说' }
 
-function dropGift(power) {
-  const pool = GIFT_POOL.filter(g => (g.weight[power] || 0) > 0)
-  const total = pool.reduce((s, g) => s + g.weight[power], 0)
-  let roll = Math.random() * total
-  for (const g of pool) {
-    roll -= g.weight[power]
-    if (roll <= 0) {
-      return { id: g.id, name: g.name, icon: g.icon, rarity: g.rarity, rarityLabel: RARITY_LABELS[g.rarity], type: g.type, desc: g.desc }
-    }
+// 稀有度概率衰减系数：稀有度越高，有效权重越低，出率自然递减
+const RARITY_MULTIPLIER = {
+  1: 1.0,   // 普通 — 基础权重
+  2: 0.45,  // 精良 — 权重降低 55%
+  3: 0.12,  // 稀有 — 权重降低 88%
+  4: 0.025, // 传说 — 权重降低 97.5%
+}
+
+// ========== 角色-文物对应关系 ==========
+// exclusive: 角色专属文物（与角色有强历史关联），权重 ×2.0
+// dynasty: 朝代文物（角色所属朝代的代表性文物），权重 ×1.0
+const FIGURE_GIFT_MAP = {
+  'fig-kongzi': { exclusive: ['g-brush', 'g-paper', 'g-yuxi'], dynasty: ['g-bronze', 'g-yubi', 'g-yuhuang'] },
+  'fig-simqian': { exclusive: ['g-scroll', 'g-rubbing', 'g-songmo'], dynasty: ['g-tongjing', 'g-sushayi'] },
+  'fig-caocao': { exclusive: ['g-wine', 'g-bronze', 'g-tongjian'], dynasty: ['g-jade', 'g-tongjing'] },
+  'fig-taoqian': { exclusive: ['g-snack', 'g-fan', 'g-incense'], dynasty: ['g-pottery', 'g-kuixue'] },
+  'fig-libai': { exclusive: ['g-wine', 'g-coin', 'g-jinbuyao'], dynasty: ['g-pottery', 'g-jade', 'g-tongjinghaishou'] },
+  'fig-baijuyi': { exclusive: ['g-tea', 'g-fan', 'g-tuhaozhan'], dynasty: ['g-paper', 'g-coin', 'g-wumahuci'] },
+  'fig-wuzetian': { exclusive: ['g-seal', 'g-coin', 'g-jinlong'], dynasty: ['g-jade', 'g-pottery', 'g-jinwan'] },
+  'fig-sushi': { exclusive: ['g-tea', 'g-brush', 'g-hanshiti'], dynasty: ['g-snack', 'g-paper', 'g-dingyao'] },
+  'fig-liqingzhao': { exclusive: ['g-paper', 'g-rubbing', 'g-kesi'], dynasty: ['g-fan', 'g-tea', 'g-jianyao'] },
+  'fig-xinqiji': { exclusive: ['g-jade', 'g-rubbing', 'g-tongjian'], dynasty: ['g-bronze', 'g-scroll', 'g-longquan'] },
+  'fig-guanhanqing': { exclusive: ['g-snack', 'g-incense', 'g-tihong'], dynasty: ['g-pottery', 'g-wine', 'g-yuanqinghua'] },
+  'fig-zhenghe': { exclusive: ['g-pottery', 'g-seal', 'g-yunjin'], dynasty: ['g-jade', 'g-mingqinghua', 'g-dehua'] },
+  'fig-wangyangming': { exclusive: ['g-scroll', 'g-brush', 'g-zhukebitong'], dynasty: ['g-fan', 'g-calligraphy', 'g-sheyan'] },
+  'fig-nalan': { exclusive: ['g-fan', 'g-paper', 'g-cixiuxiangnang'], dynasty: ['g-calligraphy', 'g-incense', 'g-feicui'] },
+  'fig-caoxueqin': { exclusive: ['g-calligraphy', 'g-scroll', 'g-qinglongpao'], dynasty: ['g-seal', 'g-rubbing', 'g-biyanhu'] },
+}
+
+// 朝代兜底文物池（角色不在 FIGURE_GIFT_MAP 时使用）
+const DYNASTY_GIFT_MAP = {
+  xianqin: ['g-bronze', 'g-yubi', 'g-yucong', 'g-yuxi', 'g-yuhuang', 'g-yuren'],
+  shang: ['g-simuwuding', 'g-siyangfangzun', 'g-bronze', 'g-tonggu', 'g-yuren'],
+  zhou: ['g-tongding', 'g-tonggui', 'g-yuhuang', 'g-maogongding'],
+  chunqiu: ['g-yuxi', 'g-jade'],
+  zhanguo: ['g-jade', 'g-yudaiou', 'g-tongjian', 'g-bianzhong'],
+  han: ['g-tongding', 'g-tonggui', 'g-tongjing', 'g-sushayi', 'g-songmo', 'g-rubbing', 'g-yudaiou'],
+  donghan: ['g-jade', 'g-tongjing', 'g-coin'],
+  weijin: ['g-pottery', 'g-incense', 'g-fan', 'g-kuixue', 'g-tixiwan'],
+  sanguo: ['g-shujin', 'g-tongjian'],
+  tang: ['g-coin', 'g-tea', 'g-wine', 'g-pottery', 'g-jinbuyao', 'g-jinwan', 'g-yinchaju', 'g-wumahuci', 'g-jinlong', 'g-tongjinghaishou', 'g-calligraphy', 'g-yanzhenqing', 'g-liuli', 'g-tangruqun', 'g-weiqizi', 'g-touzi'],
+  wuzhou: ['g-seal', 'g-coin', 'g-jade', 'g-pottery', 'g-jinlong', 'g-jinwan'],
+  song: ['g-tea', 'g-paper', 'g-brush', 'g-calligraphy', 'g-longfengtea', 'g-tuhaozhan', 'g-kesi', 'g-songban', 'g-hanshiti', 'g-songjin', 'g-dingyao', 'g-jianyao', 'g-ruyao', 'g-junyao', 'g-longquan', 'g-tixiwan', 'g-mudiaoguanyin'],
+  beisong: ['g-tea', 'g-paper', 'g-brush', 'g-dingyao', 'g-ruyao', 'g-junyao', 'g-longfengtea', 'g-kesi', 'g-songban', 'g-hanshiti'],
+  nansong: ['g-jianyao', 'g-longquan', 'g-tuhaozhan', 'g-mudiaoguanyin'],
+  yuan: ['g-brush', 'g-huimo', 'g-tihong', 'g-yuanqinghua', 'g-zhaomengfu', 'g-qishayan'],
+  ming: ['g-langhao', 'g-yuguanbi', 'g-fan', 'g-luodian', 'g-tanxiangshan', 'g-mingqinghua', 'g-dehua', 'g-minghuiben', 'g-mingbuzi', 'g-qiangjinpan', 'g-xianglu', 'g-yunjin', 'g-sheyan', 'g-zigang'],
+  qing: ['g-xiangyabi', 'g-feicui', 'g-ruyi', 'g-fencai', 'g-jinguan', 'g-heiqimiao', 'g-qinglongpao', 'g-cixiuxiangnang', 'g-biyanhu', 'g-chaozhu', 'g-qishayan', 'g-dianshijuan', 'g-zhukebitong', 'g-suxiutuan', 'g-huluqiqi'],
+  wudai: ['g-paper', 'g-huimo'],
+}
+
+// 关系类型权重倍数
+var GIFT_RELATION_WEIGHT = { exclusive: 2.0, dynasty: 1.0, global: 0.3 }
+
+function formatGift(g) {
+  return {
+    id: g.id,
+    name: g.name,
+    icon: g.icon,
+    imageUrl: g.imageUrl || '',
+    photoUrl: g.photoUrl || '',
+    rarity: g.rarity,
+    rarityLabel: RARITY_LABELS[g.rarity],
+    type: g.type,
+    dynasty: g.dynasty || '',
+    dynastyName: g.dynastyName || '',
+    desc: g.desc,
+    history: g.history || '',
   }
-  const g = pool[0]
-  return { id: g.id, name: g.name, icon: g.icon, rarity: g.rarity, rarityLabel: RARITY_LABELS[g.rarity], type: g.type, desc: g.desc }
+}
+
+// 掉落风物：支持角色专属 + 朝代兜底 + 全局兜底，稀有度越高出率越低
+function dropGift(power, figureId, dynasty) {
+  var candidatePool = []
+  var seenIds = {}
+
+  function addCandidate(id, relationWeight) {
+    if (seenIds[id]) return
+    var gift = null
+    for (var i = 0; i < GIFT_POOL.length; i++) {
+      if (GIFT_POOL[i].id === id) { gift = GIFT_POOL[i]; break }
+    }
+    if (!gift) return
+    var baseWeight = gift.weight[power] || 0
+    if (baseWeight <= 0) return
+    var rarityMult = RARITY_MULTIPLIER[gift.rarity] || 1
+    var w = baseWeight * rarityMult * relationWeight
+    if (w > 0) { candidatePool.push({ gift: gift, weight: w }); seenIds[id] = true }
+  }
+
+  // 1. 角色专属文物池
+  if (figureId && FIGURE_GIFT_MAP[figureId]) {
+    var figMap = FIGURE_GIFT_MAP[figureId]
+    ;(figMap.exclusive || []).forEach(function (id) { addCandidate(id, GIFT_RELATION_WEIGHT.exclusive) })
+    ;(figMap.dynasty || []).forEach(function (id) { addCandidate(id, GIFT_RELATION_WEIGHT.dynasty) })
+  }
+
+  // 2. 朝代兜底池
+  if (!candidatePool.length && dynasty && DYNASTY_GIFT_MAP[dynasty]) {
+    DYNASTY_GIFT_MAP[dynasty].forEach(function (id) { addCandidate(id, GIFT_RELATION_WEIGHT.dynasty) })
+  }
+
+  // 3. 全局兜底池
+  if (!candidatePool.length) {
+    GIFT_POOL.forEach(function (gift) { addCandidate(gift.id, GIFT_RELATION_WEIGHT.global) })
+  }
+
+  if (!candidatePool.length) return null
+
+  // 4. 加权随机
+  var total = 0
+  for (var j = 0; j < candidatePool.length; j++) { total += candidatePool[j].weight }
+  var roll = Math.random() * total
+  for (var k = 0; k < candidatePool.length; k++) {
+    roll -= candidatePool[k].weight
+    if (roll <= 0) { return formatGift(candidatePool[k].gift) }
+  }
+  return formatGift(candidatePool[0].gift)
 }
 
 // ========== 成就解锁 ==========
@@ -392,6 +484,9 @@ module.exports = {
   FIGURES_FALLBACK,
   GIFT_POOL,
   RARITY_LABELS,
+  RARITY_MULTIPLIER,
+  FIGURE_GIFT_MAP,
+  DYNASTY_GIFT_MAP,
   // 人物
   loadDbFigures,
   getActiveFigures,
@@ -399,6 +494,7 @@ module.exports = {
   randomFigure,
   // 风物
   dropGift,
+  formatGift,
   // 成就
   tryUnlock,
   // AI 回信
