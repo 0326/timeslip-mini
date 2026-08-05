@@ -14,13 +14,13 @@
 当前已经落地：
 
 1. 青月会话入口仍复用 `pages/chat/room`。
-2. 青月使用 CloudBase Agent：`agt-timeslip-2g9bj8k1d6e7cf65`。
+2. 青月使用 CloudBase Agent：`agt-timeslip-4gbqdboj2f9f506d`。
 3. 前端通过 `wx.request` 直连 ACP endpoint：
-   `https://cloud1-d0gunpzup215cfd87.api.tcloudbasegateway.com/v1/aibot/bots/agt-timeslip-2g9bj8k1d6e7cf65/acp`
+   `https://cloud1-d8guq74iacc68352a.api.tcloudbasegateway.com/v1/aibot/bots/agt-timeslip-4gbqdboj2f9f506d/acp`
 4. ACP 鉴权使用客户端 Publishable Key。
 5. 前端已处理 SSE 文本过滤：只展示 `agent_message_chunk` 等可见回复，不展示 `agent_thought_chunk`、`usage_update`、`agent_phase`。
 6. UI 已按微信式体验调整：处理期间不插入 AI 气泡，只把标题改成“对方正在输入中...”；完成后一次性追加完整消息。
-7. 青月 Agent 人格已写入 `agt-timeslip-2g9bj8k1d6e7cf65` runtime fallback，并已线上验证。
+7. 青月 Agent 人格已写入 `agt-timeslip-4gbqdboj2f9f506d` runtime fallback，并已线上验证。
 
 当前主要缺口：
 
@@ -43,7 +43,7 @@ room.js
   ↓ wx.cloud.callFunction
 qingyue-agent 代理云函数
   ↓ ACP JSON-RPC
-agt-timeslip-2g9bj8k1d6e7cf65
+agt-timeslip-4gbqdboj2f9f506d
   ↓ SSE
 qingyue-agent 解析纯文本
   ↓
@@ -92,7 +92,7 @@ cloudfunctions/qingyue-agent/
 `qingyue-agent` 是代理云函数，不是新的 Agent。真正的 Agent 仍是：
 
 ```text
-agt-timeslip-2g9bj8k1d6e7cf65
+agt-timeslip-4gbqdboj2f9f506d
 ```
 
 ### 4.2 云函数 action
@@ -468,8 +468,8 @@ chat_sessions.contextInjectedAt
 | 文件 | 改动 |
 |---|---|
 | `cloudfunctions/qingyue-agent/index.js` | 增加工具循环和工具实现 |
-| `cloudfunctions/agt-timeslip-2g9bj8k1d6e7cf65/src/config.ts` | 增加工具使用 prompt |
-| `cloudfunctions/agt-timeslip-2g9bj8k1d6e7cf65/dist/config.js` | 同步运行时 fallback |
+| `cloudfunctions/agt-timeslip-4gbqdboj2f9f506d/src/config.ts` | 增加工具使用 prompt |
+| `cloudfunctions/agt-timeslip-4gbqdboj2f9f506d/dist/config.js` | 同步运行时 fallback |
 
 ---
 

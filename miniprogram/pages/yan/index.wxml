@@ -6,12 +6,12 @@
     <!-- ====== 记录 & 藏馆 banner 入口（一排二） ====== -->
     <view class="banner-row">
       <view class="banner-card banner-records" bindtap="goRecords">
-        <image class="banner-img" src="cloud://cloud1-d0gunpzup215cfd87.636c-cloud1-d0gunpzup215cfd87-1457646459/mini-assets/yan/banner-records.jpg" mode="aspectFill" />
+        <image class="banner-img" src="cloud://cloud1-d8guq74iacc68352a.cloud1-d8guq74iacc68352a.636c-cloud1-d8guq74iacc68352a-1464144866/mini-assets/yan/banner-records.jpg" mode="aspectFill" />
         <view class="banner-mask"></view>
         <view class="banner-text">记录<text class="iconfont icon-right banner-arrow"></text></view>
       </view>
       <view class="banner-card banner-collection" bindtap="goCollection">
-        <image class="banner-img" src="cloud://cloud1-d0gunpzup215cfd87.636c-cloud1-d0gunpzup215cfd87-1457646459/mini-assets/yan/banner-collection.jpg" mode="aspectFill" />
+        <image class="banner-img" src="cloud://cloud1-d8guq74iacc68352a.cloud1-d8guq74iacc68352a.636c-cloud1-d8guq74iacc68352a-1464144866/mini-assets/yan/banner-collection.jpg" mode="aspectFill" />
         <view class="banner-mask"></view>
         <view class="banner-text">藏馆<text class="iconfont icon-right banner-arrow"></text></view>
       </view>

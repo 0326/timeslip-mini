@@ -26,7 +26,7 @@ npm install miniprogram-ci --save-dev
 
 从微信公众平台下载：
 - 开发管理 → 开发设置 → 小程序代码上传 → 生成密钥
-- 保存为 `private.wx515b70782ea1aaf3.key`
+- 保存为 `private.wx30e49a87f6326f1d.key`
 - **绝对不能提交到 Git**，`.gitignore` 加 `*.key`
 
 ### 3. IP 白名单
@@ -47,7 +47,7 @@ const ci = require('miniprogram-ci')
 const path = require('path')
 
 const project = new ci.Project({
-  appid: process.env.MP_APPID || 'wx515b70782ea1aaf3',
+  appid: process.env.MP_APPID || 'wx30e49a87f6326f1d',
   type: 'miniProgram',
   projectPath: path.resolve(__dirname, '..'),
   ignores: ['node_modules/**/*'],
@@ -69,8 +69,8 @@ const fs = require('fs')
 const path = require('path')
 
 const CONFIG = {
-  appid: process.env.MP_APPID || 'wx515b70782ea1aaf3',
-  privateKeyPath: process.env.MP_PRIVATE_KEY_PATH || './private.wx515b70782ea1aaf3.key',
+  appid: process.env.MP_APPID || 'wx30e49a87f6326f1d',
+  privateKeyPath: process.env.MP_PRIVATE_KEY_PATH || './private.wx30e49a87f6326f1d.key',
   projectPath: path.resolve(__dirname, '..'),
   robot: Number(process.env.MP_ROBOT || 1),
   outputDir: path.resolve(__dirname, '../ci-artifacts/previews'),
@@ -111,8 +111,8 @@ const fs = require('fs')
 const path = require('path')
 
 const CONFIG = {
-  appid: process.env.MP_APPID || 'wx515b70782ea1aaf3',
-  privateKeyPath: process.env.MP_PRIVATE_KEY_PATH || './private.wx515b70782ea1aaf3.key',
+  appid: process.env.MP_APPID || 'wx30e49a87f6326f1d',
+  privateKeyPath: process.env.MP_PRIVATE_KEY_PATH || './private.wx30e49a87f6326f1d.key',
   projectPath: path.resolve(__dirname, '..'),
   robot: Number(process.env.MP_ROBOT || 1),
   outputDir: path.resolve(__dirname, '../ci-artifacts/uploads'),

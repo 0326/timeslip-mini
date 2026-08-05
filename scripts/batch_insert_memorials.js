@@ -4,7 +4,7 @@ const path = require('path')
 const { spawnSync } = require('child_process')
 
 const BATCH_SIZE = 20
-const ENV_ID = 'cloud1-d0gunpzup215cfd87'
+const ENV_ID = 'cloud1-d8guq74iacc68352a'
 const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'memorials_100.json'), 'utf8'))
 console.log(`总数: ${data.length}，每批: ${BATCH_SIZE}，批数: ${Math.ceil(data.length / BATCH_SIZE)}`)
 

@@ -59,7 +59,7 @@ miniprogram/
 ### 3.1 初始化
 
 - `app.js` 的 `onLaunch` 中调用 `wx.cloud.init()`
-- env 参数：`cloud1-d0gunpzup215cfd87`
+- env 参数：`cloud1-d8guq74iacc68352a`
 - `traceUser: true`（开启用户访问追踪）
 
 ### 3.2 云函数
@@ -212,8 +212,8 @@ type 可选值：
 > 上传文件到云存储时，默认使用 `tcb` 命令行工具，不创建临时云函数。
 
 1. **默认用 tcb 上传**：需要上传图片/文件到云存储时，使用 `tcb storage upload` 命令，不要创建临时云函数
-2. **命令格式**：`tcb storage upload <localFile> <cloudPath> -e cloud1-d0gunpzup215cfd87`
+2. **命令格式**：`tcb storage upload <localFile> <cloudPath> -e cloud1-d8guq74iacc68352a`
 3. **批量上传**：多个文件逐个执行，或用 `&&` 链接
 4. **上传后清理**：上传成功后删除本地文件，不要残留临时资源
 5. **云存储路径约定**：`mini-assets/<模块名>/<文件名>`，如 `mini-assets/yan/qinghong.jpg`
-6. **引用方式**：上传后代码中用 `cloud://cloud1-d0gunpzup215cfd87.636c-cloud1-d0gunpzup215cfd87-1457646459/mini-assets/...` 引用
+6. **引用方式**：上传后代码中用 `cloud://cloud1-d8guq74iacc68352a.cloud1-d8guq74iacc68352a.636c-cloud1-d8guq74iacc68352a-1464144866/mini-assets/...` 引用

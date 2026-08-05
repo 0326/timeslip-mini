@@ -9,7 +9,7 @@ const CARRIERS_CACHE_KEY = "yan_carriers_v2";
 const CARRIERS_TTL = 3600;
 
 const CLOUD_PREFIX =
-  "cloud://cloud1-d0gunpzup215cfd87.636c-cloud1-d0gunpzup215cfd87-1457646459/mini-assets/yan/";
+  "cloud://cloud1-d8guq74iacc68352a.cloud1-d8guq74iacc68352a.636c-cloud1-d8guq74iacc68352a-1464144866/mini-assets/yan/";
 const FALLBACK_CARRIERS = [
   {
     key: "qinghong",

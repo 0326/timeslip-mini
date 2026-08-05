@@ -44,7 +44,7 @@
     "swc": false,
     "disableSWC": true
   },
-  "appid": "wx515b70782ea1aaf3",
+  "appid": "wx30e49a87f6326f1d",
   "projectname": "timeslip-mini",
   "libVersion": "3.15.1",
   "cloudfunctionTemplateRoot": "cloudfunctionTemplate/",

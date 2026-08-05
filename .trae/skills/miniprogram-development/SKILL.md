@@ -20,8 +20,8 @@ alwaysApply: false
 - 项目路径：`timeslip-mini/`
 - 小程序根：`miniprogram/`
 - 云函数根：`cloudfunctions/`
-- AppID：`wx515b70782ea1aaf3`
-- 云环境 ID：`cloud1-d0gunpzup215cfd87`
+- AppID：`wx30e49a87f6326f1d`
+- 云环境 ID：`cloud1-d8guq74iacc68352a`
 - 技术栈：原生小程序 + 微信云开发
 
 ## 核心规则
@@ -36,7 +36,7 @@ alwaysApply: false
 ### 2. 云开发集成
 
 - 在 `app.js` 的 `onLaunch` 中用 `wx.cloud.init({ env, traceUser: true })` 初始化
-- 云环境 ID：`cloud1-d0gunpzup215cfd87`
+- 云环境 ID：`cloud1-d8guq74iacc68352a`
 - 调用云函数：优先使用 `utils/cloudRequest.js` 的 `requestCloud(name, action, data, config)`
 - 云函数返回格式：`{ code: 0, message: 'ok', data: ... }`
 - 数据库操作：简单 CRUD 直接用 `wx.cloud.database()`，复杂操作走云函数

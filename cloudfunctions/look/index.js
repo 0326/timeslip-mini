@@ -3,7 +3,7 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
-const LOOK_COVER_FILE_PREFIX = 'cloud://cloud1-d0gunpzup215cfd87.636c-cloud1-d0gunpzup215cfd87-1457646459/look/'
+const LOOK_COVER_FILE_PREFIX = 'cloud://cloud1-d8guq74iacc68352a.cloud1-d8guq74iacc68352a.636c-cloud1-d8guq74iacc68352a-1464144866/look/'
 
 function normalizeArticleAsset(article) {
   if (!article || typeof article !== 'object') return article

@@ -30,12 +30,12 @@ async function checkAdmin(OPENID) {
 
 // 封面图云文件 ID（已上传到云存储）
 const COVER_FILE_IDS = {
-  emperor: 'cloud://cloud1-d0gunpzup215cfd87.636c-cloud1-d0gunpzup215cfd87-1457646459/dna-covers/emperor.jpg',
-  poet: 'cloud://cloud1-d0gunpzup215cfd87.636c-cloud1-d0gunpzup215cfd87-1457646459/dna-covers/poet.jpg',
-  general: 'cloud://cloud1-d0gunpzup215cfd87.636c-cloud1-d0gunpzup215cfd87-1457646459/dna-covers/general.jpg',
-  strategist: 'cloud://cloud1-d0gunpzup215cfd87.636c-cloud1-d0gunpzup215cfd87-1457646459/dna-covers/strategist.jpg',
-  historian: 'cloud://cloud1-d0gunpzup215cfd87.636c-cloud1-d0gunpzup215cfd87-1457646459/dna-covers/historian.jpg',
-  hero: 'cloud://cloud1-d0gunpzup215cfd87.636c-cloud1-d0gunpzup215cfd87-1457646459/dna-covers/hero.jpg'
+  emperor: 'cloud://cloud1-d8guq74iacc68352a.cloud1-d8guq74iacc68352a.636c-cloud1-d8guq74iacc68352a-1464144866/dna-covers/emperor.jpg',
+  poet: 'cloud://cloud1-d8guq74iacc68352a.cloud1-d8guq74iacc68352a.636c-cloud1-d8guq74iacc68352a-1464144866/dna-covers/poet.jpg',
+  general: 'cloud://cloud1-d8guq74iacc68352a.cloud1-d8guq74iacc68352a.636c-cloud1-d8guq74iacc68352a-1464144866/dna-covers/general.jpg',
+  strategist: 'cloud://cloud1-d8guq74iacc68352a.cloud1-d8guq74iacc68352a.636c-cloud1-d8guq74iacc68352a-1464144866/dna-covers/strategist.jpg',
+  historian: 'cloud://cloud1-d8guq74iacc68352a.cloud1-d8guq74iacc68352a.636c-cloud1-d8guq74iacc68352a-1464144866/dna-covers/historian.jpg',
+  hero: 'cloud://cloud1-d8guq74iacc68352a.cloud1-d8guq74iacc68352a.636c-cloud1-d8guq74iacc68352a-1464144866/dna-covers/hero.jpg'
 }
 
 // ============================================================

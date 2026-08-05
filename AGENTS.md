@@ -10,7 +10,7 @@
 |------|------------|--------|------|
 | **穿越兰台 主站** | `timeslip.work` | （待确认） | PC 主站，品牌入口与核心内容 |
 | **穿越·史记** | `shiji.timeslip.work` | React19 + Vite + Hono + Cloudflare Workers | PC 子站，Ink 视觉小说引擎 + 史记互动阅读 |
-| **穿越圈** | 小程序 `wx515b70782ea1aaf3` | 原生微信小程序 + 云开发（wx.cloud） | 移动端社区 / 轻互动 / 用户体系 |
+| **穿越圈** | 小程序 `wx30e49a87f6326f1d` | 原生微信小程序 + 云开发（wx.cloud） | 移动端社区 / 轻互动 / 用户体系 |
 
 > 三项目共享同一世界观与内容体系（史记 / 典籍 / 角色），但端侧技术栈不同。小程序侧重轻量、社交、社区；PC 站侧重深度阅读与视觉表现。
 
@@ -23,8 +23,8 @@
   - 云函数（事件函数为主，HTTP 函数按需）
   - 文档数据库（NoSQL）
   - 云存储（图片 / 文件）
-- **云环境 ID**：`cloud1-d0gunpzup215cfd87`
-- **AppID**：`wx515b70782ea1aaf3`
+- **云环境 ID**：`cloud1-d8guq74iacc68352a`
+- **AppID**：`wx30e49a87f6326f1d`
 - **基础库版本**：>= 3.0.0
 
 ---
@@ -77,7 +77,7 @@ timeslip-mini/
 ### 4.1 云开发初始化
 
 - 在 `app.js` 的 `onLaunch` 中调用 `wx.cloud.init({ env, traceUser: true })`
-- env 值：`cloud1-d0gunpzup215cfd87`
+- env 值：`cloud1-d8guq74iacc68352a`
 - 云函数中一律使用 `cloud.DYNAMIC_CURRENT_ENV`，**不硬编码 envId**
 
 ### 4.2 用户身份

@@ -3,7 +3,7 @@ const fs = require('fs')
 const path = require('path')
 const { spawnSync } = require('child_process')
 
-const ENV_ID = 'cloud1-d0gunpzup215cfd87'
+const ENV_ID = 'cloud1-d8guq74iacc68352a'
 const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'memorials_100.json'), 'utf8'))
 
 function runTcb(cmd) {

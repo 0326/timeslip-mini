@@ -5,7 +5,7 @@
 
 ![微信小程序](https://img.shields.io/badge/小程序-原生微信-07C160?logo=wechat)
 ![云开发](https://img.shields.io/badge/后端-微信云开发-3B82F6)
-![AppID](https://img.shields.io/badge/AppID-wx515b70782ea1aaf3-ffaa00)
+![AppID](https://img.shields.io/badge/AppID-wx30e49a87f6326f1d-ffaa00)
 ![envId](https://img.shields.io/badge/envId-cloud1--d0gunpzup215cfd87-ffaa00)
 ![基础库](https://img.shields.io/badge/基础库-≥3.0.0-lightgrey)
 
@@ -113,8 +113,8 @@
 ### 4.1 环境准备
 
 - **微信开发者工具**（≥ stable）
-- 已开通云开发，环境 ID：`cloud1-d0gunpzup215cfd87`
-- AppID：`wx515b70782ea1aaf3`（项目内已配好 `project.config.json`）
+- 已开通云开发，环境 ID：`cloud1-d8guq74iacc68352a`
+- AppID：`wx30e49a87f6326f1d`（项目内已配好 `project.config.json`）
 
 ### 4.2 本地打开
 
@@ -248,7 +248,7 @@ timeslip-mini/
 
 | 能力 | 命令（示例） |
 |---|---|
-| 本地预览二维码 | `miniprogram-ci preview --pp . --pkp ~/private.wx515b70782ea1aaf3.key --appid wx515b70782ea1aaf3` |
+| 本地预览二维码 | `miniprogram-ci preview --pp . --pkp ~/private.wx30e49a87f6326f1d.key --appid wx30e49a87f6326f1d` |
 | 上传体验版 | `miniprogram-ci upload --pp . --pkp ~/private.key --uv 1.2.0 --desc "feat: 批奏折上线"` |
 
 > `.key` 密钥文件**严禁进入 Git**（已在 `.gitignore` 忽略 `*.key`）。

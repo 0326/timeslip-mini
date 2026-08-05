@@ -1,5 +1,5 @@
-const CLOUD_ENV_ID = 'cloud1-d0gunpzup215cfd87'
-const APP_ID = 'wx515b70782ea1aaf3'
+const CLOUD_ENV_ID = 'cloud1-d8guq74iacc68352a'
+const APP_ID = 'wx30e49a87f6326f1d'
 
 const APP_NAME = '穿越圈'
 const OFFICIAL_SITE = 'https://shiji.timeslip.work'
@@ -35,7 +35,7 @@ const QINGYUE = {
   name: '青月',
   title: '系统',
   avatar: '/images/qingyue.jpg',
-  agentId: 'agt-timeslip-2g9bj8k1d6e7cf65',
+  agentId: 'agt-timeslip-4gbqdboj2f9f506d',
   isSystem: true
 }
 
