@@ -1,5 +1,5 @@
 async function requestCloud(name, action, data = {}, config = {}) {
-  const { showLoading = false, loadingText = '加载中...', throwError = true } = config
+  const { showLoading = false, loadingText = '加载中...', throwError = true, timeout } = config
 
   if (showLoading) {
     wx.showLoading({ title: loadingText, mask: true })
@@ -8,7 +8,8 @@ async function requestCloud(name, action, data = {}, config = {}) {
   try {
     const res = await wx.cloud.callFunction({
       name,
-      data: { action, ...data }
+      data: { action, ...data },
+      timeout
     })
 
     if (showLoading) wx.hideLoading()

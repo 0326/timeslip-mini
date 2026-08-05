@@ -9,9 +9,9 @@ const _ = db.command
 const common = require('./common')
 
 // 云存储路径前缀（P1-1：carriers action 中返回前端用的完整图片 URL）
-const CLOUD_PREFIX = 'cloud://cloud1-d8guq74iacc68352a.cloud1-d8guq74iacc68352a.636c-cloud1-d8guq74iacc68352a-1464144866/mini-assets/yan/'
+const CLOUD_PREFIX = 'cloud://cloud1-d8guq74iacc68352a.636c-cloud1-d8guq74iacc68352a-1464144866/mini-assets/yan/'
 // 风物图片云存储前缀（giftData.js 中 imageUrl/photoUrl 存的是相对路径）
-const GIFT_CLOUD_PREFIX = 'cloud://cloud1-d8guq74iacc68352a.cloud1-d8guq74iacc68352a.636c-cloud1-d8guq74iacc68352a-1464144866/'
+const GIFT_CLOUD_PREFIX = 'cloud://cloud1-d8guq74iacc68352a.636c-cloud1-d8guq74iacc68352a-1464144866/'
 
 const PROCESSING_STALE_MS = 2 * 60 * 1000
 

@@ -3,7 +3,7 @@ const { formatChatTime } = require('../../utils/date')
 const loginGuard = require('../../utils/loginGuard')
 
 // ── 云存储图标地址 ──
-const STORAGE = 'cloud://cloud1-d8guq74iacc68352a.cloud1-d8guq74iacc68352a.636c-cloud1-d8guq74iacc68352a-1464144866/mini-assets/achievements'
+const STORAGE = 'cloud://cloud1-d8guq74iacc68352a.636c-cloud1-d8guq74iacc68352a-1464144866/mini-assets/achievements'
 const iconUrl = (key) => `${STORAGE}/icons/${key}.jpg`
 
 // ── 成就配置（前端兜底，云函数未部署也能正常显示）──

@@ -3,7 +3,7 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
-const LOOK_COVER_FILE_PREFIX = 'cloud://cloud1-d8guq74iacc68352a.cloud1-d8guq74iacc68352a.636c-cloud1-d8guq74iacc68352a-1464144866/look/'
+const LOOK_COVER_FILE_PREFIX = 'cloud://cloud1-d8guq74iacc68352a.636c-cloud1-d8guq74iacc68352a-1464144866/look/'
 
 function normalizeArticleAsset(article) {
   if (!article || typeof article !== 'object') return article
@@ -61,6 +61,8 @@ exports.main = async (event, context) => {
 
       // ============ 批量导入接口（仅限管理员） ============
       case 'batchImport': return await batchImport(OPENID, data)
+      // ============ 一次性数据修复（仅限管理员） ============
+      case 'adminFixCoverUrl': return await adminFixCoverUrl(OPENID)
 
       default: return { code: -1, message: '未知 action: ' + action, data: null }
     }
@@ -667,6 +669,46 @@ async function batchImport(OPENID, data) {
     code: 0,
     message: `导入完成: 成功${inserted}条, 跳过${skipped}条, 失败${errors.length}条`,
     data: { inserted, skipped, errors }
+  }
+}
+
+// 一次性数据修复：批量替换 articles 集合 coverImage 字段中的错误 cloud:// 前缀
+// 错误格式: cloud://envId.envId.spaceId/...  →  正确格式: cloud://envId.spaceId/...
+async function adminFixCoverUrl(OPENID) {
+  await checkAdmin(OPENID)
+  const WRONG = 'cloud1-d8guq74iacc68352a.cloud1-d8guq74iacc68352a.636c-'
+  const RIGHT = 'cloud1-d8guq74iacc68352a.636c-'
+
+  const all = []
+  for (let skip = 0; skip < 1000; skip += 100) {
+    const res = await db.collection('articles').skip(skip).limit(100).field({ _id: true, coverImage: true }).get()
+    all.push(...(res.data || []))
+    if (!res.data || res.data.length < 100) break
+  }
+
+  let fixed = 0
+  let skipped = 0
+  const errors = []
+  for (const a of all) {
+    const url = a.coverImage
+    if (typeof url !== 'string' || url.indexOf(WRONG) === -1) {
+      skipped++
+      continue
+    }
+    try {
+      await db.collection('articles').doc(a._id).update({
+        data: { coverImage: url.replace(WRONG, RIGHT) }
+      })
+      fixed++
+    } catch (err) {
+      errors.push({ _id: a._id, error: err.message })
+    }
+  }
+
+  return {
+    code: 0,
+    message: `修复完成: 共${all.length}条, 修复${fixed}条, 跳过${skipped}条, 失败${errors.length}条`,
+    data: { total: all.length, fixed, skipped, errors }
   }
 }
 

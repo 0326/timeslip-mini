@@ -161,18 +161,10 @@ async function figureDetail(OPENID, data) {
   const targetId = data.figureId || data.id
   if (!targetId) return fail('缺少 figureId')
 
-  let res = await db.collection('figures').where({ id: targetId }).limit(1).get()
-  if (!res.data || !res.data.length) {
-    // 去掉 fig- 前缀重查（figures 表 id 可能存的是 "sushi" 而非 "fig-sushi"）
-    const stripped = targetId.startsWith('fig-') ? targetId.slice(4) : ''
-    if (stripped) {
-      res = await db.collection('figures').where({ id: stripped }).limit(1).get()
-    }
-  }
-  if (!res.data || !res.data.length) {
-    // 也尝试用 figureId 字段查
-    res = await db.collection('figures').where({ figureId: targetId }).limit(1).get()
-  }
+  // 合并三次 fallback 查询为一次 _.or，避免串行往返
+  const orConds = [{ id: targetId }, { figureId: targetId }]
+  if (targetId.startsWith('fig-')) orConds.push({ id: targetId.slice(4) })
+  const res = await db.collection('figures').where(_.or(orConds)).limit(1).get()
   if (!res.data || !res.data.length) return fail('人物不存在')
 
   const figure = normalizeFigure(res.data[0])
@@ -210,11 +202,11 @@ async function figureRelatedBooks(figure) {
   } catch (_) {}
 
   if (!ids.size) return []
-  const books = []
-  for (const part of batch([...ids], 20)) {
-    const res = await db.collection('books').where({ id: _.in(part) }).limit(part.length).get()
-    books.push(...(res.data || []))
-  }
+  const parts = batch([...ids], 20)
+  const results = await Promise.all(parts.map(part =>
+    db.collection('books').where({ id: _.in(part) }).limit(part.length).get()
+  ))
+  const books = results.flatMap(r => r.data || [])
   return books.map(b => ({
     id: b.id || b._id,
     title: b.name || b.title || b.id,
@@ -256,10 +248,13 @@ async function figureRelations(figureId) {
     ).filter(Boolean)
     const nameMap = {}
     if (targetIds.length) {
-      for (const part of batch(targetIds, 20)) {
-        const fr = await db.collection('figures').where({ id: _.in(part) }).limit(part.length).get()
-        ;(fr.data || []).forEach(f => { nameMap[f.id || f._id] = f.name || '' })
-      }
+      const parts = batch(targetIds, 20)
+      const frResults = await Promise.all(parts.map(part =>
+        db.collection('figures').where({ id: _.in(part) }).limit(part.length).get()
+      ))
+      frResults.forEach(fr => {
+        (fr.data || []).forEach(f => { nameMap[f.id || f._id] = f.name || '' })
+      })
     }
     return raw.map(item => {
       const targetId = item.figure_a === figureId ? item.figure_b : item.figure_a
@@ -308,14 +303,14 @@ async function chapterList(data) {
   if (!volumes.length) return ok({ chapters: [] })
 
   const volumeById = new Map(volumes.map(v => [v.id, v]))
-  const chapters = []
-  for (const ids of batch(volumes.map(v => v.id), 100)) {
-    const res = await db.collection('chapters')
+  const parts = batch(volumes.map(v => v.id), 100)
+  const chResults = await Promise.all(parts.map(ids =>
+    db.collection('chapters')
       .where({ volume_id: _.in(ids) })
       .limit(100)
       .get()
-    chapters.push(...(res.data || []))
-  }
+  ))
+  const chapters = chResults.flatMap(r => r.data || [])
 
   chapters.sort((a, b) => {
     const av = volumeById.get(a.volume_id)
@@ -360,11 +355,11 @@ async function bookFavorites(OPENID) {
   const favIds = new Set((favRes.data || []).map(x => x.bookId))
   if (!favIds.size) return ok([])
 
-  const books = []
-  for (const ids of batch([...favIds], 20)) {
-    const res = await db.collection('books').where({ id: _.in(ids) }).limit(ids.length).get()
-    books.push(...(res.data || []))
-  }
+  const parts = batch([...favIds], 20)
+  const results = await Promise.all(parts.map(ids =>
+    db.collection('books').where({ id: _.in(ids) }).limit(ids.length).get()
+  ))
+  const books = results.flatMap(r => r.data || [])
   return ok(books.map(b => ({ ...normalizeBook(b), favorite: true })))
 }
 

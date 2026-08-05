@@ -216,4 +216,4 @@ type 可选值：
 3. **批量上传**：多个文件逐个执行，或用 `&&` 链接
 4. **上传后清理**：上传成功后删除本地文件，不要残留临时资源
 5. **云存储路径约定**：`mini-assets/<模块名>/<文件名>`，如 `mini-assets/yan/qinghong.jpg`
-6. **引用方式**：上传后代码中用 `cloud://cloud1-d8guq74iacc68352a.cloud1-d8guq74iacc68352a.636c-cloud1-d8guq74iacc68352a-1464144866/mini-assets/...` 引用
+6. **引用方式**：上传后代码中用 `cloud://cloud1-d8guq74iacc68352a.636c-cloud1-d8guq74iacc68352a-1464144866/mini-assets/...` 引用（注意：envId 只出现一次，不要写成 `cloud1-xxx.cloud1-xxx.636c-...`）

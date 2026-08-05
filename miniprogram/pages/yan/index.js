@@ -5,11 +5,11 @@ const loginGuard = require("../../utils/loginGuard");
 const app = getApp();
 
 // 本地兜底（云端拉取失败时使用）
-const CARRIERS_CACHE_KEY = "yan_carriers_v2";
+const CARRIERS_CACHE_KEY = "yan_carriers_v3";
 const CARRIERS_TTL = 3600;
 
 const CLOUD_PREFIX =
-  "cloud://cloud1-d8guq74iacc68352a.cloud1-d8guq74iacc68352a.636c-cloud1-d8guq74iacc68352a-1464144866/mini-assets/yan/";
+  "cloud://cloud1-d8guq74iacc68352a.636c-cloud1-d8guq74iacc68352a-1464144866/mini-assets/yan/";
 const FALLBACK_CARRIERS = [
   {
     key: "qinghong",

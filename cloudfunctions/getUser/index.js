@@ -4,7 +4,7 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
-const ICON_BASE = 'cloud://cloud1-d8guq74iacc68352a.cloud1-d8guq74iacc68352a.636c-cloud1-d8guq74iacc68352a-1464144866/mini-assets/achievements/icons'
+const ICON_BASE = 'cloud://cloud1-d8guq74iacc68352a.636c-cloud1-d8guq74iacc68352a-1464144866/mini-assets/achievements/icons'
 const iconUrl = (key) => `${ICON_BASE}/${key}.jpg`
 
 const ALL_ACHIEVEMENTS = [
