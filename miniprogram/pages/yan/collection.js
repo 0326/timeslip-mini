@@ -1,5 +1,5 @@
 const { requestCloud } = require('../../utils/cloudRequest')
-const loginGuard = require('../../utils/loginGuard')
+const { patchListForDisplay, patchAuthorForDisplay } = require('../../utils/publicIdentity')
 
 const app = getApp()
 
@@ -45,7 +45,6 @@ Page({
   },
 
   onShow() {
-    if (!loginGuard.checkLogin(this)) return
     this.loadCollection()
   },
 
@@ -58,8 +57,8 @@ Page({
       const data = await requestCloud('yan', 'collection', { filter: this.data.giftFilter }, { throwError: false })
       if (data) {
         this.setData({
-          collectedGifts: data.collected || [],
-          lockedGifts: data.locked || [],
+          collectedGifts: patchListForDisplay(data.collected || []),
+          lockedGifts: patchListForDisplay(data.locked || []),
           collectionStats: data.stats || { collected: 0, total: 0, rare: 0, completion: 0 },
           loading: false
         })
@@ -80,7 +79,7 @@ Page({
   showGiftDetail(e) {
     const gift = e.currentTarget.dataset.gift
     if (!gift) return
-    this.setData({ detailVisible: true, detailGift: gift })
+    this.setData({ detailVisible: true, detailGift: Object.assign({}, gift, patchAuthorForDisplay(gift)) })
   },
 
   closeDetail() {

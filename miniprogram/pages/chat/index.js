@@ -4,6 +4,7 @@ const { QINGYUE } = require('../../utils/constants')
 const { storage } = require('../../utils/storage')
 const { requestCloud } = require('../../utils/cloudRequest')
 const loginGuard = require('../../utils/loginGuard')
+const { patchListForDisplay, patchAuthorForDisplay } = require('../../utils/publicIdentity')
 
 const FIGURES_CACHE_KEY = 'figures_star5_v5'
 const FIGURE_DETAIL_PREFIX = 'figure_v2_'
@@ -84,10 +85,10 @@ Page({
     let sessions = chatSession.getSessions()
     // 从人物缓存刷新头像，防止旧缓存头像失效
     sessions = this.refreshAvatars(sessions)
-    const processed = this.processSessions(sessions)
+    const processed = patchListForDisplay(this.processSessions(sessions))
     this.setData({
       sessions: processed,
-      filteredSessions: this.filterBySearch(processed, this.data.searchText)
+      filteredSessions: patchListForDisplay(this.filterBySearch(processed, this.data.searchText))
     })
   },
 
@@ -154,12 +155,12 @@ Page({
     const keyword = e.detail.value
     this.setData({
       searchText: keyword,
-      filteredSessions: this.filterBySearch(this.data.sessions, keyword)
+      filteredSessions: patchListForDisplay(this.filterBySearch(this.data.sessions, keyword))
     })
   },
 
   onClearSearch() {
-    this.setData({ searchText: '', filteredSessions: this.data.sessions })
+    this.setData({ searchText: '', filteredSessions: patchListForDisplay(this.data.sessions) })
   },
 
   openRoom(e) {

@@ -5,6 +5,7 @@ const https = require('https')
 const http = require('http')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
+const { resolveIdentity, ownerMatch, attachOwnerFields } = require('./_identityHelper')
 const db = cloud.database()
 
 // ============================================================
@@ -82,6 +83,7 @@ const SEED_MAP = [
 ]
 
 exports.main = async (event, context) => {
+  const id = resolveIdentity(event, cloud.getWXContext())
   const { OPENID } = cloud.getWXContext()
   const adminErr = await checkAdmin(OPENID)
   if (adminErr) return { code: -1, message: adminErr }
@@ -167,7 +169,7 @@ exports.main = async (event, context) => {
             if (coverFileID) {
               updateData.coverUrl = coverFileID
             }
-            await db.collection('videos').doc(doc._id).update({ data: updateData })
+            await db.collection('videos').doc(doc._id).update({ data: attachOwnerFields(updateData, id, db) })
             item.updatedDocs++
           }
         } catch (e) {

@@ -1,7 +1,9 @@
 const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
+const { resolveIdentity, ownerMatch, attachOwnerFields } = require('./_identityHelper')
 
 exports.main = async (event, context) => {
+  const id = resolveIdentity(event, cloud.getWXContext())
   const { OPENID } = cloud.getWXContext()
   const { action } = event
   const data = normalizeEventData(event)

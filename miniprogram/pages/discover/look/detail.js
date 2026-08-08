@@ -1,8 +1,8 @@
 const { requestCloud } = require('../../../utils/cloudRequest')
 const { storage } = require('../../../utils/storage')
-const loginGuard = require('../../../utils/loginGuard')
 const { throttle } = require('../../../utils/helpers')
 const { formatCount, processArticle } = require('../../../utils/articleData')
+const { patchListForDisplay, patchAuthorForDisplay } = require('../../../utils/publicIdentity')
 
 const DETAIL_CACHE_TTL = 10 * 60
 const CACHE_VERSION = 'v4'
@@ -83,7 +83,8 @@ Page({
   },
 
   async renderDetail(data) {
-    const article = processArticle(data.article)
+    const articleRaw = processArticle(data.article)
+    const article = Object.assign({}, articleRaw, patchAuthorForDisplay(data.article))
 
     this.setData({
       articleId: article._id || this.data.articleId,
@@ -99,15 +100,17 @@ Page({
 
   _onLike: null,
   onLike(e) {
-    if (!loginGuard.checkLogin(this)) return
     if (!this._onLike) this._onLike = throttle(this.handleLike.bind(this), 300)
     this._onLike(e)
   },
 
   async handleLike() {
     const nowLiked = !this.data.liked
-    const article = this.data.article
-    article.likeCount = (article.likeCount || 0) + (nowLiked ? 1 : -1)
+    const article = {
+      ...this.data.article,
+      ...patchAuthorForDisplay(this.data.article),
+      likeCount: (this.data.article.likeCount || 0) + (nowLiked ? 1 : -1)
+    }
     article.likeText = formatCount(article.likeCount)
 
     this.setData({ liked: nowLiked, article })
@@ -118,7 +121,6 @@ Page({
   },
 
   async onBookmark() {
-    if (!loginGuard.checkLogin(this)) return
     const nowBookmarked = !this.data.bookmarked
     this.setData({ bookmarked: nowBookmarked })
     wx.showToast({ title: nowBookmarked ? '已收藏' : '已取消收藏', icon: 'none' })
@@ -129,7 +131,6 @@ Page({
   },
 
   async onVote(e) {
-    if (!loginGuard.checkLogin(this)) return
     const { optionIndex } = e.detail || {}
     if (this.data.pollVoted || optionIndex === undefined) return
 

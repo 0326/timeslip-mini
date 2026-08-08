@@ -1,5 +1,6 @@
 const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
+const { resolveIdentity, ownerMatch, attachOwnerFields } = require('./_identityHelper')
 const db = cloud.database()
 const _ = db.command
 
@@ -1447,6 +1448,7 @@ async function checkAdmin(OPENID) {
 }
 
 exports.main = async (event, context) => {
+  const id = resolveIdentity(event, cloud.getWXContext())
   const { OPENID } = cloud.getWXContext()
   const adminErr = await checkAdmin(OPENID)
   if (adminErr) return { code: -1, message: adminErr }
@@ -1512,7 +1514,7 @@ exports.main = async (event, context) => {
         createdAt: new Date(createdAtTs),
         updatedAt: new Date(now)
       }
-      const r = await db.collection('moments').add({ data: doc })
+      const r = await db.collection('moments').add({ data: attachOwnerFields(doc, id, db, { autoCreate: true }) })
       insertedIds.push({
         momentId: r._id,
         seedKey: m.seedKey,
@@ -1545,12 +1547,12 @@ exports.main = async (event, context) => {
           likes: [],
           createdAt: new Date(createdAtTs + hoursAgo * 3600000)
         }
-        await db.collection('moment_comments').add({ data: doc })
+        await db.collection('moment_comments').add({ data: attachOwnerFields(doc, id, db, { autoCreate: true }) })
         insertedCommentCount++
       }
       if (comments.length) {
         await db.collection('moments').doc(momentId).update({
-          data: { commentCount: _.set(comments.length) }
+          data: attachOwnerFields({ commentCount: _.set(comments.length) }, id, db)
         })
       }
     }

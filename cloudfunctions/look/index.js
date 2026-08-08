@@ -1,5 +1,6 @@
 const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
+const { resolveIdentity, ownerMatch, attachOwnerFields } = require('./_identityHelper')
 const db = cloud.database()
 const _ = db.command
 
@@ -30,6 +31,7 @@ async function safeCount(collectionName, where) {
 }
 
 exports.main = async (event, context) => {
+  const id = resolveIdentity(event, cloud.getWXContext())
   const { OPENID } = cloud.getWXContext()
   const { action = '' } = event
   const data = normalizeEventData(event)
@@ -45,24 +47,24 @@ exports.main = async (event, context) => {
       case 'voteResults': return await voteResults(OPENID, data)
 
       // ============ 用户接口（需登录） ============
-      case 'toggleLike': return await toggleLike(OPENID, data)
-      case 'toggleBookmark': return await toggleBookmark(OPENID, data)
-      case 'vote': return await vote(OPENID, data)
-      case 'submitComment': return await submitComment(OPENID, data)
+      case 'toggleLike': return await toggleLike(OPENID, data, id)
+      case 'toggleBookmark': return await toggleBookmark(OPENID, data, id)
+      case 'vote': return await vote(OPENID, data, id)
+      case 'submitComment': return await submitComment(OPENID, data, id)
       case 'myBookmarks': return await myBookmarks(OPENID, data)
       case 'increaseView': return await increaseView(data)
 
       // ============ 管理员接口 ============
-      case 'adminArticleCreate': return await adminArticleCreate(OPENID, data)
-      case 'adminArticleUpdate': return await adminArticleUpdate(OPENID, data)
-      case 'adminArticleRemove': return await adminArticleRemove(OPENID, data)
+      case 'adminArticleCreate': return await adminArticleCreate(OPENID, data, id)
+      case 'adminArticleUpdate': return await adminArticleUpdate(OPENID, data, id)
+      case 'adminArticleRemove': return await adminArticleRemove(OPENID, data, id)
       case 'adminArticleList': return await adminArticleList(OPENID, data)
-      case 'adminCommentRemove': return await adminCommentRemove(OPENID, data)
+      case 'adminCommentRemove': return await adminCommentRemove(OPENID, data, id)
 
       // ============ 批量导入接口（仅限管理员） ============
-      case 'batchImport': return await batchImport(OPENID, data)
+      case 'batchImport': return await batchImport(OPENID, data, id)
       // ============ 一次性数据修复（仅限管理员） ============
-      case 'adminFixCoverUrl': return await adminFixCoverUrl(OPENID)
+      case 'adminFixCoverUrl': return await adminFixCoverUrl(OPENID, id)
 
       default: return { code: -1, message: '未知 action: ' + action, data: null }
     }
@@ -357,7 +359,7 @@ async function getPollResults(articleId, optionCount) {
 
 // ==================== 用户接口 ====================
 
-async function toggleLike(OPENID, data) {
+async function toggleLike(OPENID, data, id) {
   const { articleId } = data
   if (!articleId || !OPENID) return { code: -1, message: '参数不全', data: null }
 
@@ -374,15 +376,15 @@ async function toggleLike(OPENID, data) {
   if (exist.data && exist.data.length > 0) {
     await db.collection('article_likes').doc(exist.data[0]._id).remove()
     await db.collection('articles').doc(articleId).update({
-      data: { likeCount: _.inc(-1) }
+      data: attachOwnerFields({ likeCount: _.inc(-1) }, id, db)
     })
     liked = false
   } else {
     await db.collection('article_likes').add({
-      data: { articleId, _openid: OPENID, createdAt: db.serverDate() }
+      data: attachOwnerFields({ articleId, _openid: OPENID, createdAt: db.serverDate() }, id, db, { autoCreate: true })
     })
     await db.collection('articles').doc(articleId).update({
-      data: { likeCount: _.inc(1) }
+      data: attachOwnerFields({ likeCount: _.inc(1) }, id, db)
     })
     liked = true
   }
@@ -390,7 +392,7 @@ async function toggleLike(OPENID, data) {
   return { code: 0, message: 'ok', data: { liked } }
 }
 
-async function toggleBookmark(OPENID, data) {
+async function toggleBookmark(OPENID, data, id) {
   const { articleId } = data
   if (!articleId || !OPENID) return { code: -1, message: '参数不全', data: null }
 
@@ -407,15 +409,15 @@ async function toggleBookmark(OPENID, data) {
   if (exist.data && exist.data.length > 0) {
     await db.collection('article_bookmarks').doc(exist.data[0]._id).remove()
     await db.collection('articles').doc(articleId).update({
-      data: { bookmarkCount: _.inc(-1) }
+      data: attachOwnerFields({ bookmarkCount: _.inc(-1) }, id, db)
     })
     bookmarked = false
   } else {
     await db.collection('article_bookmarks').add({
-      data: { articleId, _openid: OPENID, createdAt: db.serverDate() }
+      data: attachOwnerFields({ articleId, _openid: OPENID, createdAt: db.serverDate() }, id, db, { autoCreate: true })
     })
     await db.collection('articles').doc(articleId).update({
-      data: { bookmarkCount: _.inc(1) }
+      data: attachOwnerFields({ bookmarkCount: _.inc(1) }, id, db)
     })
     bookmarked = true
   }
@@ -423,7 +425,7 @@ async function toggleBookmark(OPENID, data) {
   return { code: 0, message: 'ok', data: { bookmarked } }
 }
 
-async function vote(OPENID, data) {
+async function vote(OPENID, data, id) {
   const { articleId, optionIndex } = data
   if (!articleId || optionIndex === undefined || !OPENID) {
     return { code: -1, message: '参数不全', data: null }
@@ -447,14 +449,14 @@ async function vote(OPENID, data) {
   }
 
   await db.collection('article_polls').add({
-    data: { articleId, optionIndex, _openid: OPENID, createdAt: db.serverDate() }
+    data: attachOwnerFields({ articleId, optionIndex, _openid: OPENID, createdAt: db.serverDate() }, id, db, { autoCreate: true })
   })
 
   const results = await getPollResults(articleId, articleDoc.data.poll.options.length)
   return { code: 0, message: 'ok', data: { results, voted: true } }
 }
 
-async function submitComment(OPENID, data) {
+async function submitComment(OPENID, data, id) {
   const { articleId, content, replyTo = '' } = data
   if (!articleId || !content || !OPENID) {
     return { code: -1, message: '参数不全', data: null }
@@ -497,10 +499,10 @@ async function submitComment(OPENID, data) {
     createdAt: db.serverDate()
   }
 
-  const res = await db.collection('article_comments').add({ data: doc })
+  const res = await db.collection('article_comments').add({ data: attachOwnerFields(doc, id, db, { autoCreate: true }) })
 
   await db.collection('articles').doc(articleId).update({
-    data: { commentCount: _.inc(1) }
+    data: attachOwnerFields({ commentCount: _.inc(1) }, id, db)
   })
 
   return { code: 0, message: 'ok', data: { _id: res._id, ...doc } }
@@ -570,7 +572,7 @@ async function increaseView(data) {
 
 // ==================== 管理员接口 ====================
 
-async function adminArticleCreate(OPENID, data) {
+async function adminArticleCreate(OPENID, data, id) {
   await checkAdmin(OPENID)
   const {
     title, subtitle = '', coverImage = '', category = 'figure_truth',
@@ -603,11 +605,11 @@ async function adminArticleCreate(OPENID, data) {
     updatedAt: db.serverDate()
   }
 
-  const res = await db.collection('articles').add({ data: doc })
+  const res = await db.collection('articles').add({ data: attachOwnerFields(doc, id, db, { autoCreate: true }) })
   return { code: 0, message: 'ok', data: { _id: res._id, ...doc } }
 }
 
-async function adminArticleUpdate(OPENID, data) {
+async function adminArticleUpdate(OPENID, data, id) {
   await checkAdmin(OPENID)
   const { articleId, ...updateData } = data
   if (!articleId) return { code: -1, message: '缺少 articleId', data: null }
@@ -622,23 +624,23 @@ async function adminArticleUpdate(OPENID, data) {
     if (updateData[k] !== undefined) toUpdate[k] = updateData[k]
   })
 
-  await db.collection('articles').doc(articleId).update({ data: toUpdate })
+  await db.collection('articles').doc(articleId).update({ data: attachOwnerFields(toUpdate, id, db) })
   return { code: 0, message: 'ok', data: { updated: true } }
 }
 
-async function adminArticleRemove(OPENID, data) {
+async function adminArticleRemove(OPENID, data, id) {
   await checkAdmin(OPENID)
   const { articleId } = data
   if (!articleId) return { code: -1, message: '缺少 articleId', data: null }
 
   await db.collection('articles').doc(articleId).update({
-    data: { status: 'deleted', updatedAt: db.serverDate() }
+    data: attachOwnerFields({ status: 'deleted', updatedAt: db.serverDate() }, id, db)
   })
   return { code: 0, message: 'ok', data: { removed: true } }
 }
 
 // ==================== 批量导入 ====================
-async function batchImport(OPENID, data) {
+async function batchImport(OPENID, data, id) {
   await checkAdmin(OPENID)
   const articles = data.articles || []
   if (!articles.length) return { code: -1, message: '无文章数据', data: null }
@@ -658,7 +660,7 @@ async function batchImport(OPENID, data) {
       // 移除自定义 _id，让数据库自动生成
       const doc = { ...article }
       delete doc._id
-      await db.collection('articles').add({ data: doc })
+      await db.collection('articles').add({ data: attachOwnerFields(doc, id, db, { autoCreate: true }) })
       inserted++
     } catch (err) {
       errors.push({ title: article.title, error: '导入失败' })
@@ -674,7 +676,7 @@ async function batchImport(OPENID, data) {
 
 // 一次性数据修复：批量替换 articles 集合 coverImage 字段中的错误 cloud:// 前缀
 // 错误格式: cloud://envId.envId.spaceId/...  →  正确格式: cloud://envId.spaceId/...
-async function adminFixCoverUrl(OPENID) {
+async function adminFixCoverUrl(OPENID, id) {
   await checkAdmin(OPENID)
   const WRONG = 'cloud1-d8guq74iacc68352a.cloud1-d8guq74iacc68352a.636c-'
   const RIGHT = 'cloud1-d8guq74iacc68352a.636c-'
@@ -697,7 +699,7 @@ async function adminFixCoverUrl(OPENID) {
     }
     try {
       await db.collection('articles').doc(a._id).update({
-        data: { coverImage: url.replace(WRONG, RIGHT) }
+        data: attachOwnerFields({ coverImage: url.replace(WRONG, RIGHT) }, id, db)
       })
       fixed++
     } catch (err) {
@@ -746,19 +748,19 @@ async function adminArticleList(OPENID, data) {
   }
 }
 
-async function adminCommentRemove(OPENID, data) {
+async function adminCommentRemove(OPENID, data, id) {
   await checkAdmin(OPENID)
   const { commentId, articleId } = data
   if (!commentId) return { code: -1, message: '缺少 commentId', data: null }
 
   await db.collection('article_comments').doc(commentId).update({
-    data: { status: 'deleted' }
+    data: attachOwnerFields({ status: 'deleted' }, id, db)
   })
 
   if (articleId) {
     try {
       await db.collection('articles').doc(articleId).update({
-        data: { commentCount: _.inc(-1) }
+        data: attachOwnerFields({ commentCount: _.inc(-1) }, id, db)
       })
     } catch (_) {}
   }

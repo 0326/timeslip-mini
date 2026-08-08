@@ -2,6 +2,7 @@ const cloud = require('wx-server-sdk')
 const https = require('https')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
+const { resolveIdentity, ownerMatch, attachOwnerFields } = require('./_identityHelper')
 
 const db = cloud.database()
 
@@ -93,16 +94,16 @@ async function getCachedToken() {
   }
 }
 
-async function setCachedToken(token) {
+async function setCachedToken(token, id) {
   try {
     const r = await db.collection(TOKEN_COLLECTION).limit(1).get()
     if (r.data && r.data[0]) {
       await db.collection(TOKEN_COLLECTION).doc(r.data[0]._id).update({
-        data: { token, updatedAt: Date.now() }
+        data: attachOwnerFields({ token, updatedAt: Date.now() }, id, db)
       })
     } else {
       await db.collection(TOKEN_COLLECTION).add({
-        data: { token, updatedAt: Date.now() }
+        data: attachOwnerFields({ token, updatedAt: Date.now() }, id, db, { autoCreate: true })
       })
     }
   } catch (e) {
@@ -125,18 +126,18 @@ async function fetchAccessToken() {
   return data.access_token
 }
 
-async function getAccessToken() {
+async function getAccessToken(id) {
   const cached = await getCachedToken()
   if (cached) return cached
   const token = await fetchAccessToken()
-  await setCachedToken(token)
+  await setCachedToken(token, id)
   return token
 }
 
 // ===== 小程序码生成 =====
 
-async function generateUnlimited(scene, page, envVersion) {
-  const token = await getAccessToken()
+async function generateUnlimited(scene, page, envVersion, id) {
+  const token = await getAccessToken(id)
   const url = `https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=${token}`
   const bodyStr = JSON.stringify({
     scene,
@@ -172,10 +173,10 @@ async function getCached(figureId, envVersion) {
   }
 }
 
-async function setCached(figureId, envVersion, fileID) {
+async function setCached(figureId, envVersion, fileID, id) {
   try {
     await db.collection(CACHE_COLLECTION).add({
-      data: { figureId, envVersion, fileID, generatedAt: db.serverDate() }
+      data: attachOwnerFields({ figureId, envVersion, fileID, generatedAt: db.serverDate() }, id, db, { autoCreate: true })
     })
   } catch (e) {
     // 并发重复写入时忽略
@@ -194,6 +195,7 @@ async function getTempUrl(fileID) {
 // ===== 主函数 =====
 
 exports.main = async (event) => {
+  const id = resolveIdentity(event, cloud.getWXContext())
   const figureId = String(
     (event && event.figureId) ||
     (event && event.queryStringParameters && event.queryStringParameters.figureId) ||
@@ -226,7 +228,7 @@ exports.main = async (event) => {
   // 2. 生成小程序码
   let buffer
   try {
-    buffer = await generateUnlimited(figureId, page, envVersion)
+    buffer = await generateUnlimited(figureId, page, envVersion, id)
   } catch (e) {
     console.error('[figureQrcode] generateUnlimited failed:', e && e.message)
     return wrapResult({
@@ -249,7 +251,7 @@ exports.main = async (event) => {
   const fileID = uploadRes.fileID
 
   // 4. 记录缓存
-  await setCached(figureId, envVersion, fileID)
+  await setCached(figureId, envVersion, fileID, id)
 
   // 5. 取临时 URL 返回
   try {

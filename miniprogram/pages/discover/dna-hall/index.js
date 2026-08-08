@@ -1,5 +1,5 @@
 const { requestCloud } = require('../../../utils/cloudRequest')
-const loginGuard = require('../../../utils/loginGuard')
+const { patchListForDisplay, patchAuthorForDisplay } = require('../../../utils/publicIdentity')
 
 const QUIZ_THEME = {
   emperor: { start: '#B71C1C', end: '#5D1A1A' },
@@ -22,7 +22,6 @@ Page({
   },
 
   onShow() {
-    if (!loginGuard.checkLogin(this)) return
     // 返回大厅时刷新参与人数
     if (this._needRefresh) {
       this._needRefresh = false
@@ -49,8 +48,8 @@ Page({
           : '抢先体验'
       })
       // 取第一个作为 hero
-      var hero = quizzes[0] ? Object.assign({}, quizzes[0]) : null
-      var list = quizzes.slice(1)
+      var hero = quizzes[0] ? Object.assign({}, quizzes[0], patchAuthorForDisplay(quizzes[0])) : null
+      var list = patchListForDisplay(quizzes.slice(1))
       this.setData({
         quizzes: list,
         hero: hero,

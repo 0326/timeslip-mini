@@ -1,4 +1,13 @@
 <view class="profile-page">
+  <!-- ★ 访客模式：顶部绑定微信提示条（浅橙底，配合浅古风纸张色） -->
+  <view class="visitor-tip-banner" wx:if="{{isVisitor}}" bindtap="doBindWx">
+    <view class="vt-inner">
+      <text class="vt-icon">🔒</text>
+      <text class="vt-text">{{bindTip}}</text>
+      <text class="vt-btn">绑定微信 ›</text>
+    </view>
+  </view>
+
   <view class="profile-hero ancient-paper" style="padding-top: {{statusBarHeight + 40}}rpx;">
     <view class="hero-inner">
       <view class="user-avatar-row" bindtap="onEditAvatar">
@@ -10,20 +19,23 @@
               mode="aspectFill"
               binderror="onAvatarError"
             />
+            <view wx:if="{{isVisitor}}" class="visitor-badge">游客</view>
           </view>
-          <!-- <view class="avatar-edit iconfont icon-edit"></view> -->
         </view>
         <view class="user-meta">
           <view class="user-name-row">
             <text class="u-name">{{userInfo.nickName || '穿越客'}}</text>
           </view>
           <view class="user-id-row">
-            <text class="u-crossno">穿越编号：{{userInfo.crossNo || '--'}}</text>
-            <!-- <view class="seal" wx:if="{{userInfo.memberLevel}}">{{userInfo.memberLevel || '布衣'}}</view> -->
+            <text class="u-crossno">穿越编号：{{userInfo.crossNo || localCrossNo || '--'}}</text>
           </view>
           <view class="u-points">
             <text class="p-icon">✨</text>
             <text class="p-text">{{userInfo.points || 0}} 穿越积分</text>
+          </view>
+          <view wx:if="{{isVisitor}}" class="bind-wx-btn" catchtap="doBindWx">
+            <text class="bw-icon">✓</text>
+            <text class="bw-text">绑定微信同步数据</text>
           </view>
         </view>
       </view>

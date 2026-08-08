@@ -1,5 +1,82 @@
 const { restoreFromCache } = require('./utils/auth')
 const { setTabBar } = require('./utils/globalLogic')
+const { isMiniprogram, isH5, isDonutApp, getPlatformTag } = require('./utils/platform')
+
+// Donut H5/App 端：CloudBase Web SDK 匿名登录就绪状态（Promise，可等待）
+// Web SDK 必须先匿名登录完成后，callFunction 才能拿到有效凭证，否则报 -601002 INVALID_CREDENTIAL
+let _cloudWebSdkReady = null
+function getCloudReadyPromise() { return _cloudWebSdkReady }
+function markCloudReady(err) {
+  if (_cloudWebSdkReady && _cloudWebSdkReady._ts) return _cloudWebSdkReady
+  _cloudWebSdkReady = err ? Promise.reject(err) : Promise.resolve(true)
+  _cloudWebSdkReady._ts = Date.now()
+  return _cloudWebSdkReady
+}
+
+function _initCloudOnce(extraOpts) {
+  try {
+    wx.cloud.init(Object.assign({
+      env: 'cloud1-d8guq74iacc68352a',
+      traceUser: true
+    }, extraOpts || {}))
+    return true
+  } catch (e) {
+    console.warn('[app.js] wx.cloud.init error:', e && e.message)
+    return false
+  }
+}
+
+/**
+ * Donut 多端（H5/App）：触发 CloudBase Web SDK 匿名登录并返回 Promise
+ *
+ * -601002 的根因是 Web SDK 必须先完成一次匿名登录（signInAnonymously）才会在
+ * 内部生成有效的访问凭证，后续 callFunction 请求才会携带。
+ * 微信小程序端不需要——基础库已经把微信身份凭证自动注入了。
+ *
+ * 兼容三种实现：
+ *   1) wx.cloud.auth().signInAnonymously()         新版 CloudBase Web SDK
+ *   2) wx.cloud.signInAnonymously()                Donut 别名
+ *   3) 调不到就直接 warmup 一个轻函数逼它自动触发匿名登录
+ */
+function _donutWebAnonSignIn(maxRetries = 2) {
+  return new Promise((resolve) => {
+    const tryAuth = (n) => {
+      const run = () => {
+        try {
+          // 优先直接调 getUser warmup——CloudBase Web SDK 通常在首次 callFunction 时会自动匿名登录
+          // 如果自动登录成功，这个请求就过了；连 warmup 都报 -601002 再降级 try/catch
+          wx.cloud.callFunction({
+            name: 'getUser',
+            data: { action: 'warmup' },
+            timeout: 6000
+          }).then(() => resolve(true)).catch(() => {
+            if (n > 0) return setTimeout(() => tryAuth(n - 1), 600)
+            resolve(true) // 仍然 resolve(true)，不阻塞首屏，失败了让 cloudRequest 自己重试提示刷新
+          })
+        } catch (_) { resolve(true) }
+      }
+      // 优先显式走 signInAnonymously（如果 Donut SDK 暴露了）
+      try {
+        let signInFn = null
+        if (wx.cloud && typeof wx.cloud.auth === 'function') {
+          const authObj = wx.cloud.auth()
+          if (authObj && typeof authObj.signInAnonymously === 'function') {
+            signInFn = authObj.signInAnonymously.bind(authObj)
+          }
+        }
+        if (!signInFn && wx.cloud && typeof wx.cloud.signInAnonymously === 'function') {
+          signInFn = wx.cloud.signInAnonymously.bind(wx.cloud)
+        }
+        if (signInFn) {
+          signInFn().then(() => resolve(true)).catch(() => run())
+          return
+        }
+      } catch (_) {}
+      run()
+    }
+    tryAuth(maxRetries)
+  })
+}
 
 App({
   globalData: {
@@ -8,6 +85,9 @@ App({
     points: 0,
     memberLevel: '普通会员',
     crossNo: '',
+    // Donut 端：平台标记（donut-h5 / donut-app / miniprogram / unknown）
+    platformTag: 'unknown',
+    isDonutRuntime: false,
     cache: {
       figures: null,
       dnaQuestions: null
@@ -32,28 +112,92 @@ App({
   ],
 
   onLaunch: function () {
-    if (!wx.cloud) {
-      console.error('请使用 2.2.3 或以上的基础库以使用云能力')
-      wx.showModal({
-        title: '基础库版本过低',
-        content: '请升级微信至最新版本使用本小程序',
-        showCancel: false
-      })
-      return
-    }
+    // 1. 先判定当前平台（Donut 多端 / 微信小程序）
+    let platformTag = 'unknown'
+    try { platformTag = getPlatformTag() } catch (_) {}
+    this.globalData.platformTag = platformTag
+    const reallyIsMiniprogram = isMiniprogram()
+    this.globalData.isDonutRuntime = !reallyIsMiniprogram && (isH5() || isDonutApp())
+    const isDonut = this.globalData.isDonutRuntime
 
-    wx.cloud.init({
+    // 2. wx.cloud.init：Donut 端必须显式加 region + disableDevtoolsCheck，否则 CloudBase Web SDK
+    //    在 H5/原生 App 环境下拿不到有效凭证 → callFunction 直接报 -601002 INVALID_CREDENTIAL
+    //    envId 末尾是上海环境：cloud1-xxx → region = ap-shanghai（云开发环境列表已经验证过上海）
+    const initOpts = {
       env: 'cloud1-d8guq74iacc68352a',
       traceUser: true
-    })
+    }
+    if (isDonut) {
+      initOpts.region = 'ap-shanghai'
+      initOpts.disableDevtoolsCheck = true
+      // Donut 编译产物会透传 resourceAppid，部分 CloudBase Web SDK 版本需此参数校验 env 归属
+      try {
+        const info = wx.getAccountInfoSync && wx.getAccountInfoSync()
+        if (info && info.miniProgram && info.miniProgram.appId) initOpts.appid = info.miniProgram.appId
+      } catch (_) {
+        initOpts.appid = 'wx30e49a87f6326f1d'
+      }
+    }
 
-    // 仅从本地缓存恢复用户态，未登录时由 loginGuard 跳转到登录页
+    let inited = false
+    if (!wx.cloud) {
+      // Donut App/H5 端 cloud SDK 可能延迟注入：1 秒后再次尝试
+      console.warn('[app.js] wx.cloud 未就绪，延迟 1s 重试初始化（platform=' + platformTag + '）')
+      const retryTimer = setTimeout(() => {
+        if (wx.cloud && typeof wx.cloud.init === 'function') {
+          inited = _initCloudOnce(initOpts)
+          if (inited && isDonut) this._startCloudDonutReadyFlow()
+        }
+        clearTimeout(retryTimer)
+      }, 1000)
+    } else {
+      inited = _initCloudOnce(initOpts)
+    }
+
+    if (inited && isDonut) this._startCloudDonutReadyFlow()
+    else if (!inited && !isDonut) {
+      // 小程序端已直接 inited=true 走到上面分支；这里仅处理「inited 为 false 但非 Donut」罕见情况
+    }
+
+    // 3. 冷启动身份恢复顺序：先 visitorId，再 restoreFromCache（微信绑定身份）
+    try {
+      const v = require('./utils/visitor')
+      if (v && typeof v.getVisitorId === 'function') v.getVisitorId()
+    } catch (e) {
+      console.warn('[app.js] visitor init warn:', e && e.message)
+    }
     restoreFromCache()
-    // 同步本地 app_settings 到 globalData
     this.restoreSettings()
-    // 确保青月（系统引导）会话存在
-    require('./utils/chatSession').initQingyueSession()
+    try { require('./utils/chatSession').initQingyueSession() } catch (_) {}
     this.preloadCommonData()
+  },
+
+  // Donut H5/App：触发匿名登录预热并把 Promise 挂到 globalData 上供 cloudRequest 等待
+  _startCloudDonutReadyFlow() {
+    const self = this
+    const p = _donutWebAnonSignIn(2).then(ok => {
+      markCloudReady()
+      return ok
+    }).catch(err => {
+      console.warn('[app.js] Donut CloudBase Web SDK 匿名登录预热失败，将在首次请求时重试：', err && err.message)
+      // 不 reject 成全局 fail，因为有些版本 CloudBase 会在第一次 callFunction 时自动做匿名登录
+      markCloudReady()
+      return true
+    })
+    // 暴露给 utils/cloudRequest 读取
+    this.globalData.__cloudWebSdkReady = p
+    markCloudReady()
+    return p
+  },
+
+  // 给 cloudRequest 直接读当前的 CloudBase Web SDK ready Promise（Donut 端非小程序才需要等）
+  getCloudWebSdkReady() {
+    if (this.globalData && this.globalData.__cloudWebSdkReady) return this.globalData.__cloudWebSdkReady
+    if (isMiniprogram()) return Promise.resolve(true)
+    // Donut 端还没走到 onLaunch 的极端情况：立即触发一次初始化
+    if (!wx.cloud || typeof wx.cloud.init !== 'function') return Promise.reject(new Error('wx.cloud 未就绪'))
+    this._startCloudDonutReadyFlow()
+    return this.globalData.__cloudWebSdkReady || Promise.resolve(true)
   },
 
   pointsListeners: [],

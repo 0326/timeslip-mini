@@ -13,3 +13,26 @@ miniprogram_npm/
 project.private.config.json
 dist
 backup/
+
+# ===== Donut 多端构建产物（微信官方 Donut 框架） =====
+# 多端原生资源目录（Android/iOS/鸿蒙编译输出，不进版本库）
+miniapp/
+.miniapp/
+# Donut 构建临时文件与缓存
+.donut/
+donut-dist/
+# Android 签名与打包产物
+*.keystore
+*.jks
+*.apk
+*.aab
+# iOS 签名与打包产物
+*.mobileprovision
+*.ipa
+*.xcarchive
+# H5 构建输出
+h5-dist/
+h5-out/
+# 鸿蒙（HarmonyOS）打包产物
+*.hap
+*.app

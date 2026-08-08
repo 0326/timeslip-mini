@@ -21,6 +21,9 @@ function isOnLoginPage() {
   }
 }
 
+/**
+ * 已绑定微信身份（真实登录）
+ */
 function isLoggedIn() {
   try {
     const app = getApp()
@@ -31,6 +34,22 @@ function isLoggedIn() {
   } catch (e) {}
   const cached = storage.get('userInfo')
   return !!(cached && cached._openid && cached.avatarUrl && !isTemporaryFileUrl(cached.avatarUrl))
+}
+
+/**
+ * 有身份即可（已绑定微信 OR 有本地 visitorId 都算）
+ * 用于所有原本用 checkLogin 拦截的页面：访客身份直接放行
+ */
+function hasIdentity() {
+  if (isLoggedIn()) return true
+  try {
+    const v = require('./visitor')
+    if (v && typeof v.getVisitorId === 'function') {
+      const id = v.getVisitorId()
+      return !!(id && typeof id === 'string' && id.length >= 8)
+    }
+  } catch (e) {}
+  return false
 }
 
 function isAdmin() {
@@ -85,29 +104,54 @@ function isTabPage(url) {
   return TAB_PAGES.some(p => url.indexOf(p) !== -1)
 }
 
-// 拦截：未登录则跳转到 login 页
-// needLogin: 是否强制需要登录（默认 true）
-function checkLogin(pageInst, needLogin = true) {
+/**
+ * 页面级身份检查（现在 visitor 身份也算有效，不再强制跳登录页）
+ *
+ * 新语义：
+ * - 99% 的页面应该调用 hasIdentity() 而不再需要 checkLogin
+ * - 只有明确「必须绑定微信身份」才能做的事情（比如进 admin 后台、付费），才用 requireLogin
+ * - checkLogin 保留作为兼容别名，但内部改为只要有 visitorId 就放行，不再跳登录
+ */
+function checkLogin(pageInst /*, needLogin = true */) {
+  // 兼容旧代码：只要有身份（微信绑定 或 visitor）就放行
   if (isOnLoginPage()) return true
+  if (hasIdentity()) return true
+  // 极端兜底：理论上不会走到这里（visitorId 首次启动就生成），如果真没身份就静默生成一个
+  try {
+    const v = require('./visitor')
+    if (v && typeof v.getVisitorId === 'function') {
+      v.getVisitorId() // 副作用：不存在就创建一个
+      return true
+    }
+  } catch (e) {}
+  return true // 全部放行，不做任何跳转
+}
+
+// 真正需要强制绑定微信身份时才用（例如管理员后台之外的特殊操作）
+function requireLogin(redirectAfterLogin) {
   if (isLoggedIn()) return true
-  const currentUrl = getCurrentPageUrl()
+  const currentUrl = typeof redirectAfterLogin === 'string' && redirectAfterLogin
+    ? redirectAfterLogin
+    : getCurrentPageUrl()
   let redirect = ''
   if (currentUrl) {
     if (isTabPage(currentUrl)) {
-      redirect = 'tab:' + '/' + currentUrl.replace('/', '')
+      redirect = 'tab:' + '/' + currentUrl.replace(/^\//, '')
     } else {
       redirect = currentUrl
     }
     redirect = encodeURIComponent(redirect)
   }
-  const loginUrl = LOGIN_PAGE + '?needLogin=' + (needLogin ? 'true' : 'false') + (redirect ? '&redirect=' + redirect : '')
+  const loginUrl = LOGIN_PAGE + '?needLogin=true' + (redirect ? '&redirect=' + redirect : '')
   wx.reLaunch({ url: loginUrl })
   return false
 }
 
 module.exports = {
-  checkLogin,
-  isLoggedIn,
+  checkLogin,          // 兼容旧调用：Visitor 也算有效（永远返回 true，不跳登录）
+  requireLogin,        // 新：强制需要微信绑定身份（真正跳登录）
+  hasIdentity,         // 新：有 visitorId 或已绑定微信都算
+  isLoggedIn,          // 原语义不变：仅 true 表示「已绑定微信」
   isAdmin,
   requireAdmin,
   isOnLoginPage,

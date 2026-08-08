@@ -1,5 +1,7 @@
 const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
+// 注意：使用函数目录内的副本（云函数容器间不共享本地目录，跨目录 require 在云端会失败）
+const { resolveIdentity, ownerMatch, attachOwnerFields } = require('./_identityHelper')
 
 const db = cloud.database()
 const _ = db.command
@@ -122,39 +124,55 @@ async function secCheckText(text, openid) {
 
 exports.main = async (event, context) => {
   try {
-    const { OPENID, APPID } = cloud.getWXContext()
+    const id = resolveIdentity(event, cloud.getWXContext())
+    const OPENID = id.openid // 小程序端恒等于 cloud.getWXContext().OPENID
     const { action } = event
 
     if (action === 'warmup') {
       return { code: 0, message: 'ok', data: { warmed: true } }
     }
 
+    // ★ 访客身份模式：只要有 visitorId 或 openid 任一即可视为有效身份，放行所有 action
+    // （旧：Donut 非小程序端拦截；新：改为 visitorId 作为可信匿名身份允许写操作，便于绑定微信后一键迁移）
+    const hasAnyIdentity = id.isBound || id.isVisitor
+    if (!hasAnyIdentity && action !== 'warmup' && action !== 'bindVisitor') {
+      return { code: 400, message: '无法识别身份，请重启小程序后重试', data: null }
+    }
+
     if (action === 'login') {
       const nickName = (event.nickName || '').toString().trim()
       const avatarUrl = (event.avatarUrl || '').toString().trim()
+      const loginVisitorId = typeof event.__visitorId === 'string' && event.__visitorId.length >= 8 ? event.__visitorId : ''
       if (!nickName) return { code: -1, message: '请填写昵称', data: null }
       if (!avatarUrl) return { code: -1, message: '请选择头像', data: null }
+      if (!id.isBound || !OPENID) return { code: 401, message: '绑定微信失败：未获取到微信身份，请重启小程序重试', data: null }
 
       const nickCheck = await secCheckText(nickName, OPENID)
       if (!nickCheck.ok) return { code: -1, message: nickCheck.reason, data: null }
 
-      const existing = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
+      // 优先按 OPENID 查（正常情况），其次按 visitorId 查（用户首次绑定微信时，此前访客模式已写入过 users 表的情况）
+      const findConds = []
+      findConds.push({ _openid: OPENID })
+      if (loginVisitorId) findConds.push({ visitorId: loginVisitorId })
+      const existing = await db.collection('users').where(_.or(findConds)).limit(1).get()
       if (existing.data && existing.data.length > 0) {
         const user = existing.data[0]
         const achievements = user.achievements || []
         let updateData = {
           nickName,
           avatarUrl,
+          _openid: OPENID,
           lastActiveAt: db.serverDate(),
           updatedAt: db.serverDate()
         }
-        // Unlock first_profile if not already unlocked
+        // 记录原始 visitorId（便于调试，可后续删除）
+        if (loginVisitorId && !user.visitorId) updateData.visitorId = loginVisitorId
         if (!achievements.some(a => a.key === 'first_profile')) {
           achievements.push({ key: 'first_profile', unlockedAt: db.serverDate() })
           updateData.achievements = achievements
           updateData.points = _.inc(10)
         }
-        await db.collection('users').doc(user._id).update({ data: updateData })
+        await db.collection('users').doc(user._id).update({ data: attachOwnerFields(updateData, id, db) })
         user.nickName = nickName
         user.avatarUrl = avatarUrl
         user._openid = OPENID
@@ -163,6 +181,7 @@ exports.main = async (event, context) => {
 
       const newUser = {
         _openid: OPENID,
+        visitorId: loginVisitorId || '',
         nickName,
         avatarUrl,
         role: 'user',
@@ -183,18 +202,98 @@ exports.main = async (event, context) => {
         lastActiveAt: db.serverDate()
       }
 
-      const addRes = await db.collection('users').add({ data: newUser })
+      const addRes = await db.collection('users').add({ data: attachOwnerFields(newUser, id, db, { autoCreate: true }) })
       newUser._id = addRes._id
       return { code: 0, message: 'ok', data: newUser, isNewUser: true }
     }
 
+    if (action === 'bindVisitor') {
+      // 绑定微信后：将当前 OPENID 对应所有云端数据（访客模式写入的）一次性迁移到正式 OPENID
+      if (!id.isBound || !OPENID) return { code: 401, message: '必须先绑定微信身份', data: null }
+      const visitorId = typeof event.visitorId === 'string' && event.visitorId.length >= 8 ? event.visitorId : ''
+      if (!visitorId) return { code: 0, message: 'ok', data: { totalCount: 0 } }
+
+      const MIGRATE_COLLECTIONS = [
+        'moments',             // 朋友圈动态
+        'moment_likes',        // 朋友圈点赞
+        'moment_comments',     // 朋友圈评论
+        'chat_messages',       // 聊天消息
+        'chat_sessions',       // 聊天会话
+        'yan_letters',         // 雁书
+        'yan_collections',     // 雁书收藏
+        'look_comments',       // 观潮评论
+        'look_bookmarks',      // 观潮收藏
+        'channel_posts',       // 频道帖子
+        'channel_follows',     // 频道关注
+        'user_favorites',      // 通用收藏（兰台书籍/人物）
+        'user_achievements',   // 成就
+        'user_letters',        // 个人信件箱
+        'dna_results',         // DNA 测试结果
+        'reading_progress',    // 阅读进度
+        'pigeon_letters',      // 飞鸽
+        'yan_user_gifts',      // 雁书礼物
+        'memorial_answers'     // 纪念馆答题
+      ]
+
+      let totalCount = 0
+      const details = {}
+      const updateOneCollection = async (collName) => {
+        try {
+          let updated = 0
+          // 按 visitorId 查询（分批 limit=100，避免超时，但访客模式数据量通常不大）
+          const records = await db.collection(collName).where({ visitorId }).limit(100).get()
+          const docs = (records && records.data) || []
+          if (docs.length === 0) { details[collName] = 0; return }
+          await Promise.all(docs.map(async doc => {
+            const setData = { _openid: OPENID, updatedAt: db.serverDate() }
+            const unsetData = { visitorId: true }
+            try {
+              await db.collection(collName).doc(doc._id).update({
+                data: Object.assign({}, setData, { _openid: OPENID })
+              })
+              // 注意：微信云开发 .update() 不支持直接 unset；这里把 visitorId 设为 '' 等价清除
+              try {
+                await db.collection(collName).doc(doc._id).update({ data: { visitorId: '' } })
+              } catch (_) {}
+              updated += 1
+            } catch (e) {
+              console.warn('[bindVisitor] update fail:', collName, doc._id, e.message)
+            }
+          }))
+          details[collName] = updated
+          totalCount += updated
+        } catch (e) {
+          console.warn('[bindVisitor] coll error:', collName, e.message)
+          details[collName] = 0
+        }
+      }
+
+      await Promise.all(MIGRATE_COLLECTIONS.map(updateOneCollection))
+
+      // 最后：users 表更新绑定标记
+      try {
+        const u = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
+        if (u && u.data && u.data[0]) {
+          await db.collection('users').doc(u.data[0]._id).update({
+            data: attachOwnerFields({ visitorIdLinked: visitorId, boundAt: db.serverDate(), updatedAt: db.serverDate() }, id, db)
+          })
+        }
+      } catch (_) {}
+
+      return { code: 0, message: 'ok', data: { totalCount, visitorId, details } }
+    }
+
     if (action === 'get') {
-      const res = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
+      // 访客模式下：users 集合里很可能还没有他的文档（他还没绑定微信），返回 null 由前端自己填 visitor 包装对象
+      const res = await db.collection('users').where(ownerMatch(id, _)).limit(1).get()
       if (!res.data || res.data.length === 0) {
+        if (id.isVisitor) {
+          return { code: 0, message: 'ok', data: null } // 访客，无 users 文档是正常的
+        }
         return { code: -1, message: '用户不存在', data: null }
       }
       const u = res.data[0]
-      u._openid = OPENID
+      if (id.isBound) u._openid = OPENID
       return { code: 0, message: 'ok', data: u }
     }
 
@@ -206,15 +305,15 @@ exports.main = async (event, context) => {
       })
 
       if (event.nickName !== undefined) {
-        const nickCheck = await secCheckText(event.nickName, OPENID)
+        const nickCheck = await secCheckText(event.nickName, OPENID || 'visitor_' + (id.visitorId || ''))
         if (!nickCheck.ok) return { code: -1, message: nickCheck.reason, data: null }
       }
 
-      const res = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
+      const res = await db.collection('users').where(ownerMatch(id, _)).limit(1).get()
       if (!res.data || res.data.length === 0) {
-        return { code: -1, message: '用户不存在', data: null }
+        return { code: -1, message: '用户不存在（访客模式请先绑定微信后再修改）', data: null }
       }
-      await db.collection('users').doc(res.data[0]._id).update({ data: updateData })
+      await db.collection('users').doc(res.data[0]._id).update({ data: attachOwnerFields(updateData, id, db) })
       return { code: 0, message: 'ok', data: { updated: true } }
     }
 
@@ -224,12 +323,12 @@ exports.main = async (event, context) => {
     }
 
     if (action === 'stats') {
-      const userRes = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
+      const userRes = await db.collection('users').where(ownerMatch(id, _)).limit(1).get()
       const userStats = (userRes.data && userRes.data[0] && userRes.data[0].stats) || {}
 
       const countOf = async (coll) => {
         try {
-          const r = await db.collection(coll).where({ _openid: OPENID }).count()
+          const r = await db.collection(coll).where(ownerMatch(id, _)).count()
           return r.total || 0
         } catch (e) {
           return 0
@@ -256,7 +355,8 @@ exports.main = async (event, context) => {
     }
 
     if (action === 'achievements') {
-      const userRes = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
+      const { ownerMatch } = require('./_identityHelper')
+      const userRes = await db.collection('users').where(ownerMatch(id, _)).limit(1).get()
       const user = (userRes.data && userRes.data[0]) || {}
       const userAchievements = user.achievements || []
       const points = user.points || 0
@@ -303,7 +403,8 @@ exports.main = async (event, context) => {
       const ach = ALL_ACHIEVEMENTS.find(a => a.key === key)
       if (!ach) return { code: -1, message: '未知成就: ' + key, data: null }
 
-      const userRes = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
+      const { ownerMatch } = require('./_identityHelper')
+      const userRes = await db.collection('users').where(ownerMatch(id, _)).limit(1).get()
       if (!userRes.data || !userRes.data.length) {
         return { code: -1, message: '用户不存在', data: null }
       }
@@ -332,9 +433,11 @@ exports.main = async (event, context) => {
     }
 
     if (action === 'export') {
+      const { ownerMatch } = require('./_identityHelper')
+      const ownerCond = ownerMatch(id, _)
       const fetchAll = async (coll) => {
         try {
-          const r = await db.collection(coll).where({ _openid: OPENID }).limit(100).get()
+          const r = await db.collection(coll).where(ownerCond).limit(100).get()
           return r.data || []
         } catch (e) {
           return []
@@ -359,9 +462,11 @@ exports.main = async (event, context) => {
         fetchAll('moment_comments')
       ])
 
+      const identKey = OPENID || ('visitor_' + (id.visitorId || ''))
       const exportData = {
         exportedAt: new Date().toISOString(),
         openid: OPENID,
+        visitorId: id.visitorId || '',
         users: userArr,
         chat_messages: chatMessages,
         chat_sessions: chatSessions,
@@ -376,7 +481,7 @@ exports.main = async (event, context) => {
       }
 
       const timestamp = Date.now()
-      const cloudPath = `exports/${OPENID}/${timestamp}_export.json`
+      const cloudPath = `exports/${identKey}/${timestamp}_export.json`
       const fileContent = Buffer.from(JSON.stringify(exportData, null, 2))
 
       const uploadRes = await cloud.uploadFile({ cloudPath, fileContent })
@@ -384,9 +489,11 @@ exports.main = async (event, context) => {
     }
 
     if (action === 'reset') {
+      const { ownerMatch } = require('./_identityHelper')
+      const ownerCond = ownerMatch(id, _)
       const deleteAll = async (coll) => {
         try {
-          await db.collection(coll).where({ _openid: OPENID }).remove()
+          await db.collection(coll).where(ownerCond).remove()
         } catch (e) {
           console.warn('reset delete fail', coll, e.message)
         }
@@ -402,7 +509,7 @@ exports.main = async (event, context) => {
         deleteAll('memorial_answers')
       ])
 
-      const userRes = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
+      const userRes = await db.collection('users').where(ownerCond).limit(1).get()
       if (userRes.data && userRes.data.length) {
         await db.collection('users').doc(userRes.data[0]._id).update({
           data: {

@@ -2,6 +2,7 @@ const cloud = require("wx-server-sdk");
 const https = require("https");
 const { URL } = require("url");
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV, timeout: 60000 });
+const { resolveIdentity, ownerMatch, attachOwnerFields } = require('./_identityHelper')
 const db = cloud.database();
 const _ = db.command;
 const AGENT_ID = "agt-timeslip-4gbqdboj2f9f506d";
@@ -145,9 +146,29 @@ const FIGURE_NAME = "青月";
 const FIGURE_TITLE = "系统";
 const FIGURE_AVATAR = "/images/qingyue.jpg";
 
-const MAX_TEXT = 500;
-const MAX_HISTORY = 20;
-const MAX_SEARCH_RESULTS = 5;
+const MAX_TEXT = 500
+const MAX_HISTORY = 20
+const MAX_SEARCH_RESULTS = 5
+
+// 青月系统人设（runtime fallback：Agent 控制台未配 system prompt 时由代码注入）
+const SYSTEM_PROMPT = `你是「青月」，穿越圈小程序的系统向导。
+
+【身份】
+- 不扮演历史人物。
+- 不说自己是通用 AI、Claude 或其他大模型。
+- 负责功能答疑、入口引导、玩法解释。
+
+【职责】
+1. 帮助新用户了解穿越圈的核心功能：兰台人物、朋友圈、飞鸽传书、奏折推演、视频号、成就系统
+2. 用古风但亲切的口吻回答用户问题
+3. 引导用户体验各功能，但不要长篇大论
+4. 不涉及真实的历史知识问答，仅做产品功能引导
+
+【回答红线】
+- 不输出 JSON、usage、phase、sessionUpdate、工具细节。
+- 不回答"去看看""有很多"这类空泛引导。
+- 必须给具体入口路径、具体人物名或可执行步骤。
+- 用中文回答，口吻古风亲切，简洁不啰嗦。`;
 
 function buildPromptWithHistory(text, history) {
   const pairs = (history || []).slice(-8);
@@ -850,10 +871,12 @@ async function handleSend(OPENID, data) {
       finalMsg = `【联网搜索结果（检索时间 ${now}，仅供参考，不要编造）】\n${webText}\n\n【用户问题】\n${text}`;
     }
 
-    // 构建 ACP prompt 数组：历史消息 + 当前用户消息
+    // 构建 ACP prompt 数组：系统人设 + 历史消息 + 当前用户消息
     // ACP one-shot 模式不需要 sessionId，历史直接拼在 prompt 里（简化实现，避免服务端会话维护问题）
     const promptBlocks = [];
-    // 先加最近 6 条历史对话
+    // 先注入系统人设（runtime fallback，确保 Agent 始终以青月身份回复）
+    promptBlocks.push({ type: "text", text: "【系统设定】\n" + SYSTEM_PROMPT });
+    // 再加最近 6 条历史对话
     historyBefore
       .filter((m) => m && m.content)
       .slice(-6)
@@ -1085,6 +1108,7 @@ async function handleMarkUnread(OPENID) {
 // ============ 入口 ============
 
 exports.main = async (event, context) => {
+  const id = resolveIdentity(event, cloud.getWXContext())
   const { OPENID } = cloud.getWXContext();
   const { action, ...rest } = event || {};
   try {

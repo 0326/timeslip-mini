@@ -1,6 +1,5 @@
 const { requestCloud } = require('../../../utils/cloudRequest')
 const dnaEngine = require('../../../utils/dna-engine')
-const loginGuard = require('../../../utils/loginGuard')
 
 Page({
   data: {
@@ -33,7 +32,6 @@ Page({
   },
 
   onShow() {
-    if (!loginGuard.checkLogin(this)) return
   },
 
   async loadRecord() {

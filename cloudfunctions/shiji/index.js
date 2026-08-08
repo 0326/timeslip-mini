@@ -1,11 +1,13 @@
 const cloud = require('wx-server-sdk')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
+const { resolveIdentity, ownerMatch, attachOwnerFields } = require('./_identityHelper')
 
 const db = cloud.database()
 const _ = db.command
 
 exports.main = async (event, context) => {
+  const id = resolveIdentity(event, cloud.getWXContext())
   const { OPENID } = cloud.getWXContext()
   const { action } = event
   const data = normalizeEventData(event)
@@ -374,7 +376,7 @@ async function bookFavToggle(OPENID, data) {
   }
 
   await db.collection('book_favorites').add({
-    data: { bookId, createdAt: db.serverDate() }
+    data: attachOwnerFields({ bookId, createdAt: db.serverDate() }, id, db, { autoCreate: true })
   })
   return ok({ favorite: true })
 }

@@ -1,5 +1,6 @@
 const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV, timeout: 60000 })
+const { resolveIdentity, ownerMatch, attachOwnerFields } = require('./_identityHelper')
 const db = cloud.database()
 const _ = db.command
 
@@ -595,6 +596,7 @@ async function checkDailyLimit(OPENID) {
 }
 
 exports.main = async (event, context) => {
+  const id = resolveIdentity(event, cloud.getWXContext())
   const { OPENID } = cloud.getWXContext()
   const { mode = 'chat', action, data, ...rest } = event || {}
   const params = data && typeof data === 'object' ? { ...rest, ...data } : rest

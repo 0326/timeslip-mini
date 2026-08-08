@@ -5,6 +5,80 @@
     linear-gradient(180deg, #F5ECDB 0%, #F9F4EA 320rpx, #f5f5f5 560rpx);
 }
 
+/* ★ 访客模式：顶部绑定微信提示条 */
+.visitor-tip-banner {
+  background: linear-gradient(90deg, #FFF3E0 0%, #FFEDCC 100%);
+  border-bottom: 1rpx solid rgba(201, 162, 77, 0.25);
+  padding: 14rpx 24rpx;
+}
+.vt-inner {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+.vt-icon {
+  font-size: 28rpx;
+  flex-shrink: 0;
+}
+.vt-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 24rpx;
+  color: #8a5a2b;
+  line-height: 1.5;
+}
+.vt-btn {
+  flex-shrink: 0;
+  padding: 8rpx 18rpx;
+  background: #fff;
+  color: #a06a2b;
+  border: 1rpx solid rgba(201, 162, 77, 0.5);
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  font-weight: 500;
+}
+
+.avatar-big-wrap {
+  position: relative;
+  width: 140rpx;
+  height: 140rpx;
+  flex-shrink: 0;
+}
+.visitor-badge {
+  position: absolute;
+  left: 50%;
+  bottom: -2rpx;
+  transform: translateX(-50%);
+  padding: 2rpx 14rpx;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 18rpx;
+  border-radius: 999rpx;
+  letter-spacing: 1rpx;
+  white-space: nowrap;
+}
+
+.bind-wx-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-top: 14rpx;
+  padding: 10rpx 22rpx;
+  background: linear-gradient(90deg, #07C160 0%, #06AE56 100%);
+  color: #fff;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+  box-shadow: 0 4rpx 12rpx rgba(7, 193, 96, 0.25);
+}
+.bw-icon {
+  font-size: 22rpx;
+  line-height: 1;
+}
+.bw-text {
+  font-size: 24rpx;
+}
+
 .profile-hero {
   position: relative;
   padding: 0 32rpx 32rpx;

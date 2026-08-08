@@ -1,5 +1,4 @@
 const { storage } = require('../../utils/storage')
-const loginGuard = require('../../utils/loginGuard')
 
 Page({
   data: {
@@ -16,7 +15,6 @@ Page({
   },
 
   onShow: function () {
-    if (!loginGuard.checkLogin(this)) return
   },
 
   loadSettings: function () {

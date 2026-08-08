@@ -1,6 +1,5 @@
 const { requestCloud } = require('../../utils/cloudRequest')
 const { formatChatTime } = require('../../utils/date')
-const loginGuard = require('../../utils/loginGuard')
 
 // ── 云存储图标地址 ──
 const STORAGE = 'cloud://cloud1-d8guq74iacc68352a.636c-cloud1-d8guq74iacc68352a-1464144866/mini-assets/achievements'
@@ -93,7 +92,6 @@ Page({
   },
 
   onShow() {
-    if (!loginGuard.checkLogin(this)) return
     this.loadAchievements()
   },
 

@@ -1,5 +1,5 @@
 const { requestCloud } = require('../../../utils/cloudRequest')
-const loginGuard = require('../../../utils/loginGuard')
+const { patchListForDisplay, patchAuthorForDisplay } = require('../../../utils/publicIdentity')
 
 const CATEGORY_NAMES = {
   figure_truth: '人物真相',
@@ -31,7 +31,6 @@ Page({
   },
 
   onShow() {
-    if (!loginGuard.checkLogin(this)) return
   },
 
   onPullDownRefresh() {
@@ -56,16 +55,16 @@ Page({
       }, { throwError: false })
 
       const list = (data && data.list) || []
-      const processed = list.map(a => ({
+      const processed = patchListForDisplay(list.map(a => ({
         ...a,
         categoryName: CATEGORY_NAMES[a.category] || a.category || '',
         dynastyName: DYNASTY_NAMES[a.dynasty] || a.dynasty || '',
         viewText: this.formatCount(a.viewCount),
         likeText: this.formatCount(a.likeCount),
         bookmarkText: this.formatCount(a.bookmarkCount || 0)
-      }))
+      })))
 
-      const allArticles = reset ? processed : this.data.articles.concat(processed)
+      const allArticles = reset ? processed : patchListForDisplay(this.data.articles.concat(processed))
       const { left, right } = this.splitColumns(allArticles)
 
       this.setData({

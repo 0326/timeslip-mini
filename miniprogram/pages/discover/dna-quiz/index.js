@@ -1,5 +1,4 @@
 const { requestCloud } = require('../../../utils/cloudRequest')
-const loginGuard = require('../../../utils/loginGuard')
 
 Page({
   data: {
@@ -35,7 +34,6 @@ Page({
   },
 
   onShow() {
-    if (!loginGuard.checkLogin(this)) return
   },
 
   async loadDetail() {

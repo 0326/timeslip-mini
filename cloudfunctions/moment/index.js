@@ -1,9 +1,10 @@
 const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
+const { resolveIdentity, ownerMatch, attachOwnerFields } = require('./_identityHelper')
 const db = cloud.database()
 const _ = db.command
 
-async function tryUnlock(OPENID, key) {
+async function tryUnlock(OPENID, key, id) {
   try {
     const userRes = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
     if (!userRes.data || !userRes.data.length) return
@@ -14,7 +15,7 @@ async function tryUnlock(OPENID, key) {
     const reward = REWARDS[key] || 0
     achievements.push({ key, unlockedAt: new Date() })
     await db.collection('users').doc(user._id).update({
-      data: { achievements, points: db.command.inc(reward), updatedAt: db.serverDate() }
+      data: attachOwnerFields({ achievements, points: db.command.inc(reward), updatedAt: db.serverDate() }, id, db)
     })
   } catch (e) { console.warn('tryUnlock fail', key, e.message) }
 }
@@ -22,6 +23,7 @@ async function tryUnlock(OPENID, key) {
 const MAX_LIMIT = 100
 
 exports.main = async (event, context) => {
+  const id = resolveIdentity(event, cloud.getWXContext())
   const { OPENID } = cloud.getWXContext()
   const { action = 'list' } = event
   const data = normalizeEventData(event)
@@ -420,12 +422,12 @@ async function toggleLike(OPENID, data) {
     if (!result) return { code: -1, message: '动态不存在' }
 
     if (result.liked) {
-      await tryUnlock(OPENID, 'first_like')
+      await tryUnlock(OPENID, 'first_like', id)
       ;(async () => {
         try {
           const momentRes = await db.collection('moments').doc(momentId).get()
           const momentData = momentRes.data || {}
-          if ((momentData.likes || []).length >= 50) await tryUnlock(OPENID, 'moment_popular')
+          if ((momentData.likes || []).length >= 50) await tryUnlock(OPENID, 'moment_popular', id)
         } catch (e) {}
       })()
     }
@@ -550,19 +552,19 @@ async function createComment(OPENID, data) {
     likes: [],
     createdAt: db.serverDate()
   }
-  const r = await db.collection('moment_comments').add({ data: doc })
+  const r = await db.collection('moment_comments').add({ data: attachOwnerFields(doc, id, db, { autoCreate: true }) })
 
   // 成就解锁：直接 await，避免云函数 return 后异步任务被冻结
   try {
     const cnt = await db.collection('moment_comments').where({ _openid: OPENID }).count()
-    if ((cnt.total || 0) >= 10) await tryUnlock(OPENID, 'comment_10')
+    if ((cnt.total || 0) >= 10) await tryUnlock(OPENID, 'comment_10', id)
   } catch (e) {}
 
   // 更新 moment 的 commentCount；get 失败时返回 null，前端保留本地 +1 的值，不返回错误的 1/0
   let finalCommentCount = null
   try {
     await db.collection('moments').doc(momentId).update({
-      data: { commentCount: _.inc(1), updatedAt: db.serverDate() }
+      data: attachOwnerFields({ commentCount: _.inc(1), updatedAt: db.serverDate() }, id, db)
     })
     try {
       const md = await db.collection('moments').doc(momentId).get()
@@ -609,7 +611,7 @@ async function removeComment(OPENID, data) {
   let finalCommentCount = null
   try {
     await db.collection('moments').doc(momentId).update({
-      data: { commentCount: _.inc(-1), updatedAt: db.serverDate() }
+      data: attachOwnerFields({ commentCount: _.inc(-1), updatedAt: db.serverDate() }, id, db)
     })
     try {
       const md = await db.collection('moments').doc(momentId).get()

@@ -1,6 +1,7 @@
 const { requestCloud } = require("../../utils/cloudRequest");
 const { storage } = require("../../utils/storage");
 const loginGuard = require("../../utils/loginGuard");
+const { patchListForDisplay, patchAuthorForDisplay } = require("../../utils/publicIdentity");
 
 const app = getApp();
 
@@ -156,7 +157,6 @@ Page({
   },
 
   onShow() {
-    if (!loginGuard.checkLogin(this)) return;
     this.updateCarrierLockState();
     this.checkCarrierBusy();
     this.startCountdownLoop();
@@ -179,7 +179,7 @@ Page({
       Array.isArray(cachedCarriers) &&
       cachedCarriers.length
     ) {
-      this.setData({ carriers: cachedCarriers });
+      this.setData({ carriers: patchListForDisplay(cachedCarriers) });
     }
     // 2. 拉缓存的人物
     const cachedFigures = storage.get("yan_figures");
@@ -189,7 +189,7 @@ Page({
       cachedFigures.figures.length
     ) {
       this.setData({
-        allFigures: cachedFigures.figures,
+        allFigures: patchListForDisplay(cachedFigures.figures),
         dynasties: cachedFigures.dynasties || FALLBACK_DYNASTIES,
       });
       this.applyInitialSelection(
@@ -204,7 +204,7 @@ Page({
         requestCloud("yan", "figures", {}, { throwError: false }),
       ]);
       if (carriersRes && Array.isArray(carriersRes) && carriersRes.length) {
-        this.setData({ carriers: carriersRes });
+        this.setData({ carriers: patchListForDisplay(carriersRes) });
         storage.set(CARRIERS_CACHE_KEY, carriersRes, CARRIERS_TTL);
       }
       if (
@@ -213,7 +213,7 @@ Page({
         figuresRes.figures.length
       ) {
         this.setData({
-          allFigures: figuresRes.figures,
+          allFigures: patchListForDisplay(figuresRes.figures),
           dynasties: figuresRes.dynasties || FALLBACK_DYNASTIES,
         });
         storage.set("yan_figures", figuresRes, 3600);
@@ -268,7 +268,7 @@ Page({
     if (dynasty === "random" || !dynasty) {
       figures = [];
     } else {
-      figures = this.data.allFigures.filter((f) => f.dynasty === dynasty);
+      figures = patchListForDisplay(this.data.allFigures.filter((f) => f.dynasty === dynasty));
     }
     let selectedFigureId = forcedFigureId || this.data.selectedFigureId;
     if (
@@ -362,10 +362,10 @@ Page({
   // ====== 信使锁定状态（管理员专属信使对非管理员显示锁定） ======
   updateCarrierLockState() {
     const isAdmin = loginGuard.isAdmin();
-    const carriers = this.data.carriers.map(function (c) {
+    const carriers = patchListForDisplay(this.data.carriers.map(function (c) {
       var locked = c.adminOnly ? !isAdmin : false;
       return Object.assign({}, c, { locked: locked });
-    });
+    }));
     this.setData({ carriers: carriers });
     this.updateCanSend();
   },
@@ -478,13 +478,14 @@ Page({
       if (detail.reply && detail.reply.content) {
         replyContent = this.trimReplyContent(detail.reply.content);
       }
-      this.setData({ showDetail: true, detailLetter: detail, replyContent: replyContent });
+      this.setData({ showDetail: true, detailLetter: Object.assign({}, detail, patchAuthorForDisplay(detail)), replyContent: replyContent });
       const received = await requestCloud("yan", "read", { letterId: letter._id }, { throwError: false });
       if (received) {
+        const updatedDetail = { ...detail, status: "arrived", read: true, claimed: !!detail.gift || detail.claimed };
         this.setData({
           carrierReturned: { ...this.data.carrierReturned, [key]: null },
           currentTraveling: null,
-          detailLetter: { ...detail, status: "arrived", read: true, claimed: !!detail.gift || detail.claimed }
+          detailLetter: Object.assign({}, updatedDetail, patchAuthorForDisplay(updatedDetail))
         });
         await this.checkCarrierBusy();
       }
@@ -787,7 +788,7 @@ Page({
         avatar: "",
         avatarError: true,
       });
-      this.setData({ figures });
+      this.setData({ figures: patchListForDisplay(figures) });
     }
   },
 

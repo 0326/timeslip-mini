@@ -1,5 +1,5 @@
 const { requestCloud } = require('../../../utils/cloudRequest')
-const loginGuard = require('../../../utils/loginGuard')
+const { patchListForDisplay, patchAuthorForDisplay } = require('../../../utils/publicIdentity')
 
 Page({
   data: {
@@ -29,7 +29,6 @@ Page({
   },
 
   onShow() {
-    if (!loginGuard.checkLogin(this)) return
   },
 
   onPullDownRefresh() {
@@ -61,12 +60,12 @@ Page({
       }, { throwError: false })
 
       if (data && data.list) {
-        const newComments = data.list.map(c => ({
+        const newComments = patchListForDisplay(data.list.map(c => ({
           ...c,
           timeText: this.formatTime(c.createdAt)
-        }))
+        })))
 
-        const comments = reset ? newComments : [...this.data.comments, ...newComments]
+        const comments = reset ? newComments : patchListForDisplay([...this.data.comments, ...newComments])
         this.setData({
           comments,
           page: page + 1,
@@ -115,7 +114,6 @@ Page({
   },
 
   async onSubmit() {
-    if (!loginGuard.checkLogin(this)) return
 
     const content = this.data.inputContent.trim()
     if (!content) {
@@ -138,12 +136,9 @@ Page({
       }, { throwError: false })
 
       if (data && data._id) {
-        const newComment = {
-          ...data,
-          timeText: '刚刚'
-        }
+        const newComment = Object.assign({}, data, patchAuthorForDisplay(data), { timeText: '刚刚' })
         this.setData({
-          comments: [newComment, ...this.data.comments],
+          comments: patchListForDisplay([newComment, ...this.data.comments]),
           inputContent: '',
           replyTo: '',
           replyToName: '',

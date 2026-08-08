@@ -1,7 +1,7 @@
 const { requestCloud } = require('../../utils/cloudRequest')
 const { getDynastyInfo } = require('../../utils/date')
 const { storage } = require('../../utils/storage')
-const loginGuard = require('../../utils/loginGuard')
+const { patchListForDisplay, patchAuthorForDisplay } = require('../../utils/publicIdentity')
 
 const RELATION_TYPE_MAP = {
   peer: '同朝',
@@ -75,7 +75,6 @@ Page({
   },
 
   onShow() {
-    if (!loginGuard.checkLogin(this)) return
   },
 
   async loadDetail(id) {
@@ -99,7 +98,7 @@ Page({
       // 构造逻辑 figureId（video_channels 存的是 "fig-sushi" 格式）
       const logicalFigureId = figure.figureId || (figure.id ? 'fig-' + figure.id : id)
       this.setData({
-        figure,
+        figure: Object.assign({}, figure, patchAuthorForDisplay(figure)),
         figureId: logicalFigureId,
         dynastyInfo: getDynastyInfo(figure.dynasty),
         loading: false
@@ -117,8 +116,8 @@ Page({
       const data = await requestCloud('videoChannel', 'channelByFigure', { figureId }, { throwError: false })
       if (data && data.channel) {
         this.setData({
-          channelInfo: data.channel,
-          channelVideos: data.videos || []
+          channelInfo: Object.assign({}, data.channel, patchAuthorForDisplay(data.channel)),
+          channelVideos: patchListForDisplay(data.videos || [])
         })
       }
     } catch (e) {}
@@ -138,14 +137,14 @@ Page({
           han: '秦汉', sanguo: '三国', tang: '唐', song: '宋',
           ming: '明', qing: '清'
         }
-        const articles = data.list.map(a => ({
+        const articles = patchListForDisplay(data.list.map(a => ({
           ...a,
           categoryName: CATEGORY_NAMES[a.category] || a.category || '',
           dynastyName: DYNASTY_NAMES[a.dynasty] || a.dynasty || '',
           viewText: this.formatCount(a.viewCount),
           likeText: this.formatCount(a.likeCount),
           bookmarkText: this.formatCount(a.bookmarkCount || 0)
-        }))
+        })))
         this.setData({ relatedArticles: articles })
       }
     } catch (e) {}
@@ -199,13 +198,12 @@ Page({
 
   onChannelFollow() {
     const channel = this.data.channelInfo
-    if (!channel || !loginGuard.checkLogin(this)) return
 
     requestCloud('videoChannel', 'toggleFollow', { channelId: channel._id }, { throwError: false })
       .then(res => {
         if (res && typeof res.followed !== 'undefined') {
-          channel.followed = res.followed
-          this.setData({ channelInfo: channel })
+          const updated = Object.assign({}, channel, { followed: res.followed })
+          this.setData({ channelInfo: Object.assign({}, updated, patchAuthorForDisplay(updated)) })
           wx.showToast({ title: res.followed ? '已关注' : '已取消关注', icon: 'none' })
         }
       })

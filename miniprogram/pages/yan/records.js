@@ -1,5 +1,5 @@
 const { requestCloud } = require('../../utils/cloudRequest')
-const loginGuard = require('../../utils/loginGuard')
+const { patchListForDisplay, patchAuthorForDisplay } = require('../../utils/publicIdentity')
 
 const app = getApp()
 
@@ -30,7 +30,6 @@ Page({
   },
 
   onShow() {
-    if (!loginGuard.checkLogin(this)) return
     this.loadLetters()
     this.startCountdownLoop()
   },
@@ -60,7 +59,7 @@ Page({
       const data = await requestCloud('yan', 'list', {}, { throwError: false })
       if (data) {
         const letters = data.letters || []
-        const traveling = letters
+        const traveling = patchListForDisplay(letters
           .filter(l => l.status === 'traveling' || l.status === 'processing' || l.status === 'returned')
           .map(l => ({
             ...l,
@@ -69,13 +68,13 @@ Page({
             sentAtText: this.formatTime(l.sentAt),
             remainText: l.status === 'returned' ? '已返回，点击查看' : this.formatCountdown(Math.max(0, l.arriveAt - Date.now())),
             progress: l.status === 'returned' ? 100 : this.calcProgress(l)
-          }))
-        const arrived = letters
+          })))
+        const arrived = patchListForDisplay(letters
           .filter(l => l.status === 'arrived')
           .map(l => ({
             ...l,
             arrivedAtText: this.formatTime(l.arriveAt)
-          }))
+          })))
         this.setData({
           travelingLetters: traveling,
           arrivedLetters: arrived,
@@ -112,12 +111,12 @@ Page({
     this._countdownTimer = setInterval(() => {
       if (this.data.travelingLetters.length === 0) return
       const now = Date.now()
-      const updated = this.data.travelingLetters.map(l => {
+      const updated = patchListForDisplay(this.data.travelingLetters.map(l => {
         if (l.isReturned) return l
         const remain = Math.max(0, l.arriveAt - now)
         const progress = l.arriveAt > l.sentAt ? Math.min(100, ((now - l.sentAt) / (l.arriveAt - l.sentAt)) * 100) : 100
         return Object.assign({}, l, { remainText: this.formatCountdown(remain), progress: Math.round(progress) })
-      })
+      }))
       this.setData({ travelingLetters: updated })
       const arrived = updated.filter(l => !l.isReturned && l.remainText === '已到达')
       if (arrived.length > 0) {
@@ -153,11 +152,12 @@ Page({
         if (data.reply && data.reply.content) {
           replyContent = this.trimReplyContent(data.reply.content)
         }
-        this.setData({ showDetail: true, detailLetter: data, replyContent: replyContent })
+        this.setData({ showDetail: true, detailLetter: Object.assign({}, data, patchAuthorForDisplay(data)), replyContent: replyContent })
         if (data.status === 'returned' || (data.status === 'arrived' && !data.read)) {
           await requestCloud('yan', 'read', { letterId: id }, { throwError: false })
           await this.loadLetters()
-          this.setData({ detailLetter: Object.assign({}, data, { status: 'arrived', read: true, claimed: data.gift ? true : data.claimed }) })
+          const updated = Object.assign({}, data, { status: 'arrived', read: true, claimed: data.gift ? true : data.claimed })
+          this.setData({ detailLetter: Object.assign({}, updated, patchAuthorForDisplay(updated)) })
         }
       }
     } catch (e) {}
@@ -175,9 +175,9 @@ Page({
   },
 
   syncReadLocal(letterId) {
-    const arrivedLetters = this.data.arrivedLetters.map(l =>
+    const arrivedLetters = patchListForDisplay(this.data.arrivedLetters.map(l =>
       l._id === letterId ? Object.assign({}, l, { read: true }) : l
-    )
+    ))
     const unreadCount = arrivedLetters.filter(l => !l.read).length
     this.setData({ arrivedLetters, unreadCount })
   },

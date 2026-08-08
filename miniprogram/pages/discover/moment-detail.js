@@ -1,12 +1,12 @@
 const { requestCloud } = require('../../utils/cloudRequest')
 const { CONTENT_SECURITY } = require('../../utils/constants')
 const { throttle } = require('../../utils/helpers')
-const loginGuard = require('../../utils/loginGuard')
 const {
   enrichMomentView,
   enrichCommentView,
   normalizeRemoteAssetUrl
 } = require('../../utils/momentAdapter')
+const { patchListForDisplay, patchAuthorForDisplay } = require('../../utils/publicIdentity')
 
 Page({
   data: {
@@ -41,7 +41,6 @@ Page({
   },
 
   onShow() {
-    if (!loginGuard.checkLogin(this)) return
   },
 
   onRetryLoad() {
@@ -55,7 +54,7 @@ Page({
     try {
       const data = await requestCloud('moment', 'detail', { momentId: id }, { throwError: false })
       if (data && data.moment) {
-        const momentView = enrichMomentView(data.moment)
+        const momentView = Object.assign({}, enrichMomentView(data.moment), patchAuthorForDisplay(data.moment))
         let commentResult = null
         try {
           commentResult = await requestCloud('moment', 'commentList', {
@@ -66,7 +65,7 @@ Page({
         let nextCursor = ''
         let hasMore = false
         if (commentResult && Array.isArray(commentResult.comments)) {
-          comments = commentResult.comments.map(c => enrichCommentView(c))
+          comments = patchListForDisplay(commentResult.comments.map(c => enrichCommentView(c)))
           nextCursor = commentResult.nextCursor || ''
           hasMore = !!commentResult.hasMore
         }
@@ -127,6 +126,7 @@ Page({
       moment: {
         ...m,
         likeText,
+        ...patchAuthorForDisplay(m),
         interaction: {
           ...original,
           liked: nextLiked,
@@ -151,6 +151,7 @@ Page({
         moment: {
           ...this.data.moment,
           likeText: rollbackText,
+          ...patchAuthorForDisplay(this.data.moment),
           interaction: snap
         }
       })
@@ -168,6 +169,7 @@ Page({
       moment: {
         ...this.data.moment,
         likeText: finalText,
+        ...patchAuthorForDisplay(this.data.moment),
         interaction: {
           ...(this.data.moment.interaction || {}),
           liked: finalLiked,
@@ -247,6 +249,7 @@ Page({
     const updatedMoment = this.data.moment
       ? {
           ...this.data.moment,
+          ...patchAuthorForDisplay(this.data.moment),
           interaction: {
             ...(this.data.moment.interaction || {}),
             commentCount: (this.data.moment.interaction.commentCount || 0) + 1
@@ -256,7 +259,7 @@ Page({
 
     const pendingMap = { ...this.data.pendingCommentIds, [tempId]: true }
     this.setData({
-      comments: this.data.comments.concat([tempComment]),
+      comments: patchListForDisplay(this.data.comments.concat([tempComment])),
       moment: updatedMoment,
       pendingCommentIds: pendingMap
     })
@@ -280,6 +283,7 @@ Page({
       const rolledMoment = this.data.moment
         ? {
             ...this.data.moment,
+            ...patchAuthorForDisplay(this.data.moment),
             interaction: {
               ...this.data.moment.interaction,
               commentCount: Math.max(0, (this.data.moment.interaction.commentCount || 1) - 1)
@@ -287,7 +291,7 @@ Page({
           }
         : null
       this.setData({
-        comments: cleaned,
+        comments: patchListForDisplay(cleaned),
         moment: rolledMoment,
         pendingCommentIds: cleanedPending,
         submitting: false
@@ -307,6 +311,7 @@ Page({
     const finalMoment = this.data.moment
       ? {
           ...this.data.moment,
+          ...patchAuthorForDisplay(this.data.moment),
           interaction: {
             ...this.data.moment.interaction,
             commentCount: finalCount
@@ -315,7 +320,7 @@ Page({
       : null
 
     this.setData({
-      comments: replaced,
+      comments: patchListForDisplay(replaced),
       moment: finalMoment,
       pendingCommentIds: finalPending,
       submitting: false,
@@ -378,6 +383,7 @@ Page({
     const rolledMoment = this.data.moment
       ? {
           ...this.data.moment,
+          ...patchAuthorForDisplay(this.data.moment),
           interaction: {
             ...this.data.moment.interaction,
             commentCount: finalCount
@@ -387,7 +393,7 @@ Page({
     const cleanedDel = { ...this.data.deletingCommentIds }
     delete cleanedDel[id]
     this.setData({
-      comments: nextComments,
+      comments: patchListForDisplay(nextComments),
       moment: rolledMoment,
       deletingCommentIds: cleanedDel
     })

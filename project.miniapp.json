@@ -1,0 +1,80 @@
+{
+  "miniVersion": "v2",
+  "name": "%name%",
+  "version": "0.0.1",
+  "versionCode": 100,
+  "i18nFilePath": "i18n",
+  "mini-ohos": {
+    "sdkVersion": "0.5.1"
+  },
+  "mini-android": {
+    "resourcePath": "miniapp/android/nativeResources",
+    "sdkVersion": "1.7.0",
+    "toolkitVersion": "0.11.0",
+    "useExtendedSdk": {
+      "media": false,
+      "bluetooth": false,
+      "network": false,
+      "scanner": false,
+      "xweb": false
+    },
+    "icons": {
+      "hdpi": "",
+      "xhdpi": "",
+      "xxhdpi": "",
+      "xxxhdpi": ""
+    },
+    "splashscreen": {
+      "hdpi": "",
+      "xhdpi": "",
+      "xxhdpi": ""
+    },
+    "enableVConsole": "close",
+    "privacy": {
+      "enable": true
+    },
+    "__备注__": {
+      "icons": "请将 48x48(hdpi) / 72x72(xhdpi) / 96x96(xxhdpi) / 144x144(xxxhdpi) 的 PNG 放入 miniapp/android/nativeResources/res/drawable-*/ 目录，并在此填写相对路径；或使用 Donut 构建器图标上传功能自动生成",
+      "splashscreen": "闪屏图，建议尺寸：hdpi=480x800 / xhdpi=720x1280 / xxhdpi=1080x1920，PNG 格式，放入对应 drawable-*/ 目录后填路径",
+      "enableVConsole": "正式版必须=close，开发调试期可临时改为=open",
+      "privacy.enable": "Android 12+ 首次启动弹隐私协议，必须为 true"
+    }
+  },
+  "mini-ios": {
+    "sdkVersion": "1.7.0",
+    "toolkitVersion": "0.0.9",
+    "useExtendedSdk": {
+      "WeAppOpenFuns": true,
+      "WeAppNetwork": false,
+      "WeAppBluetooth": false,
+      "WeAppMedia": false,
+      "WeAppLBS": false,
+      "WeAppOthers": false
+    },
+    "enableVConsole": "close",
+    "icons": {
+      "mainIcon120": "",
+      "mainIcon180": "",
+      "spotlightIcon80": "",
+      "spotlightIcon120": "",
+      "settingsIcon58": "",
+      "settingsIcon87": "",
+      "notificationIcon40": "",
+      "notificationIcon60": "",
+      "appStore1024": ""
+    },
+    "splashScreen": {
+      "customImage": ""
+    },
+    "privacy": {
+      "enable": true
+    },
+    "enableOpenUrlNavigate": true,
+    "__备注__": {
+      "icons": "尺寸需严格匹配：iPhone主图120x120(@2x)/180x180(@3x)，App Store图必须1024x1024且无透明通道，PNG格式",
+      "splashScreen.customImage": "启动图，建议 1242x2688（iPhone X 系列），会自动适配其他机型",
+      "privacy.enable": "iOS 首次安装启动弹《用户协议与隐私政策》弹窗，与小程序端 pages/login/agreement 共用文案，App Store 审核必须 true",
+      "enableVConsole": "提交 App Store 审核前务必=close，否则被拒"
+    }
+  }
+}

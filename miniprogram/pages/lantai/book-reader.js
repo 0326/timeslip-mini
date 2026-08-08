@@ -1,6 +1,5 @@
 const { requestCloud } = require('../../utils/cloudRequest')
 const { storage } = require('../../utils/storage')
-const loginGuard = require('../../utils/loginGuard')
 
 Page({
   data: {
@@ -21,7 +20,6 @@ Page({
   },
 
   onShow() {
-    if (!loginGuard.checkLogin(this)) return
     const progressKey = 'chapters_progress_' + this.data.bookId
     const savedProgress = storage.get(progressKey) || {}
     const hasAnyProgress = Object.values(savedProgress).some(p => typeof p === 'number' && p > 0)

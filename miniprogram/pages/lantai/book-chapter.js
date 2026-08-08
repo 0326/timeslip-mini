@@ -1,6 +1,5 @@
 const { requestCloud } = require('../../utils/cloudRequest')
 const { storage } = require('../../utils/storage')
-const loginGuard = require('../../utils/loginGuard')
 
 // 把各种可能结构的注释（按段分组 / 键名不一 / 纯对象）统一展平为 [{keyword, note}]
 function normalizeNotes(raw) {
@@ -150,7 +149,6 @@ Page({
   },
 
   onShow() {
-    if (!loginGuard.checkLogin(this)) return
   },
 
   onUnload() {

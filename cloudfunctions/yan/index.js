@@ -3,6 +3,7 @@
 // 回信生成逻辑已移至 yan-timer 定时云函数，此处不再调用 processArrived
 const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
+const { resolveIdentity, ownerMatch, attachOwnerFields } = require('./_identityHelper')
 const db = cloud.database()
 const _ = db.command
 
@@ -17,6 +18,7 @@ const PROCESSING_STALE_MS = 2 * 60 * 1000
 
 // ========== 主入口 ==========
 exports.main = async (event, context) => {
+  const id = resolveIdentity(event, cloud.getWXContext())
   const { OPENID } = cloud.getWXContext()
   const { action = 'send' } = event
   const data = normalizeEventData(event)

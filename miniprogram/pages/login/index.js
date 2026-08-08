@@ -3,6 +3,7 @@ const { isLoggedIn } = require('../../utils/loginGuard')
 const { storage } = require('../../utils/storage')
 const { requestCloud } = require('../../utils/cloudRequest')
 const { isTemporaryFileUrl } = require('../../utils/helpers')
+const { canIUseChooseAvatar } = require('../../utils/platform')
 
 function uploadAvatarFile(filePath) {
   return new Promise((resolve, reject) => {
@@ -38,7 +39,8 @@ Page({
     showRegister: false,
     profileRepair: false,
     redirect: '',
-    needLogin: true
+    needLogin: true,
+    canUseChooseAvatar: canIUseChooseAvatar()
   },
 
   onLoad(options) {
@@ -135,6 +137,45 @@ Page({
     const { avatarUrl } = e.detail
     if (avatarUrl) {
       this.setData({ 'form.avatarUrl': avatarUrl }, () => this.updateCanSubmit())
+    }
+  },
+
+  // Donut App/H5 端：使用 chooseMedia / chooseImage 选择本地图片作为头像
+  onChooseAvatarLocal() {
+    const done = (filePath) => {
+      if (!filePath) return
+      this.setData({ 'form.avatarUrl': filePath }, () => this.updateCanSubmit())
+    }
+    try {
+      if (typeof wx.chooseMedia === 'function') {
+        wx.chooseMedia({
+          count: 1,
+          mediaType: ['image'],
+          sizeType: ['compressed'],
+          sourceType: ['album', 'camera'],
+          success: (res) => {
+            const f = res && res.tempFiles && res.tempFiles[0] && res.tempFiles[0].tempFilePath
+            done(f)
+          },
+          fail: () => {}
+        })
+        return
+      }
+      if (typeof wx.chooseImage === 'function') {
+        wx.chooseImage({
+          count: 1,
+          sizeType: ['compressed'],
+          sourceType: ['album', 'camera'],
+          success: (res) => {
+            done(res && res.tempFilePaths && res.tempFilePaths[0])
+          },
+          fail: () => {}
+        })
+        return
+      }
+      wx.showToast({ title: '当前环境无法选择图片', icon: 'none' })
+    } catch (e) {
+      wx.showToast({ title: '选择图片失败', icon: 'none' })
     }
   },
 

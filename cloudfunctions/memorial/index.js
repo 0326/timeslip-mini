@@ -1,5 +1,6 @@
 const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
+const { resolveIdentity, ownerMatch, attachOwnerFields } = require('./_identityHelper')
 const db = cloud.database()
 const _ = db.command
 
@@ -40,7 +41,7 @@ const ACHIEVEMENT_INFO = {
   type_all:              { name: '兼容并包',   desc: '批阅过五种类型的奏折' }
 }
 
-async function tryUnlock(OPENID, key) {
+async function tryUnlock(OPENID, key, id) {
   try {
     const userRes = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
     if (!userRes.data || !userRes.data.length) return { ok: false, reason: 'no_user', key: key }
@@ -52,11 +53,11 @@ async function tryUnlock(OPENID, key) {
     const reward = REWARDS[key] || 0
     achievements.push({ key: key, unlockedAt: new Date() })
     await db.collection('users').doc(user._id).update({
-      data: {
+      data: attachOwnerFields({
         achievements: achievements,
         points: _.inc(reward),
         updatedAt: db.serverDate()
-      }
+      }, id, db)
     })
     return { ok: true, reward: reward, key: key }
   } catch (e) {
@@ -158,7 +159,7 @@ async function getUserStats(OPENID) {
   return stats
 }
 
-async function updateUserStats(OPENID, delta) {
+async function updateUserStats(OPENID, delta, id) {
   try {
     const userRes = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
     if (!userRes.data || !userRes.data.length) return { ok: false }
@@ -175,7 +176,7 @@ async function updateUserStats(OPENID, delta) {
     if (newWisdom < 0) newWisdom = 0
     incData.wisdom_index = newWisdom
     incData.updatedAt = db.serverDate()
-    await db.collection('users').doc(user._id).update({ data: incData })
+    await db.collection('users').doc(user._id).update({ data: attachOwnerFields(incData, id, db) })
     return { ok: true, new_wisdom: newWisdom }
   } catch (e) {
     console.warn('updateUserStats err:', e.message)
@@ -183,7 +184,7 @@ async function updateUserStats(OPENID, delta) {
   }
 }
 
-async function actionDaily(OPENID, body) {
+async function actionDaily(OPENID, body, id) {
   var today = getTodayStr()
   var dailyCol = db.collection('memorial_daily')
   var userStats = await getUserStats(OPENID)
@@ -238,7 +239,7 @@ async function actionDaily(OPENID, body) {
       created_at: db.serverDate(), updated_at: db.serverDate()
     }
     try {
-      var addRes = await dailyCol.add({ data: toSave })
+      var addRes = await dailyCol.add({ data: attachOwnerFields(toSave, id, db, { autoCreate: true }) })
       toSave._id = addRes._id
     } catch (e) {
       return { code: 1, message: 'daily create fail: ' + e.message }
@@ -268,7 +269,7 @@ async function actionDaily(OPENID, body) {
       var mergedQ = existQ.concat(newQueueItems)
       try {
         await dailyCol.doc(todayDoc._id).update({
-          data: { queue: mergedQ, carryover_count: _.inc(newQueueItems.length), updated_at: db.serverDate() }
+          data: attachOwnerFields({ queue: mergedQ, carryover_count: _.inc(newQueueItems.length), updated_at: db.serverDate() }, id, db)
         })
         todayDoc.queue = mergedQ
         todayDoc.carryover_count = (todayDoc.carryover_count || 0) + newQueueItems.length
@@ -355,7 +356,7 @@ function unlockResultsSummary(arr) {
   return out
 }
 
-async function actionDecide(OPENID, body) {
+async function actionDecide(OPENID, body, id) {
   var memorialId = body.memorial_id || body.memorialId
   var decision = body.decision
   var customZhupi = body.custom_zhupi || body.customZhupi || ''
@@ -428,7 +429,7 @@ async function actionDecide(OPENID, body) {
   var ansId = null
   try {
     var addAns = await db.collection('memorial_answers').add({
-      data: {
+      data: attachOwnerFields({
         _openid: OPENID, memorial_id: memorialId, memorial_title: mem.title,
         memorial_type: mem.type,
         official_name: (mem.official && mem.official.name) || '',
@@ -436,7 +437,7 @@ async function actionDecide(OPENID, body) {
         decision: decision, decision_label: decisionLabel, zhupi: finalZhupi, retained: retained,
         wisdom_delta: wisdomDelta, consequence: consequence, follow_up: followUp,
         option_id: (optionChosen && optionChosen.id) || '', created_at: db.serverDate()
-      }
+      }, id, db, { autoCreate: true })
     })
     ansId = addAns._id
   } catch (e) {
@@ -452,7 +453,7 @@ async function actionDecide(OPENID, body) {
       var comp = d.completed_ids || []
       if (comp.indexOf(memorialId) < 0) comp.push(memorialId)
       await dailyCol.doc(d._id).update({
-        data: { completed_ids: comp, updated_at: db.serverDate() }
+        data: attachOwnerFields({ completed_ids: comp, updated_at: db.serverDate() }, id, db)
       })
     }
   } catch (e) { console.warn('daily update warn:', e.message) }
@@ -482,31 +483,31 @@ async function actionDecide(OPENID, body) {
     total_done: 1, retain_count: retained ? 1 : 0, zhupi_total_len: zhupiLen,
     secret_done: type === '密折' ? 1 : 0, wisdom_delta: wisdomDelta
   }
-  var uStatsAfter = await updateUserStats(OPENID, delta)
+  var uStatsAfter = await updateUserStats(OPENID, delta, id)
   var newTotal = (await getUserStats(OPENID)).total
   var unlocks = []
-  if (newTotal >= 1) unlocks.push(tryUnlock(OPENID, 'first_memorial'))
-  if (newTotal >= 5) unlocks.push(tryUnlock(OPENID, 'memorial_5'))
-  if (newTotal >= 20) unlocks.push(tryUnlock(OPENID, 'memorial_20'))
-  if (newTotal >= 100) unlocks.push(tryUnlock(OPENID, 'memorial_century'))
-  if (zhupiLen >= 100) unlocks.push(tryUnlock(OPENID, 'memorial_zhupi_100'))
+  if (newTotal >= 1) unlocks.push(tryUnlock(OPENID, 'first_memorial', id))
+  if (newTotal >= 5) unlocks.push(tryUnlock(OPENID, 'memorial_5', id))
+  if (newTotal >= 20) unlocks.push(tryUnlock(OPENID, 'memorial_20', id))
+  if (newTotal >= 100) unlocks.push(tryUnlock(OPENID, 'memorial_century', id))
+  if (zhupiLen >= 100) unlocks.push(tryUnlock(OPENID, 'memorial_zhupi_100', id))
   if (retained) {
     var retC = (await getUserStats(OPENID)).retain
-    if (retC >= 10) unlocks.push(tryUnlock(OPENID, 'memorial_retain_10'))
+    if (retC >= 10) unlocks.push(tryUnlock(OPENID, 'memorial_retain_10', id))
   }
   try {
     var sm = await db.collection('memorials').where({ type: '密折' }).count()
     var sa = await db.collection('memorial_answers').where({ _openid: OPENID, memorial_type: '密折' }).count()
     if (sm && sa && sm.total > 0 && sa.total >= sm.total) {
-      unlocks.push(tryUnlock(OPENID, 'memorial_secret_all'))
+      unlocks.push(tryUnlock(OPENID, 'memorial_secret_all', id))
     }
   } catch (_) {}
   try {
     var nu = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
     if (nu.data && nu.data.length) {
       var wi = nu.data[0].wisdom_index
-      if (wi >= 75) unlocks.push(tryUnlock(OPENID, 'wisdom_75'))
-      if (wi >= 90) unlocks.push(tryUnlock(OPENID, 'memorial_wisdom_90'))
+      if (wi >= 75) unlocks.push(tryUnlock(OPENID, 'wisdom_75', id))
+      if (wi >= 90) unlocks.push(tryUnlock(OPENID, 'memorial_wisdom_90', id))
     }
   } catch (_) {}
   // type_all：五种类型都批阅过
@@ -519,7 +520,7 @@ async function actionDecide(OPENID, body) {
         if (!tc || tc.total < 1) { hasAll = false; break }
       } catch (_t) { hasAll = false; break }
     }
-    if (hasAll) unlocks.push(tryUnlock(OPENID, 'type_all'))
+    if (hasAll) unlocks.push(tryUnlock(OPENID, 'type_all', id))
   } catch (_) {}
   try {
     var dt = await dailyCol.where({ _openid: OPENID, date: today }).limit(1).get()
@@ -532,13 +533,13 @@ async function actionDecide(OPENID, body) {
         if (ansC && ansC.total < 1) { miss = true; break }
       }
       if (queue.length > 0 && !miss) {
-        unlocks.push(tryUnlock(OPENID, 'memorial_daily_clear'))
+        unlocks.push(tryUnlock(OPENID, 'memorial_daily_clear', id))
         try {
           var uu = await db.collection('users').where({ _openid: OPENID }).limit(1).get()
           if (uu.data && uu.data.length) {
             var alreadyDay = (uu.data[0].memorial_stats && uu.data[0].memorial_stats.daily_clear_days) || 0
             if (alreadyDay === 0) {
-              await updateUserStats(OPENID, { daily_clear_days: 1 })
+              await updateUserStats(OPENID, { daily_clear_days: 1 }, id)
             }
           }
         } catch (_) {}
@@ -645,14 +646,15 @@ async function actionWisdom(OPENID) {
 }
 
 exports.main = async function(event, context) {
+  const id = resolveIdentity(event, cloud.getWXContext())
   const wx = cloud.getWXContext()
   const OPENID = wx.OPENID
   const action = event.action || event.query || 'daily'
   const body = event.body || event.data || event
   switch (action) {
-    case 'daily': return actionDaily(OPENID, body)
+    case 'daily': return actionDaily(OPENID, body, id)
     case 'detail': return actionDetail(OPENID, body)
-    case 'decide': return actionDecide(OPENID, body)
+    case 'decide': return actionDecide(OPENID, body, id)
     case 'archive': return actionArchive(OPENID, body)
     case 'wisdom': return actionWisdom(OPENID)
     default:

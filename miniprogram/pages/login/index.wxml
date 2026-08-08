@@ -15,18 +15,35 @@
           <text class="avatar-plus">＋</text>
           <text class="avatar-tip">选头像</text>
         </view>
+        <!-- 微信小程序端：使用官方 open-type="chooseAvatar" -->
         <button
+          wx:if="{{canUseChooseAvatar}}"
           class="avatar-btn-abs"
           open-type="chooseAvatar"
           bind:chooseavatar="onChooseAvatar"
         ></button>
+        <!-- Donut App/H5 端：降级为点击选择本地图片 -->
+        <view wx:else class="avatar-btn-abs" bindtap="onChooseAvatarLocal"></view>
       </view>
+      <view wx:if="{{!canUseChooseAvatar}}" class="platform-tip">当前环境请点击选择本地图片作为头像</view>
     </view>
 
     <view class="nickname-row">
       <input
         class="nickname-input"
+        wx:if="{{canUseChooseAvatar}}"
         type="nickname"
+        placeholder="请输入昵称（最多10字）"
+        placeholder-style="color:#b2b2b2"
+        maxlength="10"
+        value="{{form.nickName}}"
+        bindinput="onNicknameInput"
+        bindblur="onNicknameBlur"
+        confirm-type="done"
+      />
+      <input
+        wx:else
+        class="nickname-input"
         placeholder="请输入昵称（最多10字）"
         placeholder-style="color:#b2b2b2"
         maxlength="10"

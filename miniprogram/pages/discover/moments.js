@@ -5,8 +5,8 @@ const {
   enrichCommentView,
   normalizeRemoteAssetUrl
 } = require('../../utils/momentAdapter')
-const loginGuard = require('../../utils/loginGuard')
 const { throttle } = require('../../utils/helpers')
+const { patchListForDisplay, patchAuthorForDisplay } = require('../../utils/publicIdentity')
 
 const MAX_COLLAPSE_LINES = 6
 
@@ -107,11 +107,10 @@ Page({
         ...interaction
       }
     }
-    this.setData({ moments: nextMoments })
+    this.setData({ moments: patchListForDisplay(nextMoments) })
   },
 
   onShow() {
-    if (!loginGuard.checkLogin(this)) return
   },
 
   onPullDownRefresh() {
@@ -166,7 +165,7 @@ Page({
         cursor, limit, dynasty
       }, { throwError: false })
       if (data && Array.isArray(data.moments)) {
-        const moments = data.moments.map(m => enrichMomentView(m))
+        const moments = patchListForDisplay(data.moments.map(m => enrichMomentView(m)))
         result = {
           moments,
           nextCursor: data.nextCursor || '',
@@ -300,7 +299,7 @@ Page({
         likePreview: previewNames.slice(0, 10)
       }
     }
-    this.setData({ moments: updatedMoments, pendingLikeIds, actionMenuId: '' })
+    this.setData({ moments: patchListForDisplay(updatedMoments), pendingLikeIds, actionMenuId: '' })
 
     let result = null
     try {
@@ -321,7 +320,7 @@ Page({
           ? (originalInteraction.likeCount / 1000).toFixed(1) + 'k'
           : String(originalInteraction.likeCount)
       }
-      this.setData({ moments: rollbackMoments, pendingLikeIds: cleanedPending })
+      this.setData({ moments: patchListForDisplay(rollbackMoments), pendingLikeIds: cleanedPending })
       wx.showToast({ title: '操作未成功', icon: 'none' })
       return
     }
@@ -340,7 +339,7 @@ Page({
         likePreview: finalPreview.slice(0, 10)
       }
     }
-    this.setData({ moments: finalMoments, pendingLikeIds: cleanedPending })
+    this.setData({ moments: patchListForDisplay(finalMoments), pendingLikeIds: cleanedPending })
   },
 
   openCommentInput(e) {
@@ -437,7 +436,7 @@ Page({
           commentPreview: updatedPreview
         }
       }
-      this.setData({ moments: nextMoments, pendingCommentIds })
+      this.setData({ moments: patchListForDisplay(nextMoments), pendingCommentIds })
     }
 
     let result = null
@@ -462,7 +461,7 @@ Page({
         const cleanedPending = { ...this.data.pendingCommentIds }
         delete cleanedPending[tempId]
         this.setData({
-          moments: rollback,
+          moments: patchListForDisplay(rollback),
           commentSubmitting: false,
           pendingCommentIds: cleanedPending
         })
@@ -499,7 +498,7 @@ Page({
           commentPreview: updated
         }
       }
-      this.setData({ moments: finalMoments, pendingCommentIds: cleanedPending })
+      this.setData({ moments: patchListForDisplay(finalMoments), pendingCommentIds: cleanedPending })
     }
 
     this.setData({

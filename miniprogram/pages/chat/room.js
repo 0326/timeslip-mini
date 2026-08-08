@@ -3,7 +3,7 @@ const chatSession = require('../../utils/chatSession')
 const { AI_CONFIG, QINGYUE } = require('../../utils/constants')
 const { storage } = require('../../utils/storage')
 const { uid, sleep, resolveAvatarUrl } = require('../../utils/helpers')
-const loginGuard = require('../../utils/loginGuard')
+const { patchListForDisplay, patchAuthorForDisplay } = require('../../utils/publicIdentity')
 
 Page({
   data: {
@@ -62,7 +62,6 @@ Page({
 
   onShow() {
     // 青月（系统引导）无需登录
-    if (!this.data.isSystem && !loginGuard.checkLogin(this)) return
     const app = getApp()
     app.setCurrentTab(this, 0)
     // P1：标记当前页面活跃（青月异步完成时判断是否累加 unread）
@@ -122,7 +121,7 @@ Page({
             createdAt: m.createdAt ? new Date(m.createdAt).getTime() : Date.now()
           }))
         if (toAdd.length) {
-          const messages = localMsgs.concat(toAdd)
+          const messages = patchListForDisplay(localMsgs.concat(toAdd))
           chatSession.saveMessages(figureId, messages)
           this.setData({ messages })
           this.scrollToBottom(true)
@@ -175,7 +174,7 @@ Page({
   async loadHistory() {
     const localMessages = chatSession.getMessages(this.data.figureId)
     if (localMessages.length || this.data.isSystem) {
-      this.setData({ messages: localMessages })
+      this.setData({ messages: patchListForDisplay(localMessages) })
       this.scrollToBottom(true)
       return
     }
@@ -185,11 +184,11 @@ Page({
       limit: 50
     }, { throwError: false })
     if (Array.isArray(cloudMessages) && cloudMessages.length) {
-      const messages = cloudMessages.map(message => ({
+      const messages = patchListForDisplay(cloudMessages.map(message => ({
         ...message,
         role: message.role === 'assistant' ? 'figure' : message.role,
         createdAt: message.createdAt ? new Date(message.createdAt).getTime() : Date.now()
-      }))
+      })))
       chatSession.saveMessages(this.data.figureId, messages)
       this.setData({ messages })
     } else {
@@ -285,7 +284,7 @@ Page({
   // 触发日限：回滚乐观消息，禁用输入
   handleDailyLimitReached() {
     // 移除最后一条乐观添加的用户消息
-    const messages = this.data.messages.slice(0, -1)
+    const messages = patchListForDisplay(this.data.messages.slice(0, -1))
     this.setData({
       messages,
       sending: false,
@@ -361,7 +360,7 @@ Page({
       content: text,
       createdAt: now
     }
-    const messages = this.data.messages.concat([userMsg])
+    const messages = patchListForDisplay(this.data.messages.concat([userMsg]))
     this.setData({
       messages,
       inputValue: '',
@@ -483,7 +482,7 @@ Page({
       content,
       createdAt: now
     }
-    const messages = this.data.messages.concat([fullMsg])
+    const messages = patchListForDisplay(this.data.messages.concat([fullMsg]))
     this.setData({
       messages,
       sending: false,

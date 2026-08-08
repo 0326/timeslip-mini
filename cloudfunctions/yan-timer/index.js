@@ -2,6 +2,7 @@
 // 定时任务：扫描到期信件，先生成回信与风物并标记为已返回，用户查看后再归档为已收信
 const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
+const { resolveIdentity, ownerMatch, attachOwnerFields } = require('./_identityHelper')
 const db = cloud.database()
 const _ = db.command
 

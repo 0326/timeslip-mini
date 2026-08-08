@@ -2,6 +2,7 @@ const cloud = require('wx-server-sdk')
 const https = require('https')
 const http = require('http')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
+const { resolveIdentity, ownerMatch, attachOwnerFields } = require('./_identityHelper')
 const db = cloud.database()
 
 // ============================================================
@@ -10,6 +11,7 @@ const db = cloud.database()
 // ============================================================
 
 exports.main = async (event, context) => {
+  const id = resolveIdentity(event, cloud.getWXContext())
   const { OPENID } = cloud.getWXContext()
   const { action = 'transferBatch' } = event
 
@@ -131,7 +133,7 @@ async function transferBatch(event) {
         if (item.coverFileID) updateData.coverUrl = item.coverFileID
 
         if (Object.keys(updateData).length > 0) {
-          await db.collection('videos').doc(video._id).update({ data: updateData })
+          await db.collection('videos').doc(video._id).update({ data: attachOwnerFields(updateData, id, db) })
           success++
         } else {
           fail++
@@ -190,7 +192,7 @@ async function transferOne(event) {
     if (result.coverFileID) updateData.coverUrl = result.coverFileID
 
     if (Object.keys(updateData).length > 0) {
-      await db.collection('videos').doc(videoId).update({ data: updateData })
+      await db.collection('videos').doc(videoId).update({ data: attachOwnerFields(updateData, id, db) })
     }
 
     return { code: 0, message: '转存成功', data: result }

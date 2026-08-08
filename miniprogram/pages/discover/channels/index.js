@@ -1,6 +1,7 @@
 const { requestCloud } = require('../../../utils/cloudRequest')
 const loginGuard = require('../../../utils/loginGuard')
 const { throttle, debounce } = require('../../../utils/helpers')
+const { patchListForDisplay, patchAuthorForDisplay } = require('../../../utils/publicIdentity')
 
 Page({
   data: {
@@ -123,8 +124,8 @@ Page({
 
       const data = await requestCloud('videoChannel', 'feedList', params, { throwError: false })
       const list = (data && data.list) || []
-      const processedList = this.processVideoList(list)
-      const newList = reset ? processedList : this.data.videoList.concat(processedList)
+      const processedList = patchListForDisplay(this.processVideoList(list))
+      const newList = reset ? processedList : patchListForDisplay(this.data.videoList.concat(processedList))
 
       this.setData({
         videoList: newList,
@@ -259,7 +260,6 @@ Page({
   },
 
   async onLike(e) {
-    if (!loginGuard.checkLogin(this)) return
     const videoId = e.currentTarget.dataset.id
     const list = this.data.videoList.slice()
     const idx = list.findIndex(v => v._id === videoId)
@@ -271,7 +271,7 @@ Page({
     list[idx].liked = !wasLiked
     list[idx].likeCount = originalCount + (wasLiked ? -1 : 1)
     list[idx].likeCountText = this.formatCount(list[idx].likeCount)
-    this.setData({ videoList: list })
+    this.setData({ videoList: patchListForDisplay(list) })
 
     try {
       const res = await requestCloud('videoChannel', 'toggleLike', { videoId }, { throwError: false })
@@ -279,14 +279,14 @@ Page({
         list[idx].liked = res.liked
         list[idx].likeCount = originalCount + (res.liked ? 1 : -1)
         list[idx].likeCountText = this.formatCount(list[idx].likeCount)
-        this.setData({ videoList: list })
+        this.setData({ videoList: patchListForDisplay(list) })
       }
     } catch (err) {
       // 回滚
       list[idx].liked = wasLiked
       list[idx].likeCount = originalCount
       list[idx].likeCountText = this.formatCount(originalCount)
-      this.setData({ videoList: list })
+      this.setData({ videoList: patchListForDisplay(list) })
       wx.showToast({ title: '😊', icon: 'none' })
     }
   },
@@ -306,7 +306,7 @@ Page({
     try {
       const data = await requestCloud('videoChannel', 'commentList', { videoId: id }, { throwError: false })
       this.setData({
-        commentList: data || [],
+        commentList: patchListForDisplay(data || []),
         commentLoading: false
       })
     } catch (e) {
@@ -325,7 +325,6 @@ Page({
   async sendComment() {
     const text = (this.data.commentText || '').trim()
     if (!text) return
-    if (!loginGuard.checkLogin(this)) return
 
     const videoId = this.data.currentVideoId
     if (!videoId) return
@@ -335,14 +334,14 @@ Page({
       const newComment = await requestCloud('videoChannel', 'userCommentAdd', { videoId, content: text }, { throwError: false })
       if (newComment) {
         const list = this.data.commentList.slice()
-        list.push(newComment)
+        list.push(Object.assign({}, newComment, patchAuthorForDisplay(newComment)))
         const videoList = this.data.videoList.slice()
         const vIdx = videoList.findIndex(v => v._id === videoId)
         if (vIdx >= 0) {
           videoList[vIdx].commentCount = (videoList[vIdx].commentCount || 0) + 1
           videoList[vIdx].commentCountText = this.formatCount(videoList[vIdx].commentCount)
         }
-        this.setData({ commentList: list, commentText: '', videoList })
+        this.setData({ commentList: patchListForDisplay(list), commentText: '', videoList: patchListForDisplay(videoList) })
         wx.hideLoading()
       } else {
         wx.hideLoading()
@@ -367,7 +366,6 @@ Page({
   },
 
   onFollow(e) {
-    if (!loginGuard.checkLogin(this)) return
     const { channelId } = e.currentTarget.dataset
     const list = this.data.videoList.slice()
     const idx = list.findIndex(v => v.channelId === channelId)
@@ -377,7 +375,7 @@ Page({
       .then(res => {
         if (res && typeof res.followed !== 'undefined') {
           list[idx].followed = res.followed
-          this.setData({ videoList: list })
+          this.setData({ videoList: patchListForDisplay(list) })
           wx.showToast({ title: res.followed ? '已关注' : '已取消关注', icon: 'none' })
         }
       })

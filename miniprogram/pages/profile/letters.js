@@ -1,10 +1,8 @@
-const loginGuard = require('../../utils/loginGuard')
 
 Page({
   data: {},
 
   onShow() {
-    if (!loginGuard.checkLogin(this)) return
   },
 
   goBack() {

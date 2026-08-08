@@ -1,5 +1,6 @@
 const { requestCloud } = require('../../../utils/cloudRequest')
 const loginGuard = require('../../../utils/loginGuard')
+const { patchListForDisplay, patchAuthorForDisplay } = require('../../../utils/publicIdentity')
 
 Page({
   data: {
@@ -36,7 +37,7 @@ Page({
       const data = await requestCloud('videoChannel', 'channelDetail', params, { throwError: false })
       if (data) {
         this.setData({
-          channel: data,
+          channel: Object.assign({}, data, patchAuthorForDisplay(data)),
           channelId: data._id
         })
       }
@@ -55,7 +56,7 @@ Page({
         channelId: chId
       }, { throwError: false })
       this.setData({
-        videoList: data || [],
+        videoList: patchListForDisplay(data || []),
         loading: false
       })
     } catch (e) {
@@ -64,14 +65,13 @@ Page({
   },
 
   onFollow() {
-    if (!loginGuard.checkLogin(this)) return
     const channelId = this.data.channelId
     if (!channelId) return
 
     requestCloud('videoChannel', 'toggleFollow', { channelId }, { throwError: false })
       .then(res => {
         if (res && typeof res.followed !== 'undefined') {
-          const channel = { ...this.data.channel, followed: res.followed, followerCount: res.followerCount }
+          const channel = { ...this.data.channel, ...patchAuthorForDisplay(this.data.channel), followed: res.followed, followerCount: res.followerCount }
           this.setData({ channel })
           wx.showToast({ title: res.followed ? '已关注' : '已取消关注', icon: 'none' })
         }
